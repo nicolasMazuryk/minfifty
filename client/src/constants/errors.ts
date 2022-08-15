@@ -1,0 +1,3 @@
+export const ERROR_CODES = {
+  PERMISSION_DENIED: 'PERMISSION_DENIED',
+} as const

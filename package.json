@@ -1,0 +1,23 @@
+{
+  "name": "minfifty",
+  "version": "0.0.1",
+  "description": "",
+  "devDependencies": {
+    "husky": "^8.0.1",
+    "lint-staged": "^13.0.3"
+  },
+  "workspaces": [
+    "./*"
+  ],
+  "private": true,
+  "dependencies": {
+    "@generator-minfifty/server-ts-express": "0.0.1",
+    "@generator-minfifty/client-ts-react": "0.0.1"
+  },
+  "scripts": {
+    "prettify": "prettier --write .",
+    "server": "cd server && npm run",
+    "client": "cd client && npm run",
+    "prepare": "husky install"
+  }
+}

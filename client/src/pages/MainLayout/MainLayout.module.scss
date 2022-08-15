@@ -1,0 +1,45 @@
+@import 'core';
+
+.root {
+  min-height: 100vh;
+  height: 100%;
+  background: $white;
+}
+.header {
+  background: $elephant;
+}
+.menu {
+  line-height: 64px;
+  background: $elephant;
+}
+
+.logout {
+  float: right;
+}
+
+.content {
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
+  margin-top: 64px;
+}
+
+.footer {
+  position: fixed;
+  bottom: 0;
+  background-color: #1976d2;
+
+  right: 0;
+  text-align: right;
+  width: 100%;
+  padding: 32px;
+
+  height: max-content;
+}
+
+.footerAction {
+  span {
+    font-size: 1rem;
+    color: $white;
+  }
+}

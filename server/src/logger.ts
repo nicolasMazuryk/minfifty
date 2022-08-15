@@ -1,0 +1,76 @@
+import util from 'util'
+
+import bunyan from 'bunyan'
+import { LogLevel } from 'bunyan'
+
+import Exception from '@/services/Exception'
+
+export interface ILogParams {
+  service: string
+  runtime: number
+  params: object
+  result: object
+  userId?: string
+}
+
+const inspect = (data: any) =>
+  util.inspect(data, {
+    showHidden: false,
+    depth: null,
+  })
+
+const logger = bunyan.createLogger({
+  name: 'minfifty',
+  streams: [
+    {
+      name: 'stdout',
+      level: (process.env.LOG_LEVEL || 'trace') as LogLevel,
+      stream: process.stdout,
+    },
+    {
+      name: 'stderr',
+      level: 'error',
+      stream: process.stderr,
+    },
+  ],
+  serializers: {
+    error: bunyan.stdSerializers.err,
+  },
+})
+
+function isServiceInfo(info: Partial<ILogParams>) {
+  return info !== null && typeof info === 'object' && info.service
+}
+
+const devlogger = {
+  info(...data: any[]) {
+    if (data.length === 1 && isServiceInfo(data[0])) {
+      const { service, runtime, params, result, userId }: ILogParams = data[0]
+      const color = result instanceof Exception ? 33 : 32
+      const res = result instanceof Exception ? inspect(result.toHash()) : inspect(result)
+      /* eslint-disable no-console */
+      console.info(
+        `\x1b[${color}m%s \x1b[35m%s \x1b[36m%s \x1b[0m`,
+        service,
+        `${runtime}ms`,
+        userId || 'NOT_LOGGED',
+      )
+      console.info(`\x1b[${color}m%s \x1b[0m%s`, '====>', inspect(params))
+      console.info(`\x1b[${color}m%s \x1b[0m%s`, '<====', res, '\n')
+    } else {
+      console.info(...data)
+    }
+  },
+  error(err: Exception) {
+    console.error(err)
+  },
+}
+
+const loggers: {
+  [key: string]: any
+} = {
+  devlogger,
+  default: logger,
+}
+
+export default loggers[process.env.NODE_LOGGER_TYPE] || logger

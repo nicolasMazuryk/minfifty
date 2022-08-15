@@ -1,0 +1,31 @@
+@import 'core';
+
+.container {
+  width: 100%;
+  padding: 30px 70px;
+  background: $alabaster;
+
+  @media only screen and (max-width: 1280px) {
+    padding: 20px 30px;
+  }
+}
+
+.title {
+  @include myriad-pro-regular;
+  padding-left: 30px;
+  font-size: 36px;
+}
+
+.card {
+  padding: 20px;
+  margin-bottom: 15px;
+  border-radius: 30px;
+  min-height: 220px;
+  box-shadow: rgba(0, 0, 0, 0.12) 0px 10px 15px,
+    rgba(0, 0, 0, 0.12) 0px 5px 15px;
+  font-size: 18px;
+
+  dt {
+    color: #8e8e8e;
+  }
+}

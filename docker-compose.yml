@@ -1,0 +1,25 @@
+version: '3.9'
+
+services:
+  #  api:
+  #    build: .
+  #    ports:
+  #      - 9000:9000
+  #    volumes:
+  #      - ./server/src:/usr/app/src
+  #      - ./server/.env:/usr/app/.env
+  #    command: npm start
+  #    depends_on:
+  #      - postgres
+  #    environment:
+  #      - SQL_HOST=postgres
+
+  postgres:
+    image: postgres:14.2
+    restart: unless-stopped
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_PASSWORD: ab1f6hh942sm
+      POSTGRES_USER: boilerplate
+      POSTGRES_DB: boilerplate

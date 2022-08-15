@@ -1,0 +1,42 @@
+@import 'core';
+
+.header {
+  display: flex;
+  justify-content: right;
+  padding: 0 10px;
+  background: $elephant;
+
+  &.home {
+    background-color: transparent;
+    z-index: 4;
+
+    .menu {
+      border-bottom: none;
+    }
+  }
+}
+
+.menu {
+  line-height: 64px;
+  background: $elephant;
+
+  &Button {
+    @include button();
+
+    &:focus {
+      outline: 1px solid $cerulean;
+    }
+  }
+
+  &Item {
+    a {
+      margin-left: 16px;
+      color: $white;
+    }
+
+    button {
+      width: max-content;
+      margin-left: 16px;
+    }
+  }
+}
