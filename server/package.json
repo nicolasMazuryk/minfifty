@@ -1,5 +1,5 @@
 {
-  "name": "@generator-minfifty/server-ts-express",
+  "name": "server-workspace",
   "version": "0.0.1",
   "description": "",
   "main": "index.js",
@@ -9,6 +9,7 @@
   "scripts": {
     "start": "tsc-watch -p tsconfig.json --onSuccess 'node --inspect ./build/index.js'",
     "start:prod": "npm run build && node -r source-map-support/register ./build/index.js",
+    "seed-data": "npx ts-node src/strategy/seed-datebase.ts",
     "test": "jest",
     "build": "tsc -b",
     "prettify": "prettier --write .",
@@ -16,6 +17,7 @@
   },
   "license": "ISC",
   "devDependencies": {
+    "@types/axios": "^0.14.0",
     "@types/body-parser": "^1.19.2",
     "@types/bunyan": "^1.8.8",
     "@types/cors": "^2.8.12",
@@ -30,6 +32,8 @@
     "@types/node": "^18.6.3",
     "@types/nodemailer": "^6.4.4",
     "@types/nodemailer-stub-transport": "^1.1.5",
+    "@types/pg": "^8.6.5",
+    "@types/sequelize": "^4.28.14",
     "@types/supertest": "^2.0.12",
     "@typescript-eslint/eslint-plugin": "^5.0.0",
     "@typescript-eslint/parser": "^5.0.0",
@@ -48,11 +52,10 @@
     "ts-node": "^10.7.0",
     "tsc-watch": "^5.0.3",
     "tsconfig-paths": "^4.0.0",
-    "typescript": "^4.7.4",
-    "@types/sequelize": "^4.28.14",
-    "@types/pg": "^8.6.5"
+    "typescript": "^4.7.4"
   },
   "dependencies": {
+    "axios": "^0.27.2",
     "body-parser": "^1.20.0",
     "bunyan": "^1.8.15",
     "connect-multiparty": "^2.2.0",
@@ -62,6 +65,7 @@
     "dotenv-safe": "^8.2.0",
     "express": "^4.18.1",
     "express-session": "^1.17.3",
+    "extract-zip": "^2.0.1",
     "json-pointer": "^0.6.2",
     "jsonpath": "^1.1.1",
     "livr": "^2.3.3",
@@ -73,11 +77,11 @@
     "nodemailer-sendmail-transport": "^1.0.2",
     "nodemailer-smtp-transport": "^2.7.4",
     "nodemailer-stub-transport": "^1.1.0",
-    "rename-keys": "^2.0.1",
-    "source-map-support": "^0.5.21",
     "pg": "^8.7.3",
+    "rename-keys": "^2.0.1",
     "sequelize": "^6.21.3",
-    "sequelize-cli": "^6.4.1"
+    "sequelize-cli": "^6.4.1",
+    "source-map-support": "^0.5.21"
   },
   "nodemonConfig": {
     "ignore": [

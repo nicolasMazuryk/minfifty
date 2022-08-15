@@ -16,6 +16,11 @@ node_modules/
 client/node_modules/
 server/node_modules/
 
+package-lock.json
+client/package-lock.json
+server/package-lock.json
+
+
 # Optional npm cache directory
 .npm
 
@@ -39,3 +44,5 @@ server/node_modules/
 ### Project Specific template
 client/build/
 server/build/
+
+server/src/strategy/market-data/

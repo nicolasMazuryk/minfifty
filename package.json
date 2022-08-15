@@ -11,8 +11,8 @@
   ],
   "private": true,
   "dependencies": {
-    "@generator-minfifty/server-ts-express": "0.0.1",
-    "@generator-minfifty/client-ts-react": "0.0.1"
+    "server-workspace": "0.0.1",
+    "client-workspace": "0.0.1"
   },
   "scripts": {
     "prettify": "prettier --write .",
