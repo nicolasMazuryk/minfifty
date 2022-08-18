@@ -29,12 +29,12 @@ const template = `import { QueryInterface } from 'sequelize';
 export const up = (queryInterface: QueryInterface): Promise<void> =>
   queryInterface.sequelize.transaction(async (transaction) => {
     // here go all migration changes
-  });
+  })
 
 export const down = (queryInterface: QueryInterface): Promise<void> =>
   queryInterface.sequelize.transaction(async (transaction) => {
     // here go all migration undo changes
-  });
+  })
 `
 
 fs.writeFileSync(path, template)

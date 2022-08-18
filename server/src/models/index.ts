@@ -1,3 +1,3 @@
 import db from '@/db'
 
-export const { Action, User, Company } = db.models
+export const { Action, User, Company, MarketData } = db.models

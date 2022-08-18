@@ -1,4 +1,6 @@
 import pointer from 'json-pointer'
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
 import rename from 'rename-keys'
 
 export interface IException {

@@ -4,6 +4,7 @@ import config from '@/config'
 import { Action } from '@/models/Actions'
 import { Company } from '@/models/Company'
 import * as list from '@/models/list'
+import { MarketData } from '@/models/MarketData'
 import { User } from '@/models/User'
 
 const sequelize = new Sequelize.Sequelize({
@@ -14,6 +15,7 @@ const sequelize = new Sequelize.Sequelize({
 Company.initialize(sequelize)
 User.initialize(sequelize)
 Action.initialize(sequelize)
+MarketData.initialize(sequelize)
 
 const { models } = sequelize
 
