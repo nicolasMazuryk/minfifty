@@ -1,5 +1,6 @@
 const ROUTES = {
-  HOME: '/',
+  CHART: '/',
+  HOME: '/home',
   ADMIN: '/admin',
   ADMIN_USERS: '/admin/users',
   LOGIN: '/login',

@@ -14,7 +14,12 @@ module.exports = {
     'plugin:import/typescript',
     'plugin:jest/recommended',
   ],
-  ignorePatterns: ['.jest.config.js', 'build/**/*.js', 'config-overrides.js'],
+  ignorePatterns: [
+    '.jest.config.js',
+    'build/**/*.js',
+    'config-overrides.js',
+    'charting_library/**/*.{js,ts}',
+  ],
   overrides: [
     {
       files: ['.eslintrc.js'],

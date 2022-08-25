@@ -29,9 +29,11 @@ const MARKET = {
 }
 
 // error logging function
-function logger(message: any) {
+const logger = {
   // eslint-disable-next-line no-console
-  console.error(message)
+  info: (message: string) => console.log(message),
+  // eslint-disable-next-line no-console
+  error: (message: any) => console.error(message),
 }
 
 const getBinanceDataProviderUrl = (market: string, ticker: string, year: number, month: string) =>
@@ -39,14 +41,14 @@ const getBinanceDataProviderUrl = (market: string, ticker: string, year: number,
 
 // axios asynchronously download binary file and write to filesystem by path
 async function download(url: string, dest: string) {
-  logger(`Downloading ${url} to ${dest}`)
+  logger.info(`Downloading ${url} to ${dest}`)
   const response = await axios.get(url, { responseType: 'arraybuffer' })
   return writeFileAsync(dest, response.data)
 }
 
 // function unzip downloaded binary file and remove it from filesystem
 async function unzipBinanceDataBinaryFile(dest: string) {
-  logger(`Unzipping ${dest}`)
+  logger.info(`Unzipping ${dest}`)
   await unzip(dest, { dir: destFolder })
   await fs.promises.unlink(dest)
 }
@@ -58,7 +60,7 @@ const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
 // parse csv file and save marketData to database using sequelize bulkCreate method
 async function seedDatabaseFromCsv(dest: string, market: string, ticker: string) {
-  logger(`Parsing ${dest}`)
+  logger.info(`Parsing ${dest}`)
   const csvFileStream = fs.createReadStream(dest)
   const parser = parse({ delimiter: ',' })
   const marketData: any = []
@@ -98,14 +100,14 @@ async function seedDatabaseFromCsv(dest: string, market: string, ticker: string)
     })
     .on('end', async () => {
       try {
-        logger(`MarketData length ${marketData.length}`)
+        logger.info(`MarketData length ${marketData.length}`)
         await MarketData.bulkCreate(marketData)
       } catch (error) {
-        logger(error)
+        logger.error(error)
       }
     })
     .on('error', (error: any) => {
-      logger(error)
+      logger.error(error)
     })
 }
 
@@ -143,7 +145,7 @@ async function downloadBinanceData(
           await seedDatabaseFromCsv(csvDest, market, ticker)
           await wait(1000)
         } catch (error) {
-          logger(error)
+          logger.error(error)
         }
       }
     }
@@ -152,4 +154,4 @@ async function downloadBinanceData(
 
 ;(async () => {
   await downloadBinanceData(MARKET.FUTURES, TICKER.ETH, START_DATE, END_DATE)
-})().catch(logger)
+})().catch(logger.error)
