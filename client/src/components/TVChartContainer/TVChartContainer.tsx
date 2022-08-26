@@ -10,6 +10,11 @@ import {
 
 import styles from './TVChartContainer.module.scss'
 
+// const DATAFEED_URL = 'https://demo_feed.tradingview.com'
+const DATAFEED_URL = 'http://localhost:3000/api/v1/chart'
+
+const DATAFEED_UPDATE_FREQUENCY = 5000
+
 export interface ChartContainerProps {
   symbol: ChartingLibraryWidgetOptions['symbol']
   interval: ChartingLibraryWidgetOptions['interval']
@@ -43,9 +48,9 @@ export default class TVChartContainer extends React.PureComponent<
   ChartContainerState
 > {
   public static defaultProps: Omit<ChartContainerProps, 'container'> = {
-    symbol: 'AAPL',
-    interval: 'D' as ResolutionString,
-    datafeedUrl: 'https://demo_feed.tradingview.com',
+    symbol: 'ETHUSDT',
+    interval: '1' as ResolutionString,
+    datafeedUrl: DATAFEED_URL,
     libraryPath: '/charting_library/',
     chartsStorageUrl: 'https://saveload.tradingview.com',
     chartsStorageApiVersion: '1.1',
@@ -70,6 +75,7 @@ export default class TVChartContainer extends React.PureComponent<
       // tslint:disable-next-line:no-any
       datafeed: new (window as any).Datafeeds.UDFCompatibleDatafeed(
         this.props.datafeedUrl,
+        DATAFEED_UPDATE_FREQUENCY,
       ),
       interval: this.props.interval as ChartingLibraryWidgetOptions['interval'],
       container: this.ref.current,

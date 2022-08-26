@@ -15,8 +15,13 @@ const writeFileAsync = fs.promises.writeFile
 
 const destFolder = path.join(__dirname, './market-data')
 
+// const START_DATE = '2020-01'
+// const END_DATE = '2022-08'
+
 const START_DATE = '2020-01'
 const END_DATE = '2022-08'
+
+const IGNORE_DOWNLOAD_MARKET_DATA = true
 
 const TICKER = {
   BTC: 'BTCUSDT',
@@ -86,12 +91,14 @@ async function seedDatabaseFromCsv(dest: string, market: string, ticker: string)
         market,
         ticker,
         time: new Date(parseInt(time)),
+        timestamp: parseInt(time),
         open: parseFloat(open),
         high: parseFloat(high),
         low: parseFloat(low),
         close: parseFloat(close),
         volume: parseFloat(volume),
         timeClose: new Date(parseInt(timeClose)),
+        timestampClose: parseInt(timeClose),
         quoteAssetVolume: parseFloat(quoteAssetVolume),
         trades: parseInt(trades),
         takerBuyBaseAssetVolume: parseFloat(takerBuyBaseAssetVolume),
@@ -138,15 +145,20 @@ async function downloadBinanceData(
       const csvFileName = `${ticker}-1m-${year}-${addLeadingZero(month)}.csv`
       const csvDest = path.join(destFolder, csvFileName)
 
-      if (!fs.existsSync(csvDest)) {
-        try {
+      try {
+        if (!fs.existsSync(csvDest)) {
           await download(url, zipDest)
           await unzipBinanceDataBinaryFile(zipDest)
           await seedDatabaseFromCsv(csvDest, market, ticker)
-          await wait(1000)
-        } catch (error) {
-          logger.error(error)
         }
+
+        if (IGNORE_DOWNLOAD_MARKET_DATA) {
+          await seedDatabaseFromCsv(csvDest, market, ticker)
+        }
+
+        await wait(6000)
+      } catch (error) {
+        logger.error(error)
       }
     }
   }

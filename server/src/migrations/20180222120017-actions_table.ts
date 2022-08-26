@@ -1,26 +1,28 @@
-import { BIGINT, DATE, ENUM, QueryInterface, STRING, JSON } from 'sequelize'
+import Sequelize, { QueryInterface } from 'sequelize'
+
+const { DataTypes } = Sequelize
 
 export const up = (queryInterface: QueryInterface): Promise<void> =>
-  queryInterface.sequelize.transaction(async (transaction) =>
-    queryInterface.createTable(
-      'actions',
-      {
-        id: { type: BIGINT, primaryKey: true, autoIncrement: true },
-        hash: { type: STRING, allowNull: false, unique: true },
-        type: {
-          type: ENUM,
-          values: ['resetPassword', 'confirmEmail'],
+  queryInterface.sequelize.transaction(
+    async (transaction) =>
+      await queryInterface.createTable(
+        'actions',
+        {
+          id: { type: DataTypes.UUID, primaryKey: true, defaultValue: DataTypes.UUIDV4 },
+          hash: { type: DataTypes.STRING, allowNull: false, unique: true },
+          type: {
+            type: DataTypes.STRING,
+          },
+          data: { type: DataTypes.JSON },
+          createdAt: { type: DataTypes.DATE },
+          updatedAt: { type: DataTypes.DATE },
+          deletedAt: { type: DataTypes.DATE },
         },
-        data: { type: JSON },
-        createdAt: { type: DATE },
-        updatedAt: { type: DATE },
-        deletedAt: { type: DATE },
-      },
-      { transaction },
-    ),
+        { transaction },
+      ),
   )
 
 export const down = (queryInterface: QueryInterface): Promise<void> =>
-  queryInterface.sequelize.transaction(async (transaction) =>
-    queryInterface.dropTable('actions', { transaction }),
+  queryInterface.sequelize.transaction(
+    async (transaction) => await queryInterface.dropTable('actions', { transaction }),
   )

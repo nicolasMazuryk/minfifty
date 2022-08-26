@@ -110,8 +110,6 @@ export async function renderPromiseAsJson(
   try {
     const data = await promise
 
-    data.status = 1
-
     return res.send(data)
   } catch (error: Error | Exception | unknown) {
     if (error instanceof Exception) {

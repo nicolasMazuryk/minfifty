@@ -1,26 +1,29 @@
-import { DATE, QueryInterface, STRING, UUID, UUIDV4 } from 'sequelize'
+import Sequelize, { QueryInterface } from 'sequelize'
+
+const { DataTypes } = Sequelize
 
 export const up = (queryInterface: QueryInterface): Promise<void> =>
-  queryInterface.sequelize.transaction(async (transaction) =>
-    queryInterface.createTable(
-      'companies',
-      {
-        id: {
-          type: UUID,
-          defaultValue: UUIDV4,
-          primaryKey: true,
+  queryInterface.sequelize.transaction(
+    async (transaction) =>
+      await queryInterface.createTable(
+        'companies',
+        {
+          id: {
+            type: DataTypes.UUID,
+            defaultValue: DataTypes.UUIDV4,
+            primaryKey: true,
+          },
+          username: { type: DataTypes.STRING },
+          location: { type: DataTypes.STRING },
+          createdAt: { type: DataTypes.DATE },
+          updatedAt: { type: DataTypes.DATE },
+          deletedAt: { type: DataTypes.DATE },
         },
-        username: { type: STRING },
-        location: { type: STRING },
-        createdAt: { type: DATE },
-        updatedAt: { type: DATE },
-        deletedAt: { type: DATE },
-      },
-      { transaction },
-    ),
+        { transaction },
+      ),
   )
 
 export const down = (queryInterface: QueryInterface): Promise<void> =>
-  queryInterface.sequelize.transaction(async (transaction) =>
-    queryInterface.dropTable('companies', { transaction }),
+  queryInterface.sequelize.transaction(
+    async (transaction) => await queryInterface.dropTable('companies', { transaction }),
   )

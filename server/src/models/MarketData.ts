@@ -17,12 +17,17 @@ export class MarketData extends Base<
           primaryKey: true,
           type: 'TIMESTAMP',
         },
+        timestamp: {
+          primaryKey: true,
+          type: 'BIGINT',
+        },
         open: { type: DataTypes.FLOAT },
         high: { type: DataTypes.FLOAT },
         low: { type: DataTypes.FLOAT },
         close: { type: DataTypes.FLOAT },
         volume: { type: DataTypes.FLOAT },
         timeClose: { type: 'TIMESTAMP' },
+        timestampClose: { type: 'BIGINT' },
         quoteAssetVolume: { type: DataTypes.FLOAT },
         trades: { type: DataTypes.INTEGER },
         takerBuyBaseAssetVolume: { type: DataTypes.FLOAT },
@@ -38,13 +43,15 @@ export class MarketData extends Base<
 
   declare market: string
   declare ticker: string
-  declare time: number
+  declare time: string
+  declare timestamp: number
   declare open: string
   declare high: string
   declare low: string
   declare close: string
   declare volume: string
   declare timeClose: string
+  declare timestampClose: number
   declare quoteAssetVolume: string
   declare trades: string
   declare takerBuyBaseAssetVolume: string

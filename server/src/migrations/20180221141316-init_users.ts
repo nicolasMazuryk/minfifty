@@ -1,44 +1,44 @@
-import { DATE, ENUM, QueryInterface, STRING, UUID, UUIDV4 } from 'sequelize'
+import Sequelize, { QueryInterface } from 'sequelize'
+
+const { DataTypes } = Sequelize
 
 export const up = (queryInterface: QueryInterface): Promise<void> =>
-  queryInterface.sequelize.transaction(async (transaction) =>
-    queryInterface.createTable(
-      'users',
-      {
-        id: {
-          type: UUID,
-          defaultValue: UUIDV4,
-          primaryKey: true,
+  queryInterface.sequelize.transaction(
+    async (transaction) =>
+      await queryInterface.createTable(
+        'users',
+        {
+          id: {
+            type: DataTypes.UUID,
+            defaultValue: DataTypes.UUIDV4,
+            primaryKey: true,
+          },
+          email: { type: DataTypes.STRING, unique: true },
+          username: { type: DataTypes.STRING },
+          password: { type: DataTypes.STRING },
+          status: {
+            type: DataTypes.STRING,
+            defaultValue: 'NEW',
+          },
+          role: {
+            type: DataTypes.STRING,
+            defaultValue: 'USER',
+          },
+          visibility: {
+            type: DataTypes.STRING,
+            defaultValue: 'PRIVATE',
+          },
+          avatar: { type: DataTypes.STRING },
+          location: { type: DataTypes.STRING },
+          createdAt: { type: DataTypes.DATE },
+          updatedAt: { type: DataTypes.DATE },
+          deletedAt: { type: DataTypes.DATE },
         },
-        email: { type: STRING, unique: true },
-        username: { type: STRING },
-        password: { type: STRING },
-        status: {
-          type: ENUM,
-          values: ['NEW', 'ACTIVE', 'BLOCKED'],
-          defaultValue: 'NEW',
-        },
-        role: {
-          type: ENUM,
-          values: ['USER', 'ADMIN'],
-          defaultValue: 'USER',
-        },
-        visibility: {
-          type: ENUM,
-          values: ['PUBLIC', 'PRIVATE'],
-          defaultValue: 'PRIVATE',
-        },
-        avatar: { type: STRING },
-        location: { type: STRING },
-        createdAt: { type: DATE },
-        updatedAt: { type: DATE },
-        deletedAt: { type: DATE },
-      },
-      { transaction },
-    ),
+        { transaction },
+      ),
   )
 
 export const down = (queryInterface: QueryInterface): Promise<void> =>
-  queryInterface.sequelize.transaction(async (transaction) =>
-    queryInterface.dropTable('users', { transaction }),
+  queryInterface.sequelize.transaction(
+    async (transaction) => await queryInterface.dropTable('users', { transaction }),
   )

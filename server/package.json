@@ -10,11 +10,14 @@
     "start": "tsc-watch -p tsconfig.json --onSuccess 'node --inspect ./build/index.js'",
     "start:prod": "npm run build && node -r source-map-support/register ./build/index.js",
     "sync-market-data": "npx ts-node --project tsconfig.json src/strategy/sync-market-data.ts",
-    "migration:generate": "node scripts/migration_generate.js",
     "test": "jest",
-    "build": "tsc -b",
+    "build": "rm -rf build && tsc -b",
     "prettify": "prettier --write .",
-    "lint": "eslint  --fix \"{src,tests}/**/*.{ts,js}\""
+    "lint": "eslint  --fix \"{src,tests}/**/*.{ts,js}\"",
+    "migration:generate": "node scripts/migration_generate.js add_symbols_table",
+    "migration:do": "npm run build && npx sequelize-cli db:migrate",
+    "migration:undo": "npm run build && npx sequelize-cli db:migrate:undo",
+    "migration:undo-all-to": "npm run build && npx sequelize-cli db:migrate:undo:all --to XXXXXX.js"
   },
   "license": "ISC",
   "devDependencies": {

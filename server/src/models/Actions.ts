@@ -15,9 +15,9 @@ export class Action extends Base<InferAttributes<Action>, InferCreationAttribute
     super.init<typeof Base, Action>(
       {
         id: {
-          type: DataTypes.BIGINT,
+          type: DataTypes.UUID,
           primaryKey: true,
-          autoIncrement: true,
+          defaultValue: DataTypes.UUIDV4,
         },
         hash: {
           type: DataTypes.STRING,
@@ -25,8 +25,7 @@ export class Action extends Base<InferAttributes<Action>, InferCreationAttribute
           unique: true,
         },
         type: {
-          type: DataTypes.ENUM,
-          values: Object.values(TYPE_ACTION),
+          type: DataTypes.STRING,
         },
         data: { type: DataTypes.JSON },
         createdAt: { type: DataTypes.DATE },
