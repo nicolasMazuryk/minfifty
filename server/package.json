@@ -10,6 +10,7 @@
     "start": "tsc-watch -p tsconfig.json --onSuccess 'node --inspect ./build/index.js'",
     "start:prod": "npm run build && node -r source-map-support/register ./build/index.js",
     "sync-market-data": "npx ts-node --project tsconfig.json src/strategy/sync-market-data.ts",
+    "backtest": "npx ts-node --project tsconfig.json src/strategy/backtest.ts",
     "test": "jest",
     "build": "rm -rf build && tsc -b",
     "prettify": "prettier --write .",
