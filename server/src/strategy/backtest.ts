@@ -18,9 +18,9 @@ const TICKER = {
 
 // Strategy Settings
 
-// const INITIAL_CAPITAL = 1000
-// const ORDER_QUANTITY = 0.05
-// const COMMISSION = 0.04 / 100
+const INITIAL_CAPITAL = 1000
+const ORDER_QUANTITY = 0.05
+const TRADING_FEE = 0.04 / 100
 //
 const BASE_RETRACEMENT_CONFIRMATION = 0.5 / 100
 const BASE_PRECEDING_BARS = 10
@@ -28,7 +28,7 @@ const BASE_PRECEDING_BARS = 10
 const NUMBER_OF_LEVELS = 10
 const EMERGENCY_LEVEL_NUMBER = 10
 const EMERGENCY_TAKE_PROFIT_RETRACEMENT = 0 / 100
-// const TAKE_PROFIT_BELOW_BASE = 0.0 / 100
+const TAKE_PROFIT_BELOW_BASE = 0.0 / 100
 //
 const LEVEL_STEP = 0.5 / 100
 const LEVEL_STEP_MULTIPLIER = 1
@@ -66,8 +66,7 @@ interface IBase {
   emergencyTakeProfit: number
   emergencyPriceLow: number
   levels: number[]
-  entryOrders: string[]
-  exitOrders: string[]
+  orders: string[]
 }
 
 interface IBar {
@@ -80,6 +79,139 @@ interface IBar {
 }
 
 const BASES: IBase[] = []
+
+interface IOrder {
+  id: string
+  symbol: string
+  timeOpen: number
+  timeClosed: number
+  type: string
+  side: string
+  price: number
+  quantity: number
+  amount: number
+  status: string
+  takeProfit: number
+  fee: number
+  PNL: number
+}
+
+const ORDER_SIDE = {
+  BUY: 'BUY',
+  SELL: 'SELL',
+}
+
+const ORDER_TYPE = {
+  MARKET: 'MARKET',
+  LIMIT: 'LIMIT',
+}
+
+const ORDER_STATUS = {
+  OPEN: 'OPEN',
+  FILLED: 'FILLED',
+  COMPLETED: 'COMPLETED',
+  CANCELED: 'CANCELED',
+}
+
+class Strategy {
+  public capital: number = INITIAL_CAPITAL
+  public symbol: string = TICKER.ETH
+  public orders: IOrder[] = []
+
+  // constructor(capital: number) {
+  //   this.capital = capital
+  // }
+
+  // entry method that adds new order to the orders list
+  public entry(id: string, price: number): IOrder {
+    const order = {
+      id: id,
+      symbol: this.symbol,
+      timeOpen: 0,
+      timeClosed: 0,
+      type: ORDER_TYPE.LIMIT,
+      side: ORDER_SIDE.BUY,
+      price: price,
+      quantity: ORDER_QUANTITY,
+      amount: ORDER_QUANTITY * price,
+      status: ORDER_STATUS.OPEN,
+      takeProfit: 0,
+      fee: 0,
+      PNL: 0,
+    }
+
+    this.orders.push(order)
+
+    return order
+  }
+
+  public executeEntry(closePrice: number): void {
+    this.orders.forEach((order) => {
+      if (order.status === ORDER_STATUS.OPEN && closePrice <= order.price) {
+        order.timeOpen = Date.now()
+        order.status = ORDER_STATUS.FILLED
+        order.fee = order.amount * TRADING_FEE
+      }
+    })
+  }
+
+  // exit method that removes order from the orders list
+  public exit(fromId: string, takeProfit: number): IOrder | undefined {
+    const order = this.orders.find((order) => order.id === fromId)
+    if (!order) {
+      logger.error(`Cannot EXIT from order ${fromId} . Order not found`)
+      return
+    }
+    order.takeProfit = takeProfit
+
+    return order
+  }
+
+  public executeExit(closePrice: number): void {
+    this.orders.forEach((order) => {
+      if (order.status === ORDER_STATUS.FILLED && closePrice >= order.takeProfit) {
+        order.timeClosed = Date.now()
+        order.status = ORDER_STATUS.COMPLETED
+        order.fee = order.fee + order.quantity * order.takeProfit * TRADING_FEE
+        order.PNL = (order.takeProfit - order.price) * order.quantity - order.fee
+      }
+    })
+  }
+
+  public cancel(id: string, closePrice?: number): IOrder | undefined {
+    const order = this.orders.find((order) => order.id === id)
+    if (!order) {
+      logger.error(`Cannot CANCEL order ${id} . Order not found`)
+      return
+    }
+
+    if (ORDER_STATUS.FILLED && closePrice) {
+      order.fee = order.fee + order.quantity * closePrice * TRADING_FEE
+      order.PNL = (closePrice - order.price) * order.quantity - order.fee
+    }
+
+    order.timeClosed = Date.now()
+    order.status = ORDER_STATUS.CANCELED
+
+    return order
+  }
+
+  // calculate PNL method that calculates PNL for each order in the orders list
+  public calculatePNL(closePrice: number): void {
+    this.orders
+      .filter((order) => order.status === ORDER_STATUS.FILLED)
+      .forEach((order) => {
+        order.PNL = (closePrice - order.price) * order.quantity - order.fee
+      })
+  }
+
+  // calculate capital method that calculates capital for each order in the orders list
+  public calculateCapital(): void {
+    this.capital = this.orders.reduce((acc, order) => acc + order.PNL, 0)
+  }
+}
+
+const strategy = new Strategy()
 
 // find in bars array the first bar where high divided on low is more or equal than BASE_RETRACEMENT_CONFIRMATION
 function findConfirmedBaseBarIndex(bars: IBar[], barIndex: number): number | null {
@@ -117,8 +249,7 @@ const getNewBase = (bars: IBar[], confirmedBaseBarIndex: number | null) => {
       emergencyTakeProfit: 999999,
       emergencyPriceLow: 999999,
       levels: [],
-      entryOrders: [],
-      exitOrders: [],
+      orders: [],
     }
 
     return newBase
@@ -130,32 +261,26 @@ const placeLadderOfEntryAndExitLimitOrders = (base: IBase) => {
     const level = base.price * (1.0 - LEVEL_STEP * Math.pow(i, LEVEL_STEP_MULTIPLIER))
     base.levels.push(level)
 
-    const entryOrderId = `Entry ${base.barIndex} #${i}`
-    const exitOrderId = `Exit ${base.barIndex} #${i}`
-    // TODO: implement strategy.entry/order/exit order management backtesting solution
-    // strategy.entry(entryOrderID, strategy.long, limit=limitOrderPriceLevel, comment=entryOrderID)
-    // strategy.exit(exitOrderID, from_entry=entryOrderID, limit=confirmedBasePriceLow * (1 - tp_below_base), comment=exitOrderID)
+    const orderId = `${base.barIndex} #${i}`
 
-    base.entryOrders.push(entryOrderId)
-    base.exitOrders.push(exitOrderId)
+    strategy.entry(orderId, level)
+    strategy.exit(orderId, base.price * (1 - TAKE_PROFIT_BELOW_BASE))
+
+    base.orders.push(orderId)
   }
 }
 
-const cancelOpenLimitOrders = (base: IBase, closeEntryOrdersWithOpenPosition = false) => {
+const cancelOpenLimitOrders = (base: IBase, closePrice?: number) => {
   for (let i = 0; i < NUMBER_OF_LEVELS; i++) {
-    const entryOrderId = base.entryOrders[i]
-    const exitOrderId = base.exitOrders[i]
+    const entryOrderId = base.orders[i]
 
-    if (closeEntryOrdersWithOpenPosition) {
-      // TODO: implement strategy.entry/order/exit order management backtesting solution
-      // strategy.close(entryOrderID, comment=entryOrderID)
+    if (closePrice) {
+      strategy.cancel(entryOrderId, closePrice)
     }
 
-    // TODO: implement strategy.cancel order management backtesting solution
-    // strategy.cancel(exitOrderID)
-    // strategy.cancel(entryOrderID)
+    strategy.cancel(entryOrderId)
 
-    logger.info(entryOrderId, exitOrderId)
+    logger.info(entryOrderId)
   }
 }
 
@@ -203,6 +328,9 @@ async function getBacktestBars(
 
     logger.info(`ConfirmedBaseBarIndex`, confirmedBaseBarIndex)
 
+    strategy.executeEntry(bar.close)
+    strategy.executeExit(bar.close)
+
     // Manage existing Broken Bases and the last Confirmed Base
     let baseIndex = 0
 
@@ -226,13 +354,7 @@ async function getBacktestBars(
         base.emergencyTakeProfit =
           bar.low + (base.price - bar.low) * EMERGENCY_TAKE_PROFIT_RETRACEMENT
 
-        // for i = 1 to number_of_levels
-        //                 string entryOrderID = "Entry " + str.tostring(baseBarIndex) + " #" + str.tostring(i)
-        //                 string exitOrderID = "Exit " + str.tostring(baseBarIndex) + " #" + str.tostring(i)
-        //
-        //                 strategy.exit(exitOrderID, from_entry=entryOrderID, limit=emergencyTakeProfitPriceLevel, comment=exitOrderID)
-
-        // TODO: implement strategy.exit order management backtesting solution
+        base.orders.forEach((orderId) => strategy.exit(orderId, base.emergencyTakeProfit))
       }
 
       // Set Respected Base
@@ -249,12 +371,19 @@ async function getBacktestBars(
         barIndex - base.barIndex >= BASE_BARS_LENGTH_LIMIT
 
       if (
-        (base.isBroken && (highPrice >= base.emergencyTakeProfit || highPrice >= base.price)) ||
+        (base.isBroken &&
+          (highPrice >= base.emergencyTakeProfit ||
+            highPrice >= base.price * (1 - TAKE_PROFIT_BELOW_BASE))) ||
         isBarsLimitExceeded
       ) {
         base.isRespected = true
         // Close Open Limit Orders
-        cancelOpenLimitOrders(base, true)
+        const closePrice =
+          highPrice >= base.emergencyTakeProfit
+            ? base.emergencyTakeProfit
+            : base.price * (1 - TAKE_PROFIT_BELOW_BASE)
+
+        cancelOpenLimitOrders(base, closePrice)
         // Remove Respected Base
         BASES.splice(baseIndex, 1)
       } else {
