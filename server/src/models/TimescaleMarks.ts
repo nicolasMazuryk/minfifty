@@ -25,7 +25,7 @@ export class TimescaleMarks extends Base<
         },
         timestamp: {
           primaryKey: true,
-          type: 'BIGINT',
+          type: DataTypes.BIGINT,
         },
         color: {
           type: DataTypes.STRING,

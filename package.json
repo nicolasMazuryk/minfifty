@@ -16,8 +16,8 @@
   },
   "scripts": {
     "prettify": "prettier --write .",
-    "server": "cd server && npm run",
-    "client": "cd client && npm run",
+    "client": "cd client && npm start",
+    "server": "cd server && npm start",
     "prepare": "husky install"
   }
 }

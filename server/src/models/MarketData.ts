@@ -19,7 +19,7 @@ export class MarketData extends Base<
         },
         timestamp: {
           primaryKey: true,
-          type: 'BIGINT',
+          type: DataTypes.BIGINT,
         },
         open: { type: DataTypes.FLOAT },
         high: { type: DataTypes.FLOAT },
@@ -27,7 +27,7 @@ export class MarketData extends Base<
         close: { type: DataTypes.FLOAT },
         volume: { type: DataTypes.FLOAT },
         timeClose: { type: 'TIMESTAMP' },
-        timestampClose: { type: 'BIGINT' },
+        timestampClose: { type: DataTypes.BIGINT },
         quoteAssetVolume: { type: DataTypes.FLOAT },
         trades: { type: DataTypes.INTEGER },
         takerBuyBaseAssetVolume: { type: DataTypes.FLOAT },

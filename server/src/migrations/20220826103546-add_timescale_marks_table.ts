@@ -21,7 +21,7 @@ export const up = (queryInterface: QueryInterface): Promise<void> =>
         },
         timestamp: {
           primaryKey: true,
-          type: 'BIGINT',
+          type: DataTypes.BIGINT,
         },
         color: {
           type: DataTypes.STRING,

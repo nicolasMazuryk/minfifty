@@ -22,7 +22,7 @@ export class Marks extends Base<InferAttributes<Marks>, InferCreationAttributes<
         },
         timestamp: {
           primaryKey: true,
-          type: 'BIGINT',
+          type: DataTypes.BIGINT,
         },
         color: {
           type: DataTypes.STRING,
