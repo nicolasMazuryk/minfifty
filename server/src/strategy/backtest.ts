@@ -37,8 +37,8 @@ const TAKE_PROFIT_BELOW_BASE = 0.0 / 100
 const LEVEL_STEP = 0.5 / 100
 const LEVEL_STEP_MULTIPLIER = 1
 const BASE_BARS_LENGTH_LIMIT = 0
-// const LEVERAGE_X = 2
-// const MAINTANACE_MARGIN = 20 / 100
+const LEVERAGE_X = 2
+const MAINTANACE_MARGIN = 20 / 100
 //
 // const SHOW_POSITION_BREAKEVEN_PRICE = true
 // const SHOW_LIQUIDATION_PRICE = false
@@ -63,6 +63,13 @@ const logger = {
 
 const round = (value: number) => Number(value.toFixed(TICKER_PRECISION[TICKER.ETH]))
 
+const median = (arr: any[]) => {
+  const mid = Math.floor(arr.length / 2),
+    nums = [...arr].sort((a, b) => a - b)
+  // eslint-disable-next-line no-negated-condition
+  return arr.length % 2 !== 0 ? nums[mid] : (nums[mid - 1] + nums[mid]) / 2
+}
+
 interface IBase {
   barIndex: number
   price: number
@@ -73,6 +80,10 @@ interface IBase {
   emergencyPriceLow: number
   levels: number[]
   orders: string[]
+  stats: {
+    percentDrop: number
+    barsLength: number
+  }
 }
 
 interface IBar {
@@ -121,13 +132,177 @@ const ORDER_STATUS = {
 }
 
 class Strategy {
-  public capital: number = INITIAL_CAPITAL
+  public initialCapital: number = INITIAL_CAPITAL
   public symbol: string = TICKER.ETH
   public orders: IOrder[] = []
+  public allBases: IBase[] = []
+  public emergencyClosedBases: IBase[] = []
 
-  // constructor(capital: number) {
-  //   this.capital = capital
-  // }
+  public get positionAvgPrice() {
+    if (!this.openTrades.length) return 0
+
+    return this.openTrades.reduce((acc, order) => acc + order.price, 0) / this.openTrades.length
+  }
+
+  public get positionSize() {
+    return this.orders.reduce((acc, order) => acc + order.quantity, 0)
+  }
+
+  public get equity() {
+    return this.initialCapital + this.netProfit
+  }
+
+  public get netProfit() {
+    return this.orders.reduce((acc, order) => acc + order.PNL, 0)
+  }
+
+  public get openProfit() {
+    return this.openTrades.reduce((acc, order) => acc + order.PNL, 0)
+  }
+
+  public get totalProfit() {
+    return this.netProfit + this.openProfit
+  }
+
+  public get openTrades() {
+    return this.orders.filter((order) => order.status === ORDER_STATUS.FILLED)
+  }
+
+  public statistics = {
+    maxPositionSize: 0,
+    maxOpenTrades: 0,
+    maxLiquidationPriceLevel: 0,
+    maxDistanceToLiquidationPriceLevelPercent: 100,
+    maxSimultaneousBrokenBases: 0,
+    maxUnavailableMarginBalance: INITIAL_CAPITAL * LEVERAGE_X,
+    maxDrawdownPricePercent: 0,
+    maxDrawdownEquityPercent: 0,
+  }
+
+  public getStatistics(bar: IBar) {
+    const availableAccountBalance = round(this.equity - this.positionSize * this.positionAvgPrice)
+    const availableMarginBalance = round(
+      this.equity * LEVERAGE_X - this.positionSize * this.positionAvgPrice,
+    )
+    const borrowedAboveEquity = this.positionSize * this.positionAvgPrice - this.equity || 0
+    const liquidationPriceLevel =
+      (borrowedAboveEquity * (1 + MAINTANACE_MARGIN)) / this.positionSize
+    const distanceToLiquidationPriceLevelPercent =
+      ((bar.low - liquidationPriceLevel) / bar.low) * 100
+
+    const isNotEnoughFundsToOpenOrder = availableMarginBalance <= 0
+    const isLiquidated = bar.low <= liquidationPriceLevel
+
+    const maxEmergencyClosedBases = this.emergencyClosedBases.length
+
+    // --------------------------------------------------------------
+
+    this.statistics.maxPositionSize =
+      this.statistics.maxPositionSize < this.positionSize
+        ? this.positionSize
+        : this.statistics.maxPositionSize
+
+    this.statistics.maxOpenTrades =
+      this.statistics.maxOpenTrades < this.openTrades.length
+        ? this.openTrades.length
+        : this.statistics.maxOpenTrades
+
+    if (
+      this.statistics.maxDistanceToLiquidationPriceLevelPercent >
+      distanceToLiquidationPriceLevelPercent
+    ) {
+      this.statistics.maxDistanceToLiquidationPriceLevelPercent =
+        distanceToLiquidationPriceLevelPercent
+      this.statistics.maxLiquidationPriceLevel = liquidationPriceLevel
+    }
+
+    const simultaneousBrokenBases = BASES.filter((base) => base.isBroken).length
+
+    this.statistics.maxSimultaneousBrokenBases =
+      this.statistics.maxSimultaneousBrokenBases < simultaneousBrokenBases
+        ? simultaneousBrokenBases
+        : this.statistics.maxSimultaneousBrokenBases
+
+    this.statistics.maxUnavailableMarginBalance =
+      this.statistics.maxUnavailableMarginBalance > availableMarginBalance
+        ? availableMarginBalance
+        : this.statistics.maxUnavailableMarginBalance
+
+    const currentDrawdownPricePercent = round(
+      ((this.positionAvgPrice - bar.low) / this.positionAvgPrice) * 100,
+    )
+    const curentDrawdownEquityPercent = round(
+      (((this.positionAvgPrice - bar.low) * this.positionSize) / this.initialCapital) * 100,
+    )
+
+    this.statistics.maxDrawdownPricePercent =
+      this.statistics.maxDrawdownPricePercent < currentDrawdownPricePercent
+        ? currentDrawdownPricePercent
+        : this.statistics.maxDrawdownPricePercent
+
+    this.statistics.maxDrawdownEquityPercent =
+      this.statistics.maxDrawdownEquityPercent < curentDrawdownEquityPercent
+        ? curentDrawdownEquityPercent
+        : this.statistics.maxDrawdownEquityPercent
+
+    // Bases Statistics
+
+    const confirmedBasesTotalNumber = this.allBases.length
+    const brokenBases = this.allBases.filter((base) => base.isBroken)
+    const brokenBasesTotalNumber = brokenBases.length
+
+    const brokenBaseDropMax = brokenBases.reduce(
+      (acc, base) => (acc > base.stats.percentDrop ? acc : base.stats.percentDrop),
+      0,
+    )
+    const brokenBaseDropAvg = brokenBases.length
+      ? brokenBases.reduce((acc, base) => acc + base.stats.percentDrop, 0) / brokenBases.length
+      : 0
+
+    const brokenBaseDropMedian = median(brokenBases.map((base) => base.stats.percentDrop))
+
+    const brokenBaseBarsMax = brokenBases.reduce(
+      (acc, base) => (acc > base.stats.percentDrop ? acc : base.stats.barsLength),
+      0,
+    )
+
+    const brokenBaseBarsAvg = brokenBases.length
+      ? brokenBases.reduce((acc, base) => acc + base.stats.barsLength, 0) / brokenBases.length
+      : 0
+
+    const brokenBaseBarsMedian = median(brokenBases.map((base) => base.stats.barsLength))
+
+    return {
+      positionBreakEvenPrice: this.positionAvgPrice,
+      availableAccountBalance,
+      availableMarginBalance,
+      borrowedAboveEquity,
+      liquidationPriceLevel,
+      distanceToLiquidationPriceLevelPercent,
+      isNotEnoughFundsToOpenOrder,
+      isLiquidated,
+
+      maxEmergencyClosedBases,
+
+      confirmedBasesTotalNumber,
+      brokenBasesTotalNumber,
+      brokenBaseDropMax,
+      brokenBaseDropAvg,
+      brokenBaseDropMedian,
+      brokenBaseBarsMax,
+      brokenBaseBarsAvg,
+      brokenBaseBarsMedian,
+    }
+  }
+
+  public updateBaseStats(base: IBase, bar: IBar, barIndex: number) {
+    const percentDrop = round((1 - bar.low / base.price) * 100)
+    const barsLength = barIndex - base.barIndex
+
+    base.stats.percentDrop =
+      percentDrop > base.stats.percentDrop ? percentDrop : base.stats.percentDrop
+    base.stats.barsLength = barsLength > base.stats.barsLength ? barsLength : base.stats.barsLength
+  }
 
   // entry method that adds new order to the orders list
   public entry(id: string, price: number): IOrder {
@@ -231,9 +406,9 @@ class Strategy {
 
   // calculate capital method that calculates capital for each order in the orders list
   public calculateCapital(): void {
-    this.capital = this.orders.reduce((acc, order) => acc + order.PNL, 0)
+    this.initialCapital = this.orders.reduce((acc, order) => acc + order.PNL, 0)
 
-    logger.info(`strategy.calculateCapital: ${this.capital}`)
+    logger.info(`strategy.calculateCapital: ${this.initialCapital}`)
   }
 }
 
@@ -278,6 +453,10 @@ const getNewBase = (bars: IBar[], confirmedBaseBarIndex: number | null) => {
       emergencyPriceLow: 999999,
       levels: [],
       orders: [],
+      stats: {
+        percentDrop: 0,
+        barsLength: 0,
+      },
     }
 
     logger.info(`getNewBase: confirmedBaseBarIndex ${confirmedBaseBarIndex}`)
@@ -316,6 +495,18 @@ const cancelOpenLimitOrders = (base: IBase, closePrice?: number) => {
   logger.info(
     `placeLadderOfEntryAndExitLimitOrders: base.barIndex ${base.barIndex} | closePrice ${closePrice}`,
   )
+}
+
+const calculateBaseBreakEven = (base: IBase) => {
+  const orders = strategy.orders
+    .filter((order) => base.orders.includes(order.id))
+    .filter((order) =>
+      [ORDER_STATUS.FILLED, ORDER_STATUS.COMPLETED, ORDER_STATUS.CLOSED].includes(order.status),
+    )
+
+  base.breakEven = round(orders.reduce((acc, order) => acc + order.price, 0) / orders.length)
+
+  logger.info(`calculateBreakEven: base.barIndex ${base.barIndex}`)
 }
 
 async function getBacktestBars(
@@ -388,6 +579,8 @@ async function getBacktestBars(
         base.isBroken = true
       }
 
+      calculateBaseBreakEven(base)
+
       // Calculate and Place Emergency Take Profit
       if (bar.low <= emergencyLevel && bar.low < base.emergencyPriceLow) {
         base.emergencyPriceLow = bar.low
@@ -397,6 +590,8 @@ async function getBacktestBars(
 
         base.orders.forEach((orderId) => strategy.exit(orderId, base.emergencyTakeProfit))
       }
+
+      if (base.isBroken) strategy.updateBaseStats(base, bar, barIndex)
 
       // Set Respected Base
       const highPrice =
@@ -424,6 +619,10 @@ async function getBacktestBars(
             ? base.emergencyTakeProfit
             : base.price * (1 - TAKE_PROFIT_BELOW_BASE)
 
+        if (highPrice >= base.emergencyTakeProfit) {
+          strategy.emergencyClosedBases.push(base)
+        }
+
         cancelOpenLimitOrders(base, closePrice)
         // Remove Respected Base
         BASES.splice(baseIndex, 1)
@@ -441,6 +640,9 @@ async function getBacktestBars(
       if (newBase) {
         placeLadderOfEntryAndExitLimitOrders(newBase)
         BASES.unshift(newBase)
+
+        // TODO: temporary solution to keep track of ALL bases
+        strategy.allBases.push(newBase)
       }
     }
 
@@ -453,12 +655,18 @@ async function getBacktestBars(
         if (BASES[0].isBroken) {
           BASES.unshift(newBase)
 
+          // TODO: temporary solution to keep track of ALL bases
+          strategy.allBases.push(newBase)
+
           logger.info(`Add ANOTHER New Confirmed Base: newBase.barIndex ${newBase?.barIndex}`)
         } else {
           // Close Open Limit Orders
           cancelOpenLimitOrders(BASES[0])
           // Replace to a new Base
           BASES[0] = newBase
+
+          // TODO: temporary solution to keep track of ALL bases
+          strategy.allBases.push(newBase)
 
           logger.info(`REPLACE existing Confirmed Base: newBase.barIndex ${newBase?.barIndex}`)
         }
@@ -467,3 +675,9 @@ async function getBacktestBars(
     }
   }
 })().catch(logger.error)
+
+// TODO: when architect refactoring - write down on paper dependency components and blocks and then order them properly
+
+// TODO: refactor: strategy.run(bar), this.barIndex, this.barstate.isLast etc
+// TODO: define the list of properties (and store outside "strategy class") that should persist between bars calls
+//  and define list of properties that refreshes on each bar call (and store inside "strategy class"): this.barIndex etc
