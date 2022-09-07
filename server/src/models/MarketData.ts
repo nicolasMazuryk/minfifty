@@ -43,17 +43,17 @@ export class MarketData extends Base<
 
   declare market: string
   declare ticker: string
-  declare time: string
+  declare time: Date
   declare timestamp: number
   declare open: string
   declare high: string
   declare low: string
   declare close: string
   declare volume: string
-  declare timeClose: string
+  declare timeClose: Date
   declare timestampClose: number
   declare quoteAssetVolume: string
-  declare trades: string
+  declare trades: number
   declare takerBuyBaseAssetVolume: string
   declare takerBuyQuoteAssetVolume: string
 }

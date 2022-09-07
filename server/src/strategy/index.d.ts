@@ -7,6 +7,7 @@ export interface IBase {
   emergencyTakeProfit: number
   emergencyPriceLow: number
   levels: number[] // TODO: remove levels. add EmergencyTriggerPrice instead
+  isClosedInLoss: boolean
   stats: {
     percentDrop: number
     barsLength: number
@@ -14,7 +15,7 @@ export interface IBase {
 }
 
 export interface IBar {
-  time: string
+  time: Date
   open: number
   high: number
   low: number
@@ -26,8 +27,8 @@ export interface IOrder {
   baseBarIndex: number
   level: number
   symbol: string
-  timeOpen: string
-  timeClosed: string
+  timeOpen: Date | null
+  timeClosed: Date | null
   type: string
   side: string
   price: number
@@ -37,4 +38,22 @@ export interface IOrder {
   takeProfit: number
   fee: number
   PNL: number
+}
+
+export interface IMarketData {
+  market: string
+  ticker: string
+  time: Date
+  timestamp: number
+  open: string
+  high: string
+  low: string
+  close: string
+  volume: string
+  timeClose: Date
+  timestampClose: number
+  quoteAssetVolume: string
+  trades: number
+  takerBuyBaseAssetVolume: string
+  takerBuyQuoteAssetVolume: string
 }

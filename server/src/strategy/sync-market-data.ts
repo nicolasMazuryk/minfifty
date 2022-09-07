@@ -9,8 +9,12 @@ import axios from 'axios'
 import { parse } from 'csv-parse'
 import unzip from 'extract-zip'
 
-import binance from '@/external/binance'
 import { MarketData } from '@/models'
+import {
+  syncRemainingBarsUpToDate,
+  // validateMarketDataIntegrity,
+  wait,
+} from '@/strategy/helpers'
 
 const writeFileAsync = fs.promises.writeFile
 
@@ -23,7 +27,6 @@ const START_DATE = '2020-01'
 const END_DATE = '2022-08'
 
 const PARSE_HISTORICAL_DATA = false
-const SYNC_LATEST_BINANCE_DATA = true
 
 const TICKER = {
   BTC: 'BTCUSDT',
@@ -62,8 +65,6 @@ async function unzipBinanceDataBinaryFile(dest: string) {
 
 // add leading zero to month if it is less than 10
 const addLeadingZero = (month: number): string => (month < 10 ? `0${month}` : `${month}`)
-
-const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
 // parse csv file and save marketData to database using sequelize bulkCreate method
 async function seedDatabaseFromCsv(dest: string, market: string, ticker: string) {
@@ -120,65 +121,6 @@ async function seedDatabaseFromCsv(dest: string, market: string, ticker: string)
     })
 }
 
-async function syncRemainingBarsUpToDate(market: string, ticker: string) {
-  if (!SYNC_LATEST_BINANCE_DATA) return
-
-  const latestCandle = await MarketData.findOne({
-    order: [['timestamp', 'DESC']],
-  })
-  if (latestCandle) {
-    const startTime = +latestCandle.timestamp
-    const endTime = Date.now()
-    const interval = 1000 * 60 * 500 // 500 minutes
-    for (let i = startTime; i < endTime; i += interval) {
-      const start = i + 60 * 1000
-      const end = i + interval <= Date.now() ? i + interval : Date.now()
-
-      const remainingCandles = await binance.futuresCandles({
-        symbol: TICKER.ETH,
-        interval: '1m',
-        startTime: start,
-        endTime: end,
-      })
-
-      const marketData: any[] = remainingCandles.map((candle) => {
-        const {
-          openTime,
-          open,
-          high,
-          low,
-          close,
-          volume,
-          closeTime,
-          quoteVolume,
-          trades,
-          baseAssetVolume,
-          quoteAssetVolume,
-        } = candle
-
-        return {
-          market,
-          ticker,
-          time: new Date(openTime),
-          timestamp: openTime,
-          open: parseFloat(open),
-          high: parseFloat(high),
-          low: parseFloat(low),
-          close: parseFloat(close),
-          volume: parseFloat(volume),
-          timeClose: new Date(closeTime),
-          timestampClose: closeTime,
-          quoteAssetVolume: parseFloat(quoteVolume),
-          trades,
-          takerBuyBaseAssetVolume: parseFloat(baseAssetVolume),
-          takerBuyQuoteAssetVolume: parseFloat(quoteAssetVolume),
-        }
-      })
-      await MarketData.bulkCreate(marketData)
-    }
-  }
-}
-
 // function takes as parameter market, ticker, START_DATE, END_DATE and download binance data and save it to 'futures-data' folder
 async function downloadBinanceData(
   market: string,
@@ -228,4 +170,5 @@ async function downloadBinanceData(
 ;(async () => {
   await downloadBinanceData(MARKET.FUTURES, TICKER.ETH, START_DATE, END_DATE)
   await syncRemainingBarsUpToDate(MARKET.FUTURES, TICKER.ETH)
+  // await validateMarketDataIntegrity(MARKET.FUTURES, TICKER.ETH)
 })().catch(logger.error)

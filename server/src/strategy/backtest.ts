@@ -1,6 +1,8 @@
 // eslint-disable-next-line import/order
 import '../alias-runtime'
 
+import binance from '@/external/binance'
+import { MarketData } from '@/models'
 import {
   MARKET,
   TICKER,
@@ -9,7 +11,19 @@ import {
   ORDER_TYPE,
   ORDER_STATUS,
 } from '@/strategy/constants'
-import { getBacktestBars, roundToPrecision, median, logger } from '@/strategy/helpers'
+import {
+  getBacktestBars,
+  roundToPrecision,
+  marketDataToBar,
+  median,
+  logger,
+  syncRemainingBarsUpToDate,
+  // validateMarketDataIntegrity,
+  wait,
+  wsCandleToMarketData,
+  average,
+  max,
+} from '@/strategy/helpers'
 import { IBase, IBar, IOrder } from '@/strategy/index'
 
 // Strategy Settings
@@ -30,7 +44,7 @@ const TAKE_PROFIT_BELOW_BASE = 0.0 / 100
 const BASE_BARS_LENGTH_LIMIT = 0
 
 const LEVERAGE_X = 2
-const MAINTANACE_MARGIN = 20 / 100
+const MAINTANANCE_MARGIN = 20 / 100
 
 const START_PERIOD_TIME = '2022-08-31T19:05:00+03:00'
 const END_PERIOD_TIME = '2022-08-31T20:00:00+03:00'
@@ -42,19 +56,21 @@ class Strategy {
   public symbol: string = TICKER.ETH
   public bars: IBar[] = []
   public bar!: IBar
-  public barIndex = 0
+  public barIndex = -1
   public isNewBase = false
   public newBaseBarIndex = 0
   public bases: IBase[] = []
   public allBases: IBase[] = []
-  public closedInLossBases: IBase[] = []
+  // public closedInLossBases: IBase[] = []
   public orders: IOrder[] = []
   public isRealTime = false
+  public current = 0
 
   public run(bar: IBar): void {
     this.bars.push(bar)
     this.barIndex++
     this.bar = bar
+    this.current = this.isRealTime ? this.bar.close : this.bar.low
 
     this.setBaseBroken()
 
@@ -65,6 +81,8 @@ class Strategy {
     this.processBrokenBases()
 
     this.executeOrders()
+
+    this.updateStatistics()
   }
 
   private findNewBaseBarIndex(): void {
@@ -91,7 +109,7 @@ class Strategy {
     this.bases
       .filter((base) => !base.isBroken)
       .forEach((base) => {
-        base.isBroken = this.bar.low <= base.levels[0]
+        base.isBroken = this.current <= base.levels[0]
       })
   }
 
@@ -107,14 +125,14 @@ class Strategy {
       emergencyTakeProfit: 999999,
       emergencyPriceLow: 999999,
       levels: [],
-      orders: [],
+      isClosedInLoss: false,
       stats: {
         percentDrop: 0,
         barsLength: 0,
       },
     }
 
-    if (this.bases[0].isBroken) {
+    if (this.bases[0]?.isBroken) {
       this.bases.unshift(base)
     } else {
       this.cancelBaseOrders(this.bases[0])
@@ -135,8 +153,8 @@ class Strategy {
         baseBarIndex: base.barIndex,
         level: level,
         symbol: this.symbol,
-        timeOpen: '',
-        timeClosed: '',
+        timeOpen: null,
+        timeClosed: null,
         type: ORDER_TYPE.LIMIT,
         side: ORDER_SIDE.BUY,
         price: price,
@@ -168,7 +186,7 @@ class Strategy {
       .filter((order) => order.baseBarIndex === base.barIndex)
       .filter((order) => order.status === ORDER_STATUS.FILLED)
       .forEach((order) => {
-        order.timeClosed = this.bar.time // or Date.now()
+        order.timeClosed = this.isRealTime ? new Date() : this.bar.time
         order.status = ORDER_STATUS.CLOSED
         order.fee = order.fee + order.quantity * closePrice * TRADING_FEE
         order.PNL = (closePrice - order.price) * order.quantity - order.fee
@@ -204,11 +222,11 @@ class Strategy {
   private handleEmergencyTakeProfit(base: IBase) {
     const emergencyLevel = base.levels[EMERGENCY_LEVEL_NUMBER - 1]
 
-    if (this.bar.low <= emergencyLevel && this.bar.low < base.emergencyPriceLow) {
-      base.emergencyPriceLow = this.bar.low
+    if (this.current <= emergencyLevel && this.current < base.emergencyPriceLow) {
+      base.emergencyPriceLow = this.current
 
       base.emergencyTakeProfit =
-        this.bar.low + (base.price - this.bar.low) * EMERGENCY_TAKE_PROFIT_RETRACEMENT
+        this.current + (base.price - this.current) * EMERGENCY_TAKE_PROFIT_RETRACEMENT
 
       this.orders
         .filter((order) => order.baseBarIndex === base.barIndex)
@@ -219,7 +237,7 @@ class Strategy {
   }
 
   private updateBaseStats(base: IBase) {
-    const percentDrop = round((1 - this.bar.low / base.price) * 100)
+    const percentDrop = round((1 - this.current / base.price) * 100)
     const barsLength = this.barIndex - base.barIndex
 
     base.stats.percentDrop = Math.max(base.stats.percentDrop, percentDrop)
@@ -248,7 +266,9 @@ class Strategy {
 
       this.closeBaseOrders(base, closePrice)
 
-      if (higherPrice >= base.emergencyTakeProfit) this.closedInLossBases.push(base)
+      if (higherPrice >= base.emergencyTakeProfit) {
+        base.isClosedInLoss = true
+      }
     }
   }
 
@@ -265,12 +285,12 @@ class Strategy {
   }
 
   private executeOrders() {
-    const entryPrice = this.bar.low
-    const exitPrice = this.bar.high
+    const entryPrice = this.current
+    const exitPrice = this.isRealTime ? this.bar.close : this.bar.high
 
     this.orders.forEach((order) => {
       if (order.status === ORDER_STATUS.OPEN && entryPrice <= order.price) {
-        order.timeOpen = this.bar.time // or Date.now()
+        order.timeOpen = this.isRealTime ? new Date() : this.bar.time
         order.status = ORDER_STATUS.FILLED
         order.fee = order.amount * TRADING_FEE
       }
@@ -278,7 +298,7 @@ class Strategy {
 
     this.orders.forEach((order) => {
       if (order.status === ORDER_STATUS.FILLED && exitPrice >= order.takeProfit) {
-        order.timeClosed = this.bar.time // or Date.now()
+        order.timeClosed = this.isRealTime ? new Date() : this.bar.time
         order.status = ORDER_STATUS.COMPLETED
         order.fee = order.fee + order.quantity * order.takeProfit * TRADING_FEE
         order.PNL = (order.takeProfit - order.price) * order.quantity - order.fee
@@ -289,9 +309,7 @@ class Strategy {
   }
 
   public get positionAvgPrice() {
-    // if (!this.openTrades.length) return 0
-
-    return this.openTrades.reduce((acc, order) => acc + order.price, 0) / this.openTrades.length
+    return average(this.openTrades.map((order) => order.price))
   }
 
   public get positionSize() {
@@ -299,11 +317,11 @@ class Strategy {
   }
 
   public get equity() {
-    return this.initialCapital + this.netProfit
+    return this.initialCapital + this.totalProfit
   }
 
   public get netProfit() {
-    return this.orders.reduce((acc, order) => acc + order.PNL, 0)
+    return this.closedTrades.reduce((acc, order) => acc + order.PNL, 0)
   }
 
   public get openProfit() {
@@ -318,149 +336,223 @@ class Strategy {
     return this.orders.filter((order) => order.status === ORDER_STATUS.FILLED)
   }
 
+  public get closedTrades() {
+    return this.orders.filter((order) =>
+      [ORDER_STATUS.COMPLETED, ORDER_STATUS.CLOSED].includes(order.status),
+    )
+  }
+
+  public get totalFee() {
+    return this.orders.reduce((acc, order) => acc + order.fee, 0)
+  }
+
+  public get winTrades() {
+    return this.closedTrades.filter((order) => order.PNL > 0)
+  }
+
+  public get lossTrades() {
+    return this.closedTrades.filter((order) => order.PNL < 0)
+  }
+
+  public get grossProfit() {
+    return this.winTrades.reduce((acc, order) => acc + order.fee, 0)
+  }
+
+  public get grossLoss() {
+    return this.lossTrades.reduce((acc, order) => acc + order.fee, 0)
+  }
+
+  public get openTradesCount() {
+    return this.openTrades.length
+  }
+
+  public get closedTradesCount() {
+    return this.closedTrades.length
+  }
+
+  public get winTradesCount() {
+    return this.winTrades.length
+  }
+
+  public get lossTradesCount() {
+    return this.lossTrades.length
+  }
+
+  public get availableBalance() {
+    return this.equity - this.positionSize * this.positionAvgPrice
+  }
+
+  public get availableMargin() {
+    return this.equity * LEVERAGE_X - this.positionSize * this.positionAvgPrice
+  }
+
+  public get borrowed() {
+    return Math.max(this.positionSize * this.positionAvgPrice - this.equity, 0)
+  }
+
+  public get liquidationPrice() {
+    return (this.borrowed * (1 + MAINTANANCE_MARGIN)) / this.positionSize
+  }
+
+  public get toLiquidationPrice() {
+    return ((this.current - this.liquidationPrice) / this.current) * 100
+  }
+
+  public get priceDrawdown() {
+    return ((this.positionAvgPrice - this.current) / this.positionAvgPrice) * 100
+  }
+
+  public get equityDrawdown() {
+    return (((this.positionAvgPrice - this.current) * this.positionSize) / this.equity) * 100
+  }
+
+  // Bases
+  public get brokenBases() {
+    return this.bases.filter((base) => base.isBroken)
+  }
+
+  public get brokenBasesCount() {
+    return this.brokenBases.length
+  }
+
+  public get allBasesCount() {
+    return this.allBases.length
+  }
+
+  public get allBrokenBases() {
+    return this.allBases.filter((base) => base.isBroken)
+  }
+
+  public get allBrokenBasesCount() {
+    return this.allBrokenBases.length
+  }
+
+  public get closedInLossBases() {
+    return this.allBases.filter((base) => base.isClosedInLoss)
+  }
+
+  public get closedInLossBasesCount() {
+    return this.closedInLossBases.length
+  }
+
+  public get realTimeStatistics() {
+    return {
+      equity: this.equity,
+      netProfit: this.netProfit,
+      openProfit: this.openProfit,
+      totalProfit: this.totalProfit,
+      totalFee: this.totalFee,
+      positionSize: this.positionSize,
+      positionAvgPrice: this.positionAvgPrice,
+      availableBalance: this.availableBalance,
+      availableMargin: this.availableMargin,
+      borrowed: this.borrowed,
+      liquidationPrice: this.liquidationPrice,
+      toLiquidationPrice: this.toLiquidationPrice,
+      priceDrawdown: this.priceDrawdown,
+      equityDrawdown: this.equityDrawdown,
+      brokenBasesCount: this.brokenBasesCount,
+      grossProfit: this.grossProfit,
+      grossLoss: this.grossLoss,
+      openTradesCount: this.openTradesCount,
+      closedTradesCount: this.closedTradesCount,
+      winTradesCount: this.winTradesCount,
+      lossTradesCount: this.lossTradesCount,
+    }
+  }
+
   public statistics = {
     maxPositionSize: 0,
     maxOpenTrades: 0,
-    maxLiquidationPriceLevel: 0,
-    maxDistanceToLiquidationPriceLevelPercent: 100,
+    maxLiquidationPrice: 0,
+    maxToLiquidationPrice: 100,
+    maxMarginBalanceLow: INITIAL_CAPITAL * LEVERAGE_X,
+    maxPriceDrawdown: 0,
+    maxEquityDrawdown: 0,
+    isNotEnoughFunds: false,
+    isLiquidated: false,
+
+    allBases: 0,
+    allBrokenBases: 0,
     maxSimultaneousBrokenBases: 0,
-    maxUnavailableMarginBalance: INITIAL_CAPITAL * LEVERAGE_X,
-    maxDrawdownPricePercent: 0,
-    maxDrawdownEquityPercent: 0,
+    closedInLossBases: 0,
+
+    baseDropMax: 0,
+    baseDropAvg: 0,
+    baseDropMedian: 0,
+
+    baseBarsMax: 0,
+    brokenBaseBarsAvg: 0,
+    brokenBaseBarsMedian: 0,
   }
 
-  public getStatistics(bar: IBar) {
-    const availableAccountBalance = round(this.equity - this.positionSize * this.positionAvgPrice)
-    const availableMarginBalance = round(
-      this.equity * LEVERAGE_X - this.positionSize * this.positionAvgPrice,
-    )
-    const borrowedAboveEquity = this.positionSize * this.positionAvgPrice - this.equity || 0
-    const liquidationPriceLevel =
-      (borrowedAboveEquity * (1 + MAINTANACE_MARGIN)) / this.positionSize
-    const distanceToLiquidationPriceLevelPercent =
-      ((bar.low - liquidationPriceLevel) / bar.low) * 100
-
-    const isNotEnoughFundsToOpenOrder = availableMarginBalance <= 0
-    const isLiquidated = bar.low <= liquidationPriceLevel
-
-    const maxEmergencyClosedBases = this.closedInLossBases.length
-
+  public updateStatistics() {
     // --------------------------------------------------------------
-
-    this.statistics.maxPositionSize =
-      this.statistics.maxPositionSize < this.positionSize
-        ? this.positionSize
-        : this.statistics.maxPositionSize
-
-    this.statistics.maxOpenTrades =
-      this.statistics.maxOpenTrades < this.openTrades.length
-        ? this.openTrades.length
-        : this.statistics.maxOpenTrades
-
-    if (
-      this.statistics.maxDistanceToLiquidationPriceLevelPercent >
-      distanceToLiquidationPriceLevelPercent
-    ) {
-      this.statistics.maxDistanceToLiquidationPriceLevelPercent =
-        distanceToLiquidationPriceLevelPercent
-      this.statistics.maxLiquidationPriceLevel = liquidationPriceLevel
-    }
-
-    const simultaneousBrokenBases = this.bases.filter((base) => base.isBroken).length
-
-    this.statistics.maxSimultaneousBrokenBases =
-      this.statistics.maxSimultaneousBrokenBases < simultaneousBrokenBases
-        ? simultaneousBrokenBases
-        : this.statistics.maxSimultaneousBrokenBases
-
-    this.statistics.maxUnavailableMarginBalance =
-      this.statistics.maxUnavailableMarginBalance > availableMarginBalance
-        ? availableMarginBalance
-        : this.statistics.maxUnavailableMarginBalance
-
-    const currentDrawdownPricePercent = round(
-      ((this.positionAvgPrice - bar.low) / this.positionAvgPrice) * 100,
+    // Risk Statistics
+    this.statistics.maxPositionSize = Math.max(this.statistics.maxPositionSize, this.positionSize)
+    this.statistics.maxOpenTrades = Math.max(this.statistics.maxOpenTrades, this.openTradesCount)
+    this.statistics.maxLiquidationPrice = Math.min(
+      this.statistics.maxLiquidationPrice,
+      this.liquidationPrice,
     )
-    const curentDrawdownEquityPercent = round(
-      (((this.positionAvgPrice - bar.low) * this.positionSize) / this.initialCapital) * 100,
+    this.statistics.maxToLiquidationPrice = Math.min(
+      this.statistics.maxToLiquidationPrice,
+      this.toLiquidationPrice,
     )
-
-    this.statistics.maxDrawdownPricePercent =
-      this.statistics.maxDrawdownPricePercent < currentDrawdownPricePercent
-        ? currentDrawdownPricePercent
-        : this.statistics.maxDrawdownPricePercent
-
-    this.statistics.maxDrawdownEquityPercent =
-      this.statistics.maxDrawdownEquityPercent < curentDrawdownEquityPercent
-        ? curentDrawdownEquityPercent
-        : this.statistics.maxDrawdownEquityPercent
+    this.statistics.maxMarginBalanceLow = Math.min(
+      this.statistics.maxMarginBalanceLow,
+      this.availableMargin,
+    )
+    this.statistics.maxPriceDrawdown = Math.max(
+      this.statistics.maxPriceDrawdown,
+      this.priceDrawdown,
+    )
+    this.statistics.maxEquityDrawdown = Math.max(
+      this.statistics.maxEquityDrawdown,
+      this.equityDrawdown,
+    )
+    this.statistics.isNotEnoughFunds =
+      this.statistics.isNotEnoughFunds || this.availableBalance <= 0
+    this.statistics.isLiquidated =
+      this.statistics.isLiquidated || this.current <= this.liquidationPrice
 
     // Bases Statistics
-
-    const confirmedBasesTotalNumber = this.allBases.length
-    const brokenBases = this.allBases.filter((base) => base.isBroken)
-    const brokenBasesTotalNumber = brokenBases.length
-
-    const brokenBaseDropMax = brokenBases.reduce(
-      (acc, base) => (acc > base.stats.percentDrop ? acc : base.stats.percentDrop),
-      0,
+    this.statistics.allBases = Math.max(this.statistics.allBases, this.allBasesCount)
+    this.statistics.allBrokenBases = Math.max(
+      this.statistics.allBrokenBases,
+      this.allBrokenBasesCount,
     )
-    const brokenBaseDropAvg = brokenBases.length
-      ? brokenBases.reduce((acc, base) => acc + base.stats.percentDrop, 0) / brokenBases.length
-      : 0
-
-    const brokenBaseDropMedian = median(brokenBases.map((base) => base.stats.percentDrop))
-
-    const brokenBaseBarsMax = brokenBases.reduce(
-      (acc, base) => (acc > base.stats.percentDrop ? acc : base.stats.barsLength),
-      0,
+    this.statistics.maxSimultaneousBrokenBases = Math.max(
+      this.statistics.maxSimultaneousBrokenBases,
+      this.brokenBasesCount,
+    )
+    this.statistics.closedInLossBases = Math.max(
+      this.statistics.closedInLossBases,
+      this.closedInLossBasesCount,
     )
 
-    const brokenBaseBarsAvg = brokenBases.length
-      ? brokenBases.reduce((acc, base) => acc + base.stats.barsLength, 0) / brokenBases.length
-      : 0
+    this.statistics.baseDropMax = max(this.allBrokenBases.map((base) => base.stats.percentDrop))
+    this.statistics.baseDropAvg = average(this.allBrokenBases.map((base) => base.stats.percentDrop))
+    this.statistics.baseDropMedian = median(
+      this.allBrokenBases.map((base) => base.stats.percentDrop),
+    )
 
-    const brokenBaseBarsMedian = median(brokenBases.map((base) => base.stats.barsLength))
-
-    return {
-      positionBreakEvenPrice: this.positionAvgPrice,
-      availableAccountBalance,
-      availableMarginBalance,
-      borrowedAboveEquity,
-      liquidationPriceLevel,
-      distanceToLiquidationPriceLevelPercent,
-      isNotEnoughFundsToOpenOrder,
-      isLiquidated,
-
-      maxEmergencyClosedBases,
-
-      confirmedBasesTotalNumber,
-      brokenBasesTotalNumber,
-      brokenBaseDropMax,
-      brokenBaseDropAvg,
-      brokenBaseDropMedian,
-      brokenBaseBarsMax,
-      brokenBaseBarsAvg,
-      brokenBaseBarsMedian,
-    }
-  }
-
-  public calculatePNL(closePrice: number): void {
-    this.orders
-      .filter((order) => order.status === ORDER_STATUS.FILLED)
-      .forEach((order) => {
-        order.PNL = (closePrice - order.price) * order.quantity - order.fee
-      })
-  }
-
-  public calculateCapital(): void {
-    this.initialCapital = this.orders.reduce((acc, order) => acc + order.PNL, 0)
+    this.statistics.baseBarsMax = max(this.allBrokenBases.map((base) => base.stats.barsLength))
+    this.statistics.brokenBaseBarsAvg = average(
+      this.allBrokenBases.map((base) => base.stats.barsLength),
+    )
+    this.statistics.brokenBaseBarsMedian = median(
+      this.allBrokenBases.map((base) => base.stats.barsLength),
+    )
   }
 }
 
 const strategy = new Strategy()
 
 ;(async () => {
+  await syncRemainingBarsUpToDate(MARKET.FUTURES, TICKER.ETH)
+  // await validateMarketDataIntegrity(MARKET.FUTURES, TICKER.ETH)
+
   const bars: IBar[] = await getBacktestBars(
     MARKET.FUTURES,
     TICKER.ETH,
@@ -469,12 +561,39 @@ const strategy = new Strategy()
   )
 
   for (const bar of bars) {
-    await strategy.run(bar)
+    strategy.run(bar)
   }
 
-  // TODO: implement binance websocket api to get real-time data once historical bars are over
-  // also sync latest remaining data before
+  binance.ws.futuresCandles(TICKER.ETH, '1m', async (candle) => {
+    const marketData = wsCandleToMarketData(MARKET.FUTURES, candle)
+    const bar = marketDataToBar(marketData)
+
+    strategy.run(bar)
+
+    if (candle.isFinal) {
+      await MarketData.bulkCreate([marketData])
+    }
+  })
+
   strategy.isRealTime = true
+
+  await wait(1000 * 60 * 60 * 24) // wait for 1 day
 })().catch(logger.error)
 
 // TODO: when architect refactoring - write down on paper dependency components and blocks and then order them properly
+
+// TODO: implement strategy alerts: strategy.alert()
+
+// TODO: implement strategy risk: strategy.risk.max_drawdown()
+// TODO: implement strategy risk: strategy.risk.max_intraday_loss()
+// TODO: implement strategy risk: strategy.risk.max_position_size()
+
+// TODO: implement ta: ta.atr()
+// TODO: implement ta: ta.change()
+// TODO: implement ta: ta.highest()
+// TODO: implement ta: ta.lowest()
+// TODO: implement ta: ta.range()
+// TODO: implement ta: ta.sma()
+// TODO: implement ta: ta.ema()
+
+// TODO: statistics: each base performance statistics
