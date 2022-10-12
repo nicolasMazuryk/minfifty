@@ -29,10 +29,10 @@ export const median = (arr: any[]) => {
   const mid = Math.floor(arr.length / 2),
     nums = [...arr].sort((a, b) => a - b)
   // eslint-disable-next-line no-negated-condition
-  return arr.length % 2 !== 0 ? nums[mid] : (nums[mid - 1] + nums[mid]) / 2
+  return arr.length % 2 !== 0 ? nums[mid] : (nums[mid - 1] + nums[mid]) / 2 || 0
 }
 
-export const average = (arr: any[]) => arr.reduce((a, b) => a + b, 0) / arr.length
+export const average = (arr: any[]) => arr.reduce((a, b) => a + b, 0) / arr.length || 0
 
 export const roundEpochToFullMinute = (epoch: number) => {
   const date = new Date(epoch)
@@ -190,29 +190,29 @@ export async function syncRemainingBarsUpToDate(market: string, ticker: string) 
   const latestCandle = await MarketData.findOne({
     order: [['timestamp', 'DESC']],
   })
-  if (latestCandle) {
-    const startTime = +latestCandle.timestamp
-    const endTime = Date.now()
-    const interval = 1000 * 60 * 500 // 500 minutes
-    for (let i = startTime; i < endTime; i += interval) {
-      const start = i + 60 * 1000
-      const end = i + interval <= Date.now() ? i + interval : Date.now()
+  if (!latestCandle) return
 
-      const endTimestamp = Math.max(startTime, roundEpochToFullMinute(end) - 60 * 1000)
+  const startTime = +latestCandle.timestamp
+  const endTime = Date.now()
+  const interval = 1000 * 60 * 500 // 500 minutes
+  for (let i = startTime; i < endTime; i += interval) {
+    const start = i + 60 * 1000
+    const end = i + interval <= Date.now() ? i + interval : Date.now()
 
-      if (endTimestamp === start) return
+    const endTimestamp = Math.max(startTime, roundEpochToFullMinute(end) - 60 * 1000)
 
-      const remainingCandles: CandleChartResult[] = await binance.futuresCandles({
-        symbol: ticker,
-        interval: '1m',
-        startTime: start,
-        endTime: endTimestamp,
-      })
+    if (endTimestamp === start) return
 
-      const marketData: any[] = remainingCandles.map((candle) =>
-        candleToMarketData(market, ticker, candle),
-      )
-      await MarketData.bulkCreate(marketData)
-    }
+    const remainingCandles: CandleChartResult[] = await binance.futuresCandles({
+      symbol: ticker,
+      interval: '1m',
+      startTime: start,
+      endTime: endTimestamp,
+    })
+
+    const marketData: any[] = remainingCandles.map((candle) =>
+      candleToMarketData(market, ticker, candle),
+    )
+    await MarketData.bulkCreate(marketData)
   }
 }

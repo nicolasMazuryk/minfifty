@@ -3,6 +3,8 @@ import { Op } from 'sequelize'
 import { MarketData } from '@/models'
 import Base from '@/services/Base'
 
+const END_PERIOD_TIME = '2022-09-30T23:00:00+03:00'
+
 interface IData {
   symbol: string
   resolution: string
@@ -23,11 +25,16 @@ export default class History extends Base {
   async execute(params: IData) {
     const { symbol, to, countback } = params
 
+    const endPeriodTime = new Date(END_PERIOD_TIME).getTime() / 1000
+
+    const toTimestamp = to > endPeriodTime ? endPeriodTime : to
+
     const marketData = await MarketData.findAll({
       where: {
         ticker: symbol,
         timestamp: {
-          [Op.lt]: Math.floor(to * 1000),
+          // [Op.lt]: Math.floor(to * 1000),
+          [Op.lt]: Math.floor(toTimestamp * 1000),
         },
       },
       limit: countback,

@@ -8,6 +8,8 @@ import {
   ResolutionString,
 } from '../../charting_library'
 
+import { customIndicatorsGetterRealTime } from './customIndicatorsGetterRealTime'
+
 import styles from './TVChartContainer.module.scss'
 
 // const DATAFEED_URL = 'https://demo_feed.tradingview.com'
@@ -82,7 +84,11 @@ export default class TVChartContainer extends React.PureComponent<
       library_path: this.props.libraryPath as string,
 
       locale: getLanguageFromURL() || 'en',
-      disabled_features: ['use_localstorage_for_settings'],
+      disabled_features: [
+        'use_localstorage_for_settings',
+        'create_volume_indicator_by_default',
+        'create_volume_indicator_by_default_once',
+      ],
       enabled_features: ['study_templates'],
       charts_storage_url: this.props.chartsStorageUrl,
       charts_storage_api_version: this.props.chartsStorageApiVersion,
@@ -91,6 +97,9 @@ export default class TVChartContainer extends React.PureComponent<
       fullscreen: this.props.fullscreen,
       autosize: this.props.autosize,
       studies_overrides: this.props.studiesOverrides,
+
+      custom_indicators_getter: customIndicatorsGetterRealTime,
+      // debug: true,
     }
 
     const tvWidget = new widget(widgetOptions)
@@ -106,8 +115,19 @@ export default class TVChartContainer extends React.PureComponent<
             title: 'Notification',
             body: 'TradingView Charting Library API works correctly',
             callback: () => {
-              // eslint-disable-next-line no-console
-              console.log('Noticed!')
+              // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+              // @ts-ignore
+              this.tvWidget
+                .activeChart()
+                .getAllStudies()
+                .forEach(study =>
+                  // eslint-disable-next-line no-console
+                  console.log(
+                    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                    // @ts-ignore
+                    this.tvWidget.activeChart().getStudyById(study.id),
+                  ),
+                )
             },
           }),
         )

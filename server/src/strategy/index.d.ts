@@ -26,7 +26,6 @@ export interface IBar {
 export interface IOrder {
   baseBarIndex: number
   level: number
-  symbol: string
   timeOpen: Date | null
   timeClosed: Date | null
   type: string
