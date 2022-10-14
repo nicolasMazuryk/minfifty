@@ -5,6 +5,7 @@ import '../alias-runtime'
 import fs from 'fs'
 import path from 'path'
 
+import { wait } from '@common/strategy/utils'
 import axios from 'axios'
 import { parse } from 'csv-parse'
 import unzip from 'extract-zip'
@@ -13,7 +14,6 @@ import { MarketData } from '@/models'
 import {
   syncRemainingBarsUpToDate,
   // validateMarketDataIntegrity,
-  wait,
 } from '@/strategy/helpers'
 
 const writeFileAsync = fs.promises.writeFile

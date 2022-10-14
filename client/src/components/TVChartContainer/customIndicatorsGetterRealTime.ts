@@ -1,11 +1,12 @@
+import { ORDER_STATUS } from '@common/strategy/constants'
+import Strategy from '@common/strategy/strategy'
+
 import {
   CustomIndicator,
   // PineJS,
 } from '../../charting_library'
 
-import { ORDER_STATUS } from './strategy/constants'
 // import { logger } from './strategy/helpers'
-import Strategy from './strategy/strategy'
 
 const strategy = new Strategy()
 
@@ -125,7 +126,7 @@ Promise<readonly CustomIndicator[]> =>
 
           strategy.run(bar)
 
-          const lines = strategy.bases.map(base => base.price).slice(0, 4)
+          const lines = strategy.bases.map(base => base.price).slice(0, 5)
 
           // const lines = strategy.bases.map(base => ({
           //   value: base.price,
@@ -136,7 +137,7 @@ Promise<readonly CustomIndicator[]> =>
             .filter(order => order.status === ORDER_STATUS.FILLED)
             .filter(order => order.timeOpen === bar.time)
             .map(order => order.price)
-            .slice(0, 4)
+            .slice(0, 5)
 
           const sellOrders = strategy.orders
             .filter(order =>
@@ -146,7 +147,7 @@ Promise<readonly CustomIndicator[]> =>
             )
             .filter(order => order.timeClosed === bar.time)
             .map(order => order.takeProfit)
-            .slice(0, 1)
+            .slice(0, 2)
 
           const result = [
             ...lines,

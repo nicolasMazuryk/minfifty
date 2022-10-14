@@ -2,6 +2,10 @@ const {
   override,
   adjustStyleLoaders,
   addWebpackResolve,
+  addWebpackAlias,
+  addDecoratorsLegacy,
+  removeModuleScopePlugin,
+  babelInclude,
 } = require('customize-cra')
 const addLessLoader = require('customize-cra-less-loader')
 const path = require('path')
@@ -24,4 +28,12 @@ module.exports = override(
     }
   }),
   addWebpackResolve({ plugins: [new TsconfigPathsPlugin()] }),
+  addDecoratorsLegacy(),
+  removeModuleScopePlugin(),
+  babelInclude([path.resolve('src'), path.resolve(__dirname, '../common')]),
+  addWebpackAlias({
+    '@common': path.resolve(__dirname, '../common'),
+    '@styles': path.resolve(__dirname, './src/assets/styles'),
+    '@assets': path.resolve(__dirname, './src/assets'),
+  }),
 )

@@ -20,7 +20,8 @@
     "types": ["jest", "node"],
     "baseUrl": "./",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["src/*"],
+      "@common/*": ["../common/*"]
     }
   },
   "include": [".eslintrc.js", "jest.config.js", "src"],

@@ -1,7 +1,16 @@
-import { ORDER_SIDE, ORDER_TYPE, ORDER_STATUS } from './constants'
-import { roundToPrecision, median, average, max, logger } from './helpers'
-
-import { IBase, IBar, IOrder } from '.'
+import { IBase, IBar, IOrder } from './index'
+import {
+  ORDER_SIDE,
+  ORDER_TYPE,
+  ORDER_STATUS,
+} from './constants'
+import {
+  roundToPrecision,
+  median,
+  average,
+  max,
+  logger,
+} from './utils'
 
 // const round = roundToPrecision(TICKER_PRECISION.ETH)
 const round = roundToPrecision(2)
@@ -25,6 +34,9 @@ const BASE_BARS_LENGTH_LIMIT = 0
 
 const LEVERAGE_X = 2
 const MAINTANANCE_MARGIN = 20 / 100
+
+const IGNORE_BASE_ON_TOP_PRECEDING_BARS = 30 * 60
+const IGNORE_BASE_ON_TOP_THRESHOLD = 3 / 100
 
 export default class Strategy {
   public initialCapital: number = INITIAL_CAPITAL
@@ -63,7 +75,7 @@ export default class Strategy {
 
     this.executeOrders()
 
-    // this.updateStatistics()
+    this.updateStatistics()
 
     // this.logger.timeEnd('bar')
   }
@@ -83,6 +95,7 @@ export default class Strategy {
 
         if (precedingBars.every(({ low }) => confirmedBarLow <= low)) {
           if (barIndex <= this.newBaseBarIndex) return
+          // if (this.ignoreBaseOnTop(barIndex, confirmedBarLow)) continue
 
           this.newBaseBarIndex = barIndex
           this.isNewBase = true
@@ -91,6 +104,20 @@ export default class Strategy {
         }
       }
     }
+  }
+
+  public ignoreBaseOnTop(baseBarIndex: number, baseBarLow: number) {
+    const precedingBars = this.bars.slice(
+      Math.max(0, baseBarIndex - IGNORE_BASE_ON_TOP_PRECEDING_BARS),
+      baseBarIndex,
+    )
+
+    const highestHigh = max(precedingBars.map(bar => bar.high))
+
+    const ignore =
+      baseBarLow >= highestHigh * (1 - IGNORE_BASE_ON_TOP_THRESHOLD)
+
+    return ignore
   }
 
   private setBaseBroken() {
@@ -123,7 +150,7 @@ export default class Strategy {
     if (this.bases[0]?.isBroken) {
       this.bases.unshift(base)
     } else {
-      this.cancelBaseOrders(this.bases[0])
+      this.bases[0] && this.cancelBaseOrders(this.bases[0])
       this.bases[0] = base
     }
 
@@ -136,7 +163,7 @@ export default class Strategy {
     for (let level = 1; level <= NUMBER_OF_LEVELS; level++) {
       const price = round(
         base.price *
-          (1.0 - LEVEL_STEP * Math.pow(level, LEVEL_STEP_MULTIPLIER)),
+        (1.0 - LEVEL_STEP * Math.pow(level, LEVEL_STEP_MULTIPLIER)),
       )
       const takeProfit = round(base.price * (1 - TAKE_PROFIT_BELOW_BASE))
 

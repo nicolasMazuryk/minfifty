@@ -1,24 +1,23 @@
 // eslint-disable-next-line import/order
 import '../alias-runtime'
 
-import binance from '@/external/binance'
 // import { MarketData } from '@/models'
-import { MARKET, TICKER } from '@/strategy/constants'
+import { IBar } from '@common/strategy'
+import { MARKET, TICKER } from '@common/strategy/constants'
+import Strategy from '@common/strategy/strategy'
+import { logger, wait } from '@common/strategy/utils'
+
+import binance from '@/external/binance'
 import {
   getBacktestBars,
   marketDataToBar,
-  logger,
   syncRemainingBarsUpToDate,
   // validateMarketDataIntegrity,
-  wait,
   wsCandleToMarketData,
 } from '@/strategy/helpers'
-import { IBar } from '@/strategy/index'
 
-import Strategy from './strategy'
-
-const START_PERIOD_TIME = '2022-09-01T00:00:00+03:00'
-const END_PERIOD_TIME = '2022-09-30T23:00:00+03:00'
+const START_PERIOD_TIME = '2022-10-12T00:00:00+00:00'
+const END_PERIOD_TIME = '2022-10-13T23:00:00+00:00'
 
 const strategy = new Strategy()
 

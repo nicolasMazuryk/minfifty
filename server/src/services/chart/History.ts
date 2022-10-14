@@ -3,7 +3,8 @@ import { Op } from 'sequelize'
 import { MarketData } from '@/models'
 import Base from '@/services/Base'
 
-const END_PERIOD_TIME = '2022-09-30T23:00:00+03:00'
+const START_PERIOD_TIME = '2022-10-12T00:00:00+00:00'
+const END_PERIOD_TIME = '2022-10-13T23:00:00+00:00'
 
 interface IData {
   symbol: string
@@ -25,6 +26,8 @@ export default class History extends Base {
   async execute(params: IData) {
     const { symbol, to, countback } = params
 
+    const fromTimestamp = new Date(START_PERIOD_TIME).getTime()
+
     const endPeriodTime = new Date(END_PERIOD_TIME).getTime() / 1000
 
     const toTimestamp = to > endPeriodTime ? endPeriodTime : to
@@ -34,7 +37,8 @@ export default class History extends Base {
         ticker: symbol,
         timestamp: {
           // [Op.lt]: Math.floor(to * 1000),
-          [Op.lt]: Math.floor(toTimestamp * 1000),
+          [Op.gte]: fromTimestamp,
+          [Op.lte]: Math.floor(toTimestamp * 1000),
         },
       },
       limit: countback,

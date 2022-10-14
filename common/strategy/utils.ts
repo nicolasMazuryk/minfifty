@@ -9,6 +9,8 @@ export const logger = {
   timeEnd: (...args: any) => console.timeEnd(...args),
 }
 
+export const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
+
 export const roundToPrecision = (precision: number) => (value: number) =>
   Number(value.toFixed(precision))
 
@@ -21,12 +23,17 @@ export const median = (arr: any[]) => {
   return arr.length % 2 !== 0 ? nums[mid] : (nums[mid - 1] + nums[mid]) / 2 || 0
 }
 
-export const average = (arr: any[]) =>
-  arr.reduce((a, b) => a + b, 0) / arr.length || 0
+export const average = (arr: any[]) => arr.reduce((a, b) => a + b, 0) / arr.length || 0
 
 export const roundEpochToFullMinute = (epoch: number) => {
   const date = new Date(epoch)
   date.setSeconds(0)
   date.setMilliseconds(0)
   return date.getTime()
+}
+
+export const countMinutes = (start: Date, end: Date) => {
+  const startTime = new Date(start).getTime()
+  const endTime = new Date(end).getTime()
+  return Math.ceil((endTime - startTime) / (1000 * 60))
 }
