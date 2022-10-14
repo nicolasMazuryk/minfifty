@@ -120,7 +120,7 @@ export default class TVChartContainer extends React.PureComponent<
               this.tvWidget
                 .activeChart()
                 .getAllStudies()
-                .forEach((study) =>
+                .forEach(study =>
                   // eslint-disable-next-line no-console
                   console.log(
                     // eslint-disable-next-line @typescript-eslint/ban-ts-comment

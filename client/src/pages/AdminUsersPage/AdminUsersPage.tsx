@@ -41,7 +41,7 @@ const AdminUsersPage: React.FC = () => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {users.map((row) => {
+            {users.map(row => {
               const chipColor = row.status === USER_STATUSES.ACTIVE ? 'green' : 'gold'
 
               return (

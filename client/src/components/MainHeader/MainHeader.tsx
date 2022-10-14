@@ -89,7 +89,7 @@ const MainHeader: React.FC = () => {
       <Container maxWidth="xl">
         <Toolbar disableGutters>
           <Box>
-            {menuItems.map((item) => {
+            {menuItems.map(item => {
               const commonProps = {
                 sx: { color: 'white' },
                 key: item.key,

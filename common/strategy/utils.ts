@@ -9,7 +9,7 @@ export const logger = {
   timeEnd: (...args: any) => console.timeEnd(...args),
 }
 
-export const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
+export const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
 
 export const roundToPrecision = (precision: number) => (value: number) =>
   Number(value.toFixed(precision))

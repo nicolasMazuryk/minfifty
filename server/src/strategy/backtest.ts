@@ -3,6 +3,7 @@ import '../alias-runtime'
 
 // import { MarketData } from '@/models'
 import { IBar } from '@common/strategy'
+import { START_PERIOD_TIME, END_PERIOD_TIME } from '@common/strategy/config'
 import { MARKET, TICKER } from '@common/strategy/constants'
 import Strategy from '@common/strategy/strategy'
 import { logger, wait } from '@common/strategy/utils'
@@ -15,9 +16,6 @@ import {
   // validateMarketDataIntegrity,
   wsCandleToMarketData,
 } from '@/strategy/helpers'
-
-const START_PERIOD_TIME = '2022-10-12T00:00:00+00:00'
-const END_PERIOD_TIME = '2022-10-13T23:00:00+00:00'
 
 const strategy = new Strategy()
 

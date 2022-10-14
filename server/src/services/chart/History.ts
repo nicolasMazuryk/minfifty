@@ -1,10 +1,8 @@
+import { START_PERIOD_TIME, END_PERIOD_TIME } from '@common/strategy/config'
 import { Op } from 'sequelize'
 
 import { MarketData } from '@/models'
 import Base from '@/services/Base'
-
-const START_PERIOD_TIME = '2022-10-12T00:00:00+00:00'
-const END_PERIOD_TIME = '2022-10-13T23:00:00+00:00'
 
 interface IData {
   symbol: string

@@ -118,7 +118,7 @@ Promise<readonly CustomIndicator[]> =>
 
           strategy.run(bar)
 
-          const lines = strategy.bases.map((base) => base.price).slice(0, 5)
+          const lines = strategy.bases.map(base => base.price).slice(0, 5)
 
           // const lines = strategy.bases.map(base => ({
           //   value: base.price,
@@ -126,15 +126,15 @@ Promise<readonly CustomIndicator[]> =>
           // }))
 
           const buyOrders = strategy.orders
-            .filter((order) => order.status === ORDER_STATUS.FILLED)
-            .filter((order) => order.timeOpen === bar.time)
-            .map((order) => order.price)
+            .filter(order => order.status === ORDER_STATUS.FILLED)
+            .filter(order => order.timeOpen === bar.time)
+            .map(order => order.price)
             .slice(0, 5)
 
           const sellOrders = strategy.orders
-            .filter((order) => [ORDER_STATUS.COMPLETED, ORDER_STATUS.CLOSED].includes(order.status))
-            .filter((order) => order.timeClosed === bar.time)
-            .map((order) => order.takeProfit)
+            .filter(order => [ORDER_STATUS.COMPLETED, ORDER_STATUS.CLOSED].includes(order.status))
+            .filter(order => order.timeClosed === bar.time)
+            .map(order => order.takeProfit)
             .slice(0, 2)
 
           const result = [
