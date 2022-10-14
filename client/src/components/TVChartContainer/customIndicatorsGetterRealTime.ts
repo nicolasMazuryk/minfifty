@@ -1,5 +1,7 @@
-import { ORDER_STATUS } from '@common/strategy/constants'
-import Strategy from '@common/strategy/strategy'
+import { IChartIndicator } from '@common/strategy'
+import { wait } from '@common/strategy/utils'
+
+import api from '@/api'
 
 import {
   CustomIndicator,
@@ -8,7 +10,7 @@ import {
 
 // import { logger } from './strategy/helpers'
 
-const strategy = new Strategy()
+let chartIndicator: IChartIndicator[]
 
 const createPlots = (linePlots: number, shapePlots: number) => {
   const plots = []
@@ -97,7 +99,20 @@ Promise<readonly CustomIndicator[]> =>
       constructor: function () {
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
-        this.main = function (context, inputCallback) {
+        this.init = async function (context, inputCallback) {
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          // @ts-ignore
+          this._context = context
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          // @ts-ignore
+          this._input = inputCallback
+
+          chartIndicator = await api.chart.getChartIndicator()
+        }
+
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
+        this.main = async function (context, inputCallback) {
           // eslint-disable-next-line @typescript-eslint/ban-ts-comment
           // @ts-ignore
           this._context = context
@@ -106,43 +121,24 @@ Promise<readonly CustomIndicator[]> =>
           this._input = inputCallback
 
           const { symbol } = context
-          const { time, open, high, low, close, volume, index } = symbol
+          const { index } = symbol
+          // const { time, open, high, low, close, volume, index } = symbol
+
+          if (index < 0) {
+            await wait(2000)
+            return
+          }
 
           if (index < 0) return
 
-          const bar = { time, open, high, low, close, volume }
-
-          // debugger
-
-          bar.time = new Date(bar.time)
-
-          strategy.run(bar)
-
-          const lines = strategy.bases.map(base => base.price).slice(0, 5)
-
-          // const lines = strategy.bases.map(base => ({
-          //   value: base.price,
-          //   offset: index,
-          // }))
-
-          const buyOrders = strategy.orders
-            .filter(order => order.status === ORDER_STATUS.FILLED)
-            .filter(order => order.timeOpen === bar.time)
-            .map(order => order.price)
-            .slice(0, 5)
-
-          const sellOrders = strategy.orders
-            .filter(order => [ORDER_STATUS.COMPLETED, ORDER_STATUS.CLOSED].includes(order.status))
-            .filter(order => order.timeClosed === bar.time)
-            .map(order => order.takeProfit)
-            .slice(0, 2)
+          const { bases, buyOrders, sellOrders } = chartIndicator[index]
 
           const result = [
-            ...lines,
-            ...Array(5 - lines.length).fill(undefined),
-            ...buyOrders,
+            ...bases.slice(0, 5),
+            ...Array(5 - bases.length).fill(undefined),
+            ...buyOrders.slice(0, 5),
             ...Array(5 - buyOrders.length).fill(undefined),
-            ...sellOrders,
+            ...sellOrders.slice(0, 2),
             ...Array(2 - sellOrders.length).fill(undefined),
           ]
 

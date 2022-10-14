@@ -26,4 +26,6 @@ router.get('/chart/history', routes.chart.history)
 router.get('/chart/marks', routes.chart.marks)
 router.get('/chart/timescale_marks', routes.chart.timescaleMarks)
 
+router.get('/chart/indicator', routes.chart.getChartIndicator)
+
 export default router

@@ -2,13 +2,15 @@
 import '../alias-runtime'
 
 // import { MarketData } from '@/models'
-import { IBar } from '@common/strategy'
+
+import { IBar, IChartIndicator } from '@common/strategy'
 import { START_PERIOD_TIME, END_PERIOD_TIME } from '@common/strategy/config'
 import { MARKET, TICKER } from '@common/strategy/constants'
 import Strategy from '@common/strategy/strategy'
 import { logger, wait } from '@common/strategy/utils'
 
 import binance from '@/external/binance'
+import { ChartIndicator } from '@/models'
 import {
   getBacktestBars,
   marketDataToBar,
@@ -18,6 +20,19 @@ import {
 } from '@/strategy/helpers'
 
 const strategy = new Strategy()
+
+const chartIndicatorResults: IChartIndicator[] = []
+
+const saveChartIndicatorData = async (strategy: Strategy) => {
+  const result = strategy.barChartVisualisation
+
+  chartIndicatorResults.push(result)
+
+  if (chartIndicatorResults.length % 1000) {
+    await ChartIndicator.bulkCreate(chartIndicatorResults)
+    chartIndicatorResults.length = 0
+  }
+}
 
 ;(async () => {
   await syncRemainingBarsUpToDate(MARKET.FUTURES, TICKER.ETH)
@@ -35,6 +50,12 @@ const strategy = new Strategy()
 
   for (const bar of bars) {
     strategy.run(bar)
+
+    await saveChartIndicatorData(strategy)
+  }
+
+  if (chartIndicatorResults.length) {
+    await ChartIndicator.bulkCreate(chartIndicatorResults)
   }
 
   logger.timeEnd('Strategy')

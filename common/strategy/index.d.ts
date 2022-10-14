@@ -56,3 +56,13 @@ export interface IMarketData {
   takerBuyBaseAssetVolume: string
   takerBuyQuoteAssetVolume: string
 }
+
+export interface IChartIndicator {
+  time: Date
+  timestamp: number
+  bases: number[]
+  brokenBases: number[]
+  respectedBases: number[]
+  buyOrders: number[]
+  sellOrders: number[]
+}

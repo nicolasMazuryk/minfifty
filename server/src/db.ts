@@ -2,6 +2,7 @@ import Sequelize from 'sequelize'
 
 import config from '@/config'
 import { Action } from '@/models/Actions'
+import { ChartIndicator } from '@/models/ChartIndicator'
 import { Company } from '@/models/Company'
 import * as list from '@/models/list'
 import { MarketData } from '@/models/MarketData'
@@ -22,6 +23,7 @@ MarketData.initialize(sequelize)
 Marks.initialize(sequelize)
 Symbols.initialize(sequelize)
 TimescaleMarks.initialize(sequelize)
+ChartIndicator.initialize(sequelize)
 
 const { models } = sequelize
 

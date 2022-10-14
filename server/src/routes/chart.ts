@@ -1,6 +1,7 @@
 import { Request } from 'express'
 
 import Config from '@/services/chart/Config'
+import GetChartIndicator from '@/services/chart/GetChartIndicator'
 import History from '@/services/chart/History'
 import Marks from '@/services/chart/Marks'
 import Search from '@/services/chart/Search'
@@ -17,4 +18,5 @@ export default {
   history: makeServiceRunner(History, (req: Request) => req.query),
   marks: makeServiceRunner(Marks, (req: Request) => req.query),
   timescaleMarks: makeServiceRunner(TimescaleMarks, (req: Request) => req.query),
+  getChartIndicator: makeServiceRunner(GetChartIndicator, (req: Request) => req.query),
 }

@@ -4,6 +4,6 @@ module.exports = {
 //  'config': resolve('src', 'config', 'migrations.js'),
 //  'migrations-path': resolve('src', 'migrations')
 
-  'config': resolve('build', 'config', 'migrations.js'),
-  'migrations-path': resolve('build', 'migrations')
+  'config': resolve('build', 'server', 'src', 'config', 'migrations.js'),
+  'migrations-path': resolve('build', 'server', 'src', 'migrations')
 };
