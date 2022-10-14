@@ -44,23 +44,13 @@ module.exports = {
     sourceType: 'module',
     tsconfigRootDir: __dirname,
   },
-  plugins: [
-    'react',
-    'react-hooks',
-    '@typescript-eslint',
-    'jest',
-    'import',
-    'sort-keys-fix',
-  ],
+  plugins: ['react', 'react-hooks', '@typescript-eslint', 'jest', 'import', 'sort-keys-fix'],
 
   root: true,
   rules: {
     '@typescript-eslint/default-param-last': 'off',
     '@typescript-eslint/lines-between-class-members': 'off',
-    '@typescript-eslint/naming-convention': [
-      'error',
-      { format: ['UPPER_CASE'], selector: 'enum' },
-    ],
+    '@typescript-eslint/naming-convention': ['error', { format: ['UPPER_CASE'], selector: 'enum' }],
     '@typescript-eslint/no-explicit-any': 'off',
     '@typescript-eslint/no-use-before-define': ['error', { functions: false }],
     'arrow-body-style': ['error', 'as-needed'],
