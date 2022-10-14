@@ -9,12 +9,7 @@ export default class Auth extends Base {
     return this.apiClient.post('auth', { data: { email, password } })
   }
 
-  signup(data: {
-    username: string
-    email: string
-    password: string
-    confirmPassword: string
-  }) {
+  signup(data: { username: string; email: string; password: string; confirmPassword: string }) {
     return this.apiClient.post('users', { data })
   }
 

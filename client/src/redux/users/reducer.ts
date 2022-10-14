@@ -37,15 +37,11 @@ export default combineReducers<IUsersState>({
       case actions.LIST_SUCCESS:
         return action.data
       case actions.SHOW_REQUEST:
-        return state.map(user =>
-          user.id === action.id ? { ...user, loading: true } : user,
-        )
+        return state.map((user) => (user.id === action.id ? { ...user, loading: true } : user))
       case actions.SHOW_SUCCESS:
-        return state.map(user => (user.id === action.id ? action.data : user))
+        return state.map((user) => (user.id === action.id ? action.data : user))
       case actions.SHOW_FAILURE:
-        return state.map(user =>
-          user.id === action.id ? { ...user, loading: false } : user,
-        )
+        return state.map((user) => (user.id === action.id ? { ...user, loading: false } : user))
       default:
         return state
     }

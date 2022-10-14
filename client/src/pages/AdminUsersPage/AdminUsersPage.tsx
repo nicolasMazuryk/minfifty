@@ -41,9 +41,8 @@ const AdminUsersPage: React.FC = () => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {users.map(row => {
-              const chipColor =
-                row.status === USER_STATUSES.ACTIVE ? 'green' : 'gold'
+            {users.map((row) => {
+              const chipColor = row.status === USER_STATUSES.ACTIVE ? 'green' : 'gold'
 
               return (
                 <TableRow
@@ -73,10 +72,7 @@ const AdminUsersPage: React.FC = () => {
                     />
                   </TableCell>
                   <TableCell>
-                    <Button
-                      size="small"
-                      onClick={() => dispatch(showUser(row.id))}
-                    >
+                    <Button size="small" onClick={() => dispatch(showUser(row.id))}>
                       INFO
                     </Button>
                   </TableCell>

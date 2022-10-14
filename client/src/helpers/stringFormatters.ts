@@ -26,11 +26,7 @@ export const CURRENCY_OPTIONS = {
 }
 const locale = 'en-US'
 
-export const currencyString = (
-  num: number,
-  currency = 'USD',
-  options = CURRENCY_OPTIONS,
-) =>
+export const currencyString = (num: number, currency = 'USD', options = CURRENCY_OPTIONS) =>
   `${num.toLocaleString(locale, {
     ...options,
     currency,

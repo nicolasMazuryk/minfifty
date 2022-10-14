@@ -26,26 +26,11 @@ const RootComponent = () => (
       <Route path={ROUTES.CHART} element={<ChartPage />} />
       <Route path={ROUTES.HOME} element={<HomePage />} />
       <Route path={ROUTES.CONFIRM_EMAIL} element={<ConfirmEmail />} />
-      <Route
-        path={ROUTES.ADMIN}
-        element={<PrivateRoute component={AdminContainer} />}
-      />
-      <Route
-        path={ROUTES.ADMIN_USERS}
-        element={<PrivateRoute component={AdminUsersPage} />}
-      />
-      <Route
-        path={ROUTES.PROFILE}
-        element={<PrivateRoute component={ProfilePage} />}
-      />
-      <Route
-        path={ROUTES.LOGIN}
-        element={<AuthContainer component={LoginPage} />}
-      />
-      <Route
-        path={ROUTES.SIGNUP}
-        element={<AuthContainer component={SignupPage} />}
-      />
+      <Route path={ROUTES.ADMIN} element={<PrivateRoute component={AdminContainer} />} />
+      <Route path={ROUTES.ADMIN_USERS} element={<PrivateRoute component={AdminUsersPage} />} />
+      <Route path={ROUTES.PROFILE} element={<PrivateRoute component={ProfilePage} />} />
+      <Route path={ROUTES.LOGIN} element={<AuthContainer component={LoginPage} />} />
+      <Route path={ROUTES.SIGNUP} element={<AuthContainer component={SignupPage} />} />
       <Route
         path={ROUTES.RESET_PASSWORD}
         element={<AuthContainer component={ResetPasswordPage} />}

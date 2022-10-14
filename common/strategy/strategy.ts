@@ -1,16 +1,6 @@
 import { IBase, IBar, IOrder } from './index'
-import {
-  ORDER_SIDE,
-  ORDER_TYPE,
-  ORDER_STATUS,
-} from './constants'
-import {
-  roundToPrecision,
-  median,
-  average,
-  max,
-  logger,
-} from './utils'
+import { ORDER_SIDE, ORDER_TYPE, ORDER_STATUS } from './constants'
+import { roundToPrecision, median, average, max, logger } from './utils'
 
 // const round = roundToPrecision(TICKER_PRECISION.ETH)
 const round = roundToPrecision(2)
@@ -88,10 +78,7 @@ export default class Strategy {
       if (high / this.bars[barIndex].low >= 1 + BASE_RETRACEMENT_CONFIRMATION) {
         const confirmedBarLow = this.bars[barIndex].low
 
-        const precedingBars = this.bars.slice(
-          Math.max(0, barIndex - BASE_PRECEDING_BARS),
-          barIndex,
-        )
+        const precedingBars = this.bars.slice(Math.max(0, barIndex - BASE_PRECEDING_BARS), barIndex)
 
         if (precedingBars.every(({ low }) => confirmedBarLow <= low)) {
           if (barIndex <= this.newBaseBarIndex) return
@@ -112,18 +99,17 @@ export default class Strategy {
       baseBarIndex,
     )
 
-    const highestHigh = max(precedingBars.map(bar => bar.high))
+    const highestHigh = max(precedingBars.map((bar) => bar.high))
 
-    const ignore =
-      baseBarLow >= highestHigh * (1 - IGNORE_BASE_ON_TOP_THRESHOLD)
+    const ignore = baseBarLow >= highestHigh * (1 - IGNORE_BASE_ON_TOP_THRESHOLD)
 
     return ignore
   }
 
   private setBaseBroken() {
     this.bases
-      .filter(base => !base.isBroken)
-      .forEach(base => {
+      .filter((base) => !base.isBroken)
+      .forEach((base) => {
         base.isBroken = this.current <= base.levels[0]
       })
   }
@@ -161,10 +147,7 @@ export default class Strategy {
 
   private openBaseOrders(base: IBase) {
     for (let level = 1; level <= NUMBER_OF_LEVELS; level++) {
-      const price = round(
-        base.price *
-        (1.0 - LEVEL_STEP * Math.pow(level, LEVEL_STEP_MULTIPLIER)),
-      )
+      const price = round(base.price * (1.0 - LEVEL_STEP * Math.pow(level, LEVEL_STEP_MULTIPLIER)))
       const takeProfit = round(base.price * (1 - TAKE_PROFIT_BELOW_BASE))
 
       const order = {
@@ -191,24 +174,22 @@ export default class Strategy {
 
   private cancelBaseOrders(base: IBase) {
     this.orders
-      .filter(order => order.baseBarIndex === base.barIndex)
-      .filter(order => order.status === ORDER_STATUS.OPEN)
-      .forEach(order => {
+      .filter((order) => order.baseBarIndex === base.barIndex)
+      .filter((order) => order.status === ORDER_STATUS.OPEN)
+      .forEach((order) => {
         order.status = ORDER_STATUS.CANCELED
       })
 
-    this.orders = this.orders.filter(
-      order => order.status !== ORDER_STATUS.CANCELED,
-    )
+    this.orders = this.orders.filter((order) => order.status !== ORDER_STATUS.CANCELED)
   }
 
   private closeBaseOrders(base: IBase, closePrice: number) {
     this.cancelBaseOrders(base)
 
     this.orders
-      .filter(order => order.baseBarIndex === base.barIndex)
-      .filter(order => order.status === ORDER_STATUS.FILLED)
-      .forEach(order => {
+      .filter((order) => order.baseBarIndex === base.barIndex)
+      .filter((order) => order.status === ORDER_STATUS.FILLED)
+      .forEach((order) => {
         order.timeClosed = this.isRealTime ? new Date() : this.bar.time
         order.status = ORDER_STATUS.CLOSED
         order.fee = order.fee + order.quantity * closePrice * TRADING_FEE
@@ -218,8 +199,8 @@ export default class Strategy {
 
   private processBrokenBases() {
     this.bases
-      .filter(base => base.isBroken)
-      .forEach(base => {
+      .filter((base) => base.isBroken)
+      .forEach((base) => {
         this.calculateBaseBreakEven(base)
 
         this.handleEmergencyTakeProfit(base)
@@ -229,43 +210,32 @@ export default class Strategy {
         this.setBaseRespected(base)
       })
 
-    this.bases = this.bases.filter(base => !base.isRespected)
+    this.bases = this.bases.filter((base) => !base.isRespected)
   }
 
   private calculateBaseBreakEven(base: IBase) {
     const orders = this.orders
-      .filter(order => order.baseBarIndex === base.barIndex)
-      .filter(order =>
-        [
-          ORDER_STATUS.FILLED,
-          ORDER_STATUS.COMPLETED,
-          ORDER_STATUS.CLOSED,
-        ].includes(order.status),
+      .filter((order) => order.baseBarIndex === base.barIndex)
+      .filter((order) =>
+        [ORDER_STATUS.FILLED, ORDER_STATUS.COMPLETED, ORDER_STATUS.CLOSED].includes(order.status),
       )
 
     // TODO: include fees in calculation
-    base.breakEven =
-      round(
-        orders.reduce((acc, order) => acc + order.price, 0) / orders.length,
-      ) || 0
+    base.breakEven = round(orders.reduce((acc, order) => acc + order.price, 0) / orders.length) || 0
   }
 
   private handleEmergencyTakeProfit(base: IBase) {
     const emergencyLevel = base.levels[EMERGENCY_LEVEL_NUMBER - 1]
 
-    if (
-      this.current <= emergencyLevel &&
-      this.current < base.emergencyPriceLow
-    ) {
+    if (this.current <= emergencyLevel && this.current < base.emergencyPriceLow) {
       base.emergencyPriceLow = this.current
 
       base.emergencyTakeProfit =
-        this.current +
-        (base.price - this.current) * EMERGENCY_TAKE_PROFIT_RETRACEMENT
+        this.current + (base.price - this.current) * EMERGENCY_TAKE_PROFIT_RETRACEMENT
       // TODO: once the emergency take profit is triggered, the last 10th order is CANCELED, but it should be FILLED first and then CANCELED. Not so suffiicient but still
       this.orders
-        .filter(order => order.baseBarIndex === base.barIndex)
-        .forEach(order => {
+        .filter((order) => order.baseBarIndex === base.barIndex)
+        .forEach((order) => {
           order.takeProfit = base.emergencyTakeProfit
         })
     }
@@ -289,8 +259,7 @@ export default class Strategy {
     const regularTakeProfit = base.price * (1 - TAKE_PROFIT_BELOW_BASE)
 
     const isBarLimitExceeded =
-      BASE_BARS_LENGTH_LIMIT &&
-      this.barIndex - base.barIndex >= BASE_BARS_LENGTH_LIMIT
+      BASE_BARS_LENGTH_LIMIT && this.barIndex - base.barIndex >= BASE_BARS_LENGTH_LIMIT
 
     if (
       higherPrice >= regularTakeProfit ||
@@ -300,9 +269,7 @@ export default class Strategy {
       base.isRespected = true
 
       const closePrice =
-        higherPrice >= regularTakeProfit
-          ? regularTakeProfit
-          : base.emergencyTakeProfit
+        higherPrice >= regularTakeProfit ? regularTakeProfit : base.emergencyTakeProfit
 
       this.closeBaseOrders(base, closePrice)
 
@@ -319,8 +286,7 @@ export default class Strategy {
     const emergencyLevel = base.levels[EMERGENCY_LEVEL_NUMBER - 1]
 
     const isEmergencyLevelHitOnCurrentBar =
-      !(this.bars[this.barIndex - 1].low <= emergencyLevel) &&
-      base.emergencyPriceLow < 999999
+      !(this.bars[this.barIndex - 1].low <= emergencyLevel) && base.emergencyPriceLow < 999999
 
     return isBaseBrokenOnCurrentBar || isEmergencyLevelHitOnCurrentBar
   }
@@ -328,7 +294,7 @@ export default class Strategy {
   private executeOrders() {
     const entryPrice = this.current
 
-    this.orders.forEach(order => {
+    this.orders.forEach((order) => {
       if (order.status === ORDER_STATUS.OPEN && entryPrice <= order.price) {
         order.timeOpen = this.isRealTime ? new Date() : this.bar.time
         order.status = ORDER_STATUS.FILLED
@@ -336,7 +302,7 @@ export default class Strategy {
       }
     })
 
-    this.orders.forEach(order => {
+    this.orders.forEach((order) => {
       if (
         order.status === ORDER_STATUS.FILLED &&
         this.getOrderExitPrice(order) >= order.takeProfit
@@ -344,8 +310,7 @@ export default class Strategy {
         order.timeClosed = this.isRealTime ? new Date() : this.bar.time
         order.status = ORDER_STATUS.COMPLETED
         order.fee = order.fee + order.quantity * order.takeProfit * TRADING_FEE
-        order.PNL =
-          (order.takeProfit - order.price) * order.quantity - order.fee
+        order.PNL = (order.takeProfit - order.price) * order.quantity - order.fee
       }
     })
 
@@ -354,7 +319,7 @@ export default class Strategy {
   // TODO: refactor this piece of code
   private getOrderExitPrice(order: IOrder) {
     // eslint-disable-next-line @typescript-eslint/no-shadow
-    const base = this.bases.find(base => base.barIndex === order.baseBarIndex)
+    const base = this.bases.find((base) => base.barIndex === order.baseBarIndex)
     const exitPrice =
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       this.isBaseBrokenOrEmergencyLevelHitOnCurrentBar(base!) || this.isRealTime
@@ -365,7 +330,7 @@ export default class Strategy {
   }
 
   public get positionAvgPrice() {
-    return average(this.openTrades.map(order => order.price))
+    return average(this.openTrades.map((order) => order.price))
   }
 
   public get positionSize() {
@@ -382,8 +347,7 @@ export default class Strategy {
 
   public get openProfit() {
     return this.openTrades.reduce(
-      (acc, order) =>
-        acc + ((this.current - order.price) * order.quantity - order.fee),
+      (acc, order) => acc + ((this.current - order.price) * order.quantity - order.fee),
       0,
     )
   }
@@ -393,11 +357,11 @@ export default class Strategy {
   }
 
   public get openTrades() {
-    return this.orders.filter(order => order.status === ORDER_STATUS.FILLED)
+    return this.orders.filter((order) => order.status === ORDER_STATUS.FILLED)
   }
 
   public get closedTrades() {
-    return this.orders.filter(order =>
+    return this.orders.filter((order) =>
       [ORDER_STATUS.COMPLETED, ORDER_STATUS.CLOSED].includes(order.status),
     )
   }
@@ -407,11 +371,11 @@ export default class Strategy {
   }
 
   public get winTrades() {
-    return this.closedTrades.filter(order => order.PNL > 0)
+    return this.closedTrades.filter((order) => order.PNL > 0)
   }
 
   public get lossTrades() {
-    return this.closedTrades.filter(order => order.PNL < 0)
+    return this.closedTrades.filter((order) => order.PNL < 0)
   }
 
   public get grossProfit() {
@@ -460,22 +424,16 @@ export default class Strategy {
 
   public get priceDrawdown() {
     if (this.positionAvgPrice === 0) return 0
-    return (
-      ((this.positionAvgPrice - this.current) / this.positionAvgPrice) * 100
-    )
+    return ((this.positionAvgPrice - this.current) / this.positionAvgPrice) * 100
   }
 
   public get equityDrawdown() {
-    return (
-      (((this.positionAvgPrice - this.current) * this.positionSize) /
-        this.equity) *
-      100
-    ) // instead of this.equity we can use this.initialCapital
+    return (((this.positionAvgPrice - this.current) * this.positionSize) / this.equity) * 100 // instead of this.equity we can use this.initialCapital
   }
 
   // Bases
   public get brokenBases() {
-    return this.bases.filter(base => base.isBroken)
+    return this.bases.filter((base) => base.isBroken)
   }
 
   public get brokenBasesCount() {
@@ -487,7 +445,7 @@ export default class Strategy {
   }
 
   public get allBrokenBases() {
-    return this.allBases.filter(base => base.isBroken)
+    return this.allBases.filter((base) => base.isBroken)
   }
 
   public get allBrokenBasesCount() {
@@ -495,7 +453,7 @@ export default class Strategy {
   }
 
   public get closedInLossBases() {
-    return this.allBases.filter(base => base.isClosedInLoss)
+    return this.allBases.filter((base) => base.isClosedInLoss)
   }
 
   public get closedInLossBasesCount() {
@@ -556,14 +514,8 @@ export default class Strategy {
   public updateStatistics() {
     // --------------------------------------------------------------
     // Risk Statistics
-    this.statistics.maxPositionSize = Math.max(
-      this.statistics.maxPositionSize,
-      this.positionSize,
-    )
-    this.statistics.maxOpenTrades = Math.max(
-      this.statistics.maxOpenTrades,
-      this.openTradesCount,
-    )
+    this.statistics.maxPositionSize = Math.max(this.statistics.maxPositionSize, this.positionSize)
+    this.statistics.maxOpenTrades = Math.max(this.statistics.maxOpenTrades, this.openTradesCount)
     this.statistics.maxLiquidationPrice = Math.max(
       this.statistics.maxLiquidationPrice,
       isNaN(this.liquidationPrice) ? 0 : this.liquidationPrice,
@@ -590,10 +542,7 @@ export default class Strategy {
       this.statistics.isLiquidated || this.current <= this.liquidationPrice
 
     // Bases Statistics
-    this.statistics.allBases = Math.max(
-      this.statistics.allBases,
-      this.allBasesCount,
-    )
+    this.statistics.allBases = Math.max(this.statistics.allBases, this.allBasesCount)
     this.statistics.allBrokenBases = Math.max(
       this.statistics.allBrokenBases,
       this.allBrokenBasesCount,
@@ -607,24 +556,18 @@ export default class Strategy {
       this.closedInLossBasesCount,
     )
 
-    this.statistics.baseDropMax = max(
-      this.allBrokenBases.map(base => base.stats.percentDrop),
-    )
-    this.statistics.baseDropAvg = average(
-      this.allBrokenBases.map(base => base.stats.percentDrop),
-    )
+    this.statistics.baseDropMax = max(this.allBrokenBases.map((base) => base.stats.percentDrop))
+    this.statistics.baseDropAvg = average(this.allBrokenBases.map((base) => base.stats.percentDrop))
     this.statistics.baseDropMedian = median(
-      this.allBrokenBases.map(base => base.stats.percentDrop),
+      this.allBrokenBases.map((base) => base.stats.percentDrop),
     )
 
-    this.statistics.baseBarsMax = max(
-      this.allBrokenBases.map(base => base.stats.barsLength),
-    )
+    this.statistics.baseBarsMax = max(this.allBrokenBases.map((base) => base.stats.barsLength))
     this.statistics.brokenBaseBarsAvg = average(
-      this.allBrokenBases.map(base => base.stats.barsLength),
+      this.allBrokenBases.map((base) => base.stats.barsLength),
     )
     this.statistics.brokenBaseBarsMedian = median(
-      this.allBrokenBases.map(base => base.stats.barsLength),
+      this.allBrokenBases.map((base) => base.stats.barsLength),
     )
   }
 

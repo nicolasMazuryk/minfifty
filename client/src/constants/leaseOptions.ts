@@ -1,8 +1,4 @@
-export const TYPES_OF_SPACE = [
-  'Bodega Industrial',
-  'Local Comercial',
-  'Oficina',
-]
+export const TYPES_OF_SPACE = ['Bodega Industrial', 'Local Comercial', 'Oficina']
 
 export const SQUARE_METERS_RANGE = {
   1: {

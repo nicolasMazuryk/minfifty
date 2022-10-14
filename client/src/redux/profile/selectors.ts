@@ -18,28 +18,19 @@ export const successfullyRegistered = createSelector(
   ({ successfullyRegistered }) => successfullyRegistered,
 )
 
-export const isChangedPwd = createSelector(
-  profile,
-  ({ isChangedPwd }) => isChangedPwd,
-)
+export const isChangedPwd = createSelector(profile, ({ isChangedPwd }) => isChangedPwd)
 
 export const isRecoveryRequested = createSelector(
   profile,
   ({ isRecoveryRequested }) => isRecoveryRequested,
 )
 
-export const isConfirmed = createSelector(
-  profile,
-  ({ isConfirmed }) => isConfirmed,
-)
+export const isConfirmed = createSelector(profile, ({ isConfirmed }) => isConfirmed)
 
 export const user = createSelector(profile, ({ user }) => user || ({} as IUser))
 
 export const role = createSelector(user, ({ role }) => role)
 
-export const isAdmin = createSelector(
-  user,
-  ({ role }) => role === USER_ROLES.ADMIN,
-)
+export const isAdmin = createSelector(user, ({ role }) => role === USER_ROLES.ADMIN)
 
 export const isAuthenticated = createSelector(user, ({ id }) => Boolean(id))

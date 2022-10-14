@@ -15,13 +15,7 @@ export const LOGIN_REQUEST = `${prefix}/LOGIN_REQUEST`
 export const LOGIN_SUCCESS = `${prefix}/LOGIN_SUCCESS`
 export const LOGIN_FAILURE = `${prefix}/LOGIN_FAILURE`
 
-export const login = ({
-  email,
-  password,
-}: {
-  email: string
-  password: string
-}) => ({
+export const login = ({ email, password }: { email: string; password: string }) => ({
   type: [LOGIN_REQUEST, LOGIN_SUCCESS, LOGIN_FAILURE],
   promise: (api: IApi) => api.auth.login(email, password),
 })
@@ -68,11 +62,7 @@ export const PASSWORD_RECOVERY_SUCCESS = `${prefix}/PASSWORD_RECOVERY_SUCCESS`
 export const PASSWORD_RECOVERY_FAILURE = `${prefix}/PASSWORD_RECOVERY_FAILURE`
 
 export const passwordRecovery = ({ email }: { email: string }) => ({
-  type: [
-    PASSWORD_RECOVERY_REQUEST,
-    PASSWORD_RECOVERY_SUCCESS,
-    PASSWORD_RECOVERY_FAILURE,
-  ],
+  type: [PASSWORD_RECOVERY_REQUEST, PASSWORD_RECOVERY_SUCCESS, PASSWORD_RECOVERY_FAILURE],
   promise: (api: IApi) => api.auth.resetPassword(email),
 })
 
@@ -89,10 +79,6 @@ export const resetPassword = ({
   password: string
   confirmPassword: string
 }) => ({
-  type: [
-    RESET_PASSWORD_REQUEST,
-    RESET_PASSWORD_SUCCESS,
-    RESET_PASSWORD_FAILURE,
-  ],
+  type: [RESET_PASSWORD_REQUEST, RESET_PASSWORD_SUCCESS, RESET_PASSWORD_FAILURE],
   promise: (api: IApi) => api.auth.setPassword(hash, password, confirmPassword),
 })

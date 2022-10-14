@@ -13,10 +13,7 @@ export interface IAuthContainer {
   component: React.ComponentType
 }
 
-const AuthContainer: React.FC<IAuthContainer> = ({
-  component: Component,
-  ...rest
-}) => {
+const AuthContainer: React.FC<IAuthContainer> = ({ component: Component, ...rest }) => {
   const isAuthenticated = useSelector(selector.isAuthenticated)
   const isLoading = useSelector(selector.loading)
 

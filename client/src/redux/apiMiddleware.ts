@@ -12,19 +12,11 @@ export interface IAction extends AnyAction {
 }
 
 export default function apiMiddleware(api: IApi) {
-  return ({
-      dispatch,
-      getState,
-    }: {
-      dispatch: Dispatch<IAction>
-      getState: () => IRootState
-    }) =>
+  return ({ dispatch, getState }: { dispatch: Dispatch<IAction>; getState: () => IRootState }) =>
     (next: Dispatch<IAction>) =>
     (action: IAction | ActionCreator<IAction>) => {
       if (typeof action === 'function') {
-        return dispatch(
-          action((selector: Selector<IRootState, any>) => selector(getState())),
-        )
+        return dispatch(action((selector: Selector<IRootState, any>) => selector(getState())))
       }
 
       const { promise, type, ...rest } = action

@@ -14,5 +14,5 @@ export const selectedId = (state: IRootState) => state[prefix].selected
 export const selectedUser = createSelector(
   selectedId,
   list,
-  (id, l) => l.find(u => u.id === id) || ({} as IUser),
+  (id, l) => l.find((u) => u.id === id) || ({} as IUser),
 )

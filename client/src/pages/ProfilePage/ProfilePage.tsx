@@ -24,11 +24,8 @@ const ProfilePage: React.FC = () => {
           </TableRow>
         </TableHead>
         <TableBody>
-          {[user].map(row => (
-            <TableRow
-              key={row.email}
-              sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
-            >
+          {[user].map((row) => (
+            <TableRow key={row.email} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
               <TableCell component="th" scope="row">
                 {row.email}
               </TableCell>

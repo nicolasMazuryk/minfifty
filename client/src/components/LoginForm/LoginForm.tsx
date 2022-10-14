@@ -57,18 +57,9 @@ const LoginPage: React.FC = () => {
         autoComplete="current-password"
       />
 
-      <Grid
-        container
-        direction="column"
-        justifyContent="center"
-        alignItems="center"
-      >
+      <Grid container direction="column" justifyContent="center" alignItems="center">
         <Grid item xs>
-          <Link
-            className={styles.link}
-            component={RouterLink}
-            to={ROUTES.PASSWORD_RECOVERY}
-          >
+          <Link className={styles.link} component={RouterLink} to={ROUTES.PASSWORD_RECOVERY}>
             Forgot your password?
           </Link>
         </Grid>

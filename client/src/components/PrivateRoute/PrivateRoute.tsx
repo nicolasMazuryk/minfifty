@@ -11,10 +11,7 @@ export interface IPrivateRoute {
   component: React.FC<any>
 }
 
-export const PrivateRoute: React.FC<IPrivateRoute> = ({
-  component: Component,
-  ...rest
-}) => {
+export const PrivateRoute: React.FC<IPrivateRoute> = ({ component: Component, ...rest }) => {
   const location = useLocation()
   const isLoading = useSelector(selectors.loading)
   const isAuthenticated = useSelector(selectors.isAuthenticated)
@@ -28,9 +25,7 @@ export const PrivateRoute: React.FC<IPrivateRoute> = ({
   }
 
   if (!isLoading && !isAuthenticated) {
-    return (
-      <Navigate to={{ pathname: ROUTES.LOGIN }} state={{ from: location }} />
-    )
+    return <Navigate to={{ pathname: ROUTES.LOGIN }} state={{ from: location }} />
   }
 
   return <Component {...rest} />
