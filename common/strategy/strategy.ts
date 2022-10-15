@@ -581,37 +581,6 @@ export default class Strategy {
       }
     },
   }
-
-  public get barChartVisualisation() {
-    if (this.isNewBase) {
-      const barIndex = this.bases[0].barIndex
-      const bar = this.bars[barIndex]
-
-      logger.info(bar)
-    }
-
-    const bases = this.bases.map(base => base.price)
-
-    const buyOrders = this.orders
-      .filter(order => order.status === ORDER_STATUS.FILLED)
-      .filter(order => order.timeOpen === this.bar.time)
-      .map(order => order.price)
-
-    const sellOrders = this.orders
-      .filter(order => [ORDER_STATUS.COMPLETED, ORDER_STATUS.CLOSED].includes(order.status))
-      .filter(order => order.timeClosed === this.bar.time)
-      .map(order => order.takeProfit)
-
-    return {
-      time: this.bar.time,
-      timestamp: new Date(this.bar.time).getTime(),
-      bases,
-      brokenBases: [],
-      respectedBases: [],
-      buyOrders,
-      sellOrders,
-    }
-  }
 }
 
 // TODO: when architect refactoring - write down on paper dependency components and blocks and then order them properly
