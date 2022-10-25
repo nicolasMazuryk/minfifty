@@ -1,5 +1,9 @@
+import fs from 'fs'
+import path from 'path'
+
 import { IBar, IMarketData } from '@common/strategy'
-import { countMinutes, roundEpochToFullMinute } from '@common/strategy/utils'
+import Strategy from '@common/strategy/strategy'
+import { countMinutes, logger, roundEpochToFullMinute } from '@common/strategy/utils'
 import { CandleChartResult, Candle } from 'binance-api-node'
 import Sequelize from 'sequelize'
 
@@ -7,6 +11,10 @@ import binance from '@/external/binance'
 import { MarketData } from '@/models'
 
 const { Op } = Sequelize
+
+const writeFileAsync = fs.promises.writeFile
+
+const destFolder = path.join(__dirname, './performance')
 
 export const candleToMarketData = (
   market: string,
@@ -176,4 +184,28 @@ export async function syncRemainingBarsUpToDate(market: string, ticker: string) 
     )
     await MarketData.bulkCreate(marketData)
   }
+}
+
+export const logStrategyPerformance = async (strategy: Strategy) => {
+  const strategyPerformance = {
+    ...strategy.realTimeStatistics,
+    ...strategy.statistics,
+  }
+
+  if (!fs.existsSync(destFolder)) {
+    fs.mkdirSync(destFolder)
+  }
+
+  const fileName = `${new Date()
+    .toLocaleDateString('en-GB', {
+      day: '2-digit',
+      month: 'short',
+    })
+    .replace('/', '-')} ${new Date().toLocaleTimeString('en-GB', { hour12: false })}.json`
+
+  const destFile = path.join(destFolder, fileName)
+
+  await writeFileAsync(destFile, JSON.stringify(strategyPerformance, null, 2))
+
+  logger.info(strategyPerformance)
 }

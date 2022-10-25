@@ -4,8 +4,12 @@ export interface IBase {
   isBroken: boolean
   isRespected: boolean
   breakEven: number
+  baseBounceTop: number
+  takeProfit: number
+  warningPriceLow: number
   emergencyTakeProfit: number
   emergencyPriceLow: number
+  stopLoss: number
   levels: number[] // TODO: remove levels. add EmergencyTriggerPrice instead
   isClosedInLoss: boolean
   stats: {
@@ -35,6 +39,7 @@ export interface IOrder {
   amount: number
   status: string
   takeProfit: number
+  stopLoss: number
   fee: number
   PNL: number
 }

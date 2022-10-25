@@ -46,3 +46,4 @@ client/build/
 server/build/
 
 server/src/strategy/market-data/
+server/src/strategy/performance/

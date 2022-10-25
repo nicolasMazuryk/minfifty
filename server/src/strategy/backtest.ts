@@ -9,13 +9,14 @@ import { MARKET, TICKER } from '@common/strategy/constants'
 import Strategy from '@common/strategy/strategy'
 import { logger, wait } from '@common/strategy/utils'
 
-import binance from '@/external/binance'
+// import binance from '@/external/binance'
 import {
   getBacktestBars,
-  marketDataToBar,
+  logStrategyPerformance,
+  // marketDataToBar,
   syncRemainingBarsUpToDate,
   // validateMarketDataIntegrity,
-  wsCandleToMarketData,
+  // wsCandleToMarketData,
 } from '@/strategy/helpers'
 
 const strategy = new Strategy()
@@ -42,23 +43,22 @@ const strategy = new Strategy()
 
   strategy.isRealTime = true
 
-  binance.ws.futuresCandles(TICKER.ETH, '1m', async (candle) => {
-    const marketData = wsCandleToMarketData(MARKET.FUTURES, candle)
-    const bar = marketDataToBar(marketData)
+  // binance.ws.futuresCandles(TICKER.ETH, '1m', async (candle) => {
+  //   const marketData = wsCandleToMarketData(MARKET.FUTURES, candle)
+  //   const bar = marketDataToBar(marketData)
+  //
+  //   // strategy.run(bar)
+  //
+  //   logger.info(bar.time)
+  //
+  //   if (candle.isFinal) {
+  //     // await MarketData.bulkCreate([marketData])
+  //   }
+  // })
 
-    // strategy.run(bar)
-
-    logger.info(bar.time)
-
-    if (candle.isFinal) {
-      // await MarketData.bulkCreate([marketData])
-    }
-  })
+  await logStrategyPerformance(strategy)
 
   logger.info('Started real-time mode')
-
-  logger.info(strategy.statistics)
-  logger.info(strategy.realTimeStatistics)
 
   await wait(1000 * 60 * 60 * 24) // wait for 1 day
 })().catch(logger.error)
