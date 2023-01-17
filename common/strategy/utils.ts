@@ -16,6 +16,8 @@ export const roundToPrecision = (precision: number) => (value: number) =>
 
 export const max = (arr: any[]) => Math.max(...arr, 0)
 
+export const min = (arr: any[]) => Math.min(...arr)
+
 export const median = (arr: any[]) => {
   const mid = Math.floor(arr.length / 2),
     nums = [...arr].sort((a, b) => a - b)
@@ -36,4 +38,12 @@ export const countMinutes = (start: Date, end: Date) => {
   const startTime = new Date(start).getTime()
   const endTime = new Date(end).getTime()
   return Math.ceil((endTime - startTime) / (1000 * 60))
+}
+
+export const getHourlyTime = (time: Date) => {
+  const date = new Date(time)
+  date.setMinutes(0)
+  date.setSeconds(0)
+  date.setMilliseconds(0)
+  return date
 }

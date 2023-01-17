@@ -12,6 +12,18 @@ export interface IBase {
   stopLoss: number
   levels: number[] // TODO: remove levels. add EmergencyTriggerPrice instead
   isClosedInLoss: boolean
+  isClosedInBreakEven: boolean
+  stats: {
+    percentDrop: number
+    barsLength: number
+  }
+}
+
+export interface IGlobalBase {
+  barIndex: number
+  price: number
+  // isBroken: boolean
+  // isRespected: boolean
   stats: {
     percentDrop: number
     barsLength: number
@@ -32,6 +44,8 @@ export interface IOrder {
   level: number
   timeOpen: Date | null
   timeClosed: Date | null
+  barIndexOpen: number | null
+  barIndexClosed: number | null
   type: string
   side: string
   price: number

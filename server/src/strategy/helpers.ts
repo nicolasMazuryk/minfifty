@@ -197,9 +197,9 @@ export const logStrategyPerformance = async (strategy: Strategy) => {
   }
 
   const fileName = `${new Date()
-    .toLocaleDateString('en-GB', {
+    .toLocaleDateString('en-US', {
       day: '2-digit',
-      month: 'short',
+      month: '2-digit',
     })
     .replace('/', '-')} ${new Date().toLocaleTimeString('en-GB', { hour12: false })}.json`
 
