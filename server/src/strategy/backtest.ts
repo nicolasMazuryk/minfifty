@@ -26,14 +26,14 @@ const strategy = new Strategy()
   logger.info('Synced remaining bars up to date')
   // await validateMarketDataIntegrity(MARKET.FUTURES, TICKER.ETH)
 
+  logger.time('Strategy')
+
   const bars: IBar[] = await getBacktestBars(
     MARKET.FUTURES,
     TICKER.ETH,
     START_PERIOD_TIME,
     END_PERIOD_TIME,
   )
-
-  logger.time('Strategy')
 
   for (const bar of bars) {
     strategy.run(bar)

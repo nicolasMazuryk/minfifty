@@ -1,6 +1,6 @@
 // Strategy Settings
 export const INITIAL_CAPITAL = 1000
-export const ORDER_QUANTITY = 0.05
+export const ORDER_QUANTITY = 0.025
 export const TRADING_FEE = 0.02 / 100
 
 export const BASE_RETRACEMENT_CONFIRMATION = 0.5 / 100 // 0.6
@@ -10,9 +10,9 @@ export const NUMBER_OF_LEVELS = 10
 export const LEVEL_STEP = 0.5 / 100
 export const LEVEL_STEP_MULTIPLIER = 1
 
-export const ORDER_NUMBER_OF_LEVELS = 4 // 4
+export const ORDER_NUMBER_OF_LEVELS = 44 // 4
 export const ORDER_LEVEL_STEP = 0.15 / 100 // 0.15
-export const ORDER_LEVEL_STOP_LOSS = 2 / 100 // 2
+export const ORDER_LEVEL_STOP_LOSS = 7 / 100 // 2
 export const ORDER_OPEN_TRADE_WINDOW_BARS = 20 // 20 after base
 export const ORDER_BREAK_EVEN_CLOSE_TRIGGER = 1 / 100 // (0.7%) 1%
 
@@ -26,7 +26,7 @@ export const MAINTANANCE_MARGIN = 20 / 100
 
 // Trading Rule #1
 // Do not buy high
-export const IGNORE_BASE_ON_TOP_PRECEDING_BARS = 30 * 60 // before base
+export const IGNORE_BASE_ON_TOP_PRECEDING_BARS = 24 * 60 // before base
 export const IGNORE_BASE_ON_TOP_THRESHOLD = 3 / 100 // 3%
 
 // Trading Rule #2
