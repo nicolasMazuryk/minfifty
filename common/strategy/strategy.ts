@@ -47,6 +47,7 @@ export default class Strategy {
   public bars: IBar[] = []
   public bar!: IBar
   public barIndex = -1
+  public barIndexOffset = 0
   public isNewBase = false
   public newBaseBarIndex = 0
   public bases: IBase[] = []
@@ -99,18 +100,29 @@ export default class Strategy {
     // this.logger.timeEnd('bar')
   }
 
+  public getBarByBarIndexOffset(barIndex: number): IBar {
+    return this.bars[barIndex - this.barIndexOffset]
+  }
+
+  public sliceBarsByBarIndexOffset(start: number, end: number): IBar[] {
+    return this.bars.slice(start - this.barIndexOffset, end - this.barIndexOffset)
+  }
+
+
+
   private findNewBaseBarIndex(): void {
     this.isNewBase = false
 
     for (let barIndex = this.barIndex; barIndex >= 0; barIndex--) {
-      const high = this.barIndex === barIndex ? this.bar.close : this.bar.high
-      if (high / this.bars[barIndex].low >= 1 + BASE_RETRACEMENT_CONFIRMATION) {
-        const confirmedBarLow = this.bars[barIndex].low
+      if (barIndex <= this.newBaseBarIndex) return
 
-        const precedingBars = this.bars.slice(Math.max(0, barIndex - BASE_PRECEDING_BARS), barIndex)
+      const high = this.barIndex === barIndex ? this.bar.close : this.bar.high
+      if (high / this.getBarByBarIndexOffset(barIndex).low >= 1 + BASE_RETRACEMENT_CONFIRMATION) {
+        const confirmedBarLow = this.getBarByBarIndexOffset(barIndex).low
+
+        const precedingBars = this.sliceBarsByBarIndexOffset(Math.max(0, barIndex - BASE_PRECEDING_BARS), barIndex)
 
         if (precedingBars.every(({ low }) => confirmedBarLow <= low)) {
-          if (barIndex <= this.newBaseBarIndex) return
           // if (this.ignoreBaseOnTop(barIndex, confirmedBarLow)) continue
           // if (this.ignoreBaseExceedingBarsUntilBaseConfirmationLimit(barIndex)) continue
 
@@ -126,7 +138,7 @@ export default class Strategy {
   }
 
   public ignoreBaseOnTop(baseBarIndex: number, baseBarLow: number) {
-    const precedingBars = this.bars.slice(
+    const precedingBars = this.sliceBarsByBarIndexOffset(
       Math.max(0, baseBarIndex - IGNORE_BASE_ON_TOP_PRECEDING_BARS),
       baseBarIndex,
     )
@@ -152,7 +164,7 @@ export default class Strategy {
     if (!this.bases[0] || this.bases[0].isBroken) return
 
     const base = this.bases[0]
-    const bars = this.bars.slice(base.barIndex, this.barIndex + 1)
+    const bars = this.sliceBarsByBarIndexOffset(base.barIndex, this.barIndex + 1)
 
     const belowBaseNewLowestLow = min(bars.map(bar => bar.low))
 
@@ -186,7 +198,7 @@ export default class Strategy {
 
     const base = this.bases[0]
 
-    const bars = this.bars.slice(base.barIndex, this.barIndex + 1)
+    const bars = this.sliceBarsByBarIndexOffset(base.barIndex, this.barIndex + 1)
 
     const isBaseCracked = bars.some(bar => bar.low < base.price)
 
@@ -210,7 +222,7 @@ export default class Strategy {
   private addNewBase(): void {
     if (!this.isNewBase) return
 
-    const basePrice = this.bars[this.newBaseBarIndex].low
+    const basePrice = this.getBarByBarIndexOffset(this.newBaseBarIndex).low
 
     const base = {
       barIndex: this.newBaseBarIndex,
@@ -522,18 +534,18 @@ export default class Strategy {
     if (base === undefined) return
 
     const isBaseBrokenOnCurrentBar =
-      !(this.bars[this.barIndex - 1].low <= base.levels[0]) && this.bar.low <= base.levels[0]
+      !(this.getBarByBarIndexOffset(this.barIndex - 1).low <= base.levels[0]) && this.bar.low <= base.levels[0]
 
     const breakEvenTriggerLow = base.price * (1 - ORDER_BREAK_EVEN_CLOSE_TRIGGER)
 
     const isBreakEvenTriggeredOnCurrentBar =
-      !(this.bars[this.barIndex - 1].low <= breakEvenTriggerLow) &&
+      !(this.getBarByBarIndexOffset(this.barIndex - 1).low <= breakEvenTriggerLow) &&
       this.bar.low <= breakEvenTriggerLow
 
     const emergencyLevel = base.levels[EMERGENCY_LEVEL_NUMBER - 1]
 
     const isEmergencyLevelHitOnCurrentBar =
-      !(this.bars[this.barIndex - 1].low <= emergencyLevel) && this.bar.low <= emergencyLevel
+      !(this.getBarByBarIndexOffset(this.barIndex - 1).low <= emergencyLevel) && this.bar.low <= emergencyLevel
 
     return (
       isBaseBrokenOnCurrentBar ||
@@ -609,6 +621,14 @@ export default class Strategy {
     this.closedBases.push(...this.bases.filter(base => base.isRespected || base.isClosedInBreakEven || base.isClosedInLoss))
 
     this.bases = this.bases.filter(base => !base.isRespected && !base.isClosedInBreakEven && !base.isClosedInLoss)
+
+    const BAR_CLEANUP_INTERVAL = 10000
+    const REMAINING_BAR_OFFSET = 1000
+
+    if (this.barIndex > 0 && this.barIndex % BAR_CLEANUP_INTERVAL === 0) {
+      this.bars = this.bars.slice(this.bars.length - 1 - REMAINING_BAR_OFFSET)
+      this.barIndexOffset = this.barIndex - REMAINING_BAR_OFFSET
+    }
   }
 
   public get positionAvgPrice() {

@@ -7,7 +7,10 @@ import { IBar } from '@common/strategy'
 import { START_PERIOD_TIME, END_PERIOD_TIME } from '@common/strategy/config'
 import { MARKET, TICKER } from '@common/strategy/constants'
 import Strategy from '@common/strategy/strategy'
-import { logger, wait } from '@common/strategy/utils'
+import {
+  logger,
+  // wait
+} from '@common/strategy/utils'
 
 // import binance from '@/external/binance'
 import {
@@ -58,7 +61,12 @@ const strategy = new Strategy()
 
   await logStrategyPerformance(strategy)
 
+  logger.info({
+    Bars: strategy.barIndex,
+    Orders: strategy.closedOrders.length,
+    Bases: strategy.closedBases.length,
+  })
   logger.info('Started real-time mode')
 
-  await wait(1000 * 60 * 60 * 24) // wait for 1 day
+  // await wait(1000 * 60 * 60 * 24) // wait for 1 day
 })().catch(logger.error)

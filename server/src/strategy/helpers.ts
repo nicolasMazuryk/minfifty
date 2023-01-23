@@ -101,8 +101,8 @@ export const marketDataToBar = ({ time, open, high, low, close, volume }: IMarke
 export const getBacktestBars = async (
   market: string,
   ticker: string,
-  startDate: string,
-  endDate: string,
+  startDate: string | Date,
+  endDate: string | Date,
 ): Promise<IBar[]> => {
   const marketData = await MarketData.findAll({
     where: {
