@@ -89,6 +89,8 @@ export default class Strategy {
 
     // this.calculateBaseBounceStopLoss()
 
+    // this.updateTakeProfitIgnoreTradingLevelsCloseToBase()
+
     this.processBrokenBases()
 
     this.executeOrders()
@@ -216,6 +218,7 @@ export default class Strategy {
       .filter(base => !base.isBroken)
       .forEach(base => {
         base.isBroken = this.current <= base.levels[0]
+        base.baseBrokenBarIndex = this.barIndex
       })
   }
 
@@ -229,6 +232,7 @@ export default class Strategy {
       price: basePrice,
       isBroken: false,
       isRespected: false,
+      baseBrokenBarIndex: 0,
       baseBounceTop: 0,
       takeProfit: round(basePrice * (1 - TAKE_PROFIT_BELOW_BASE)),
       breakEven: 999999,
@@ -289,6 +293,9 @@ export default class Strategy {
       }
 
       base.levels.push(price)
+
+      // Trading Rule #3 ignore Trading Levels Close To the Base
+      // if (level <= IGNORE_TRADING_LEVEL_CLOSE_TO_BASE) continue
 
       this.orders.push(order)
     }
@@ -373,8 +380,6 @@ export default class Strategy {
       .filter(base => base.isBroken)
       .forEach(base => {
         // this.calculateBaseBreakEven(base)
-
-        // this.updateTakeProfitIgnoreTradingLevelsCloseToBase()
 
         // this.updateTakeProfitWhenWarningLevelIsReached()
 
@@ -477,11 +482,12 @@ export default class Strategy {
 
   public updateBaseStats(base: IBase) {
     const percentDrop = round((1 - this.current / base.price) * 100)
-    const barsLength = this.barIndex - base.barIndex
-
     base.stats.percentDrop = Math.max(base.stats.percentDrop, percentDrop)
-    // TODO: calculation of barsLength should start once BaseBroken. Currently starting bar is a BaseConfirmed
-    base.stats.barsLength = Math.max(base.stats.barsLength, barsLength)
+
+    if (base.baseBrokenBarIndex) {
+      const barsLength = this.barIndex - base.baseBrokenBarIndex
+      base.stats.barsLength = Math.max(base.stats.barsLength, barsLength)
+    }
   }
 
   private setBaseRespected(base: IBase) {

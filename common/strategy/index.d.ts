@@ -4,6 +4,7 @@ export interface IBase {
   isBroken: boolean
   isRespected: boolean
   breakEven: number
+  baseBrokenBarIndex: number
   baseBounceTop: number
   takeProfit: number
   warningPriceLow: number
