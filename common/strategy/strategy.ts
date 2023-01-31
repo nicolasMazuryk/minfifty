@@ -629,7 +629,7 @@ export default class Strategy {
     this.bases = this.bases.filter(base => !base.isRespected && !base.isClosedInBreakEven && !base.isClosedInLoss)
 
     const BAR_CLEANUP_INTERVAL = 10000
-    const REMAINING_BAR_OFFSET = 1000
+    const REMAINING_BAR_OFFSET = 5000
 
     if (this.barIndex > 0 && this.barIndex % BAR_CLEANUP_INTERVAL === 0) {
       this.bars = this.bars.slice(this.bars.length - 1 - REMAINING_BAR_OFFSET)

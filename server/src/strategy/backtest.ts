@@ -61,6 +61,10 @@ const strategy = new Strategy()
 
   await logStrategyPerformance(strategy)
 
+  // const result = strategy.closedOrders.sort((a, b) => a.PNL - b.PNL)
+  //
+  // logger.info(result.length)
+
   logger.info({
     Bars: strategy.barIndex,
     Orders: strategy.closedOrders.length,

@@ -91,8 +91,8 @@ Promise<readonly CustomIndicator[]> =>
           precision: 2,
         },
         inputs: [],
-        plots: createPlots(5, 7),
-        styles: createPlotStyles(5, 5, 2),
+        plots: createPlots(5, 20),
+        styles: createPlotStyles(5, 15, 5),
       },
       constructor: function () {
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -129,21 +129,21 @@ Promise<readonly CustomIndicator[]> =>
             .filter(order => order.status === ORDER_STATUS.FILLED)
             .filter(order => order.timeOpen === bar.time)
             .map(order => order.price)
-            .slice(0, 5)
+            .slice(0, 15)
 
-          const sellOrders = strategy.orders
+          const sellOrders = strategy.closedOrders
             .filter(order => [ORDER_STATUS.COMPLETED, ORDER_STATUS.CLOSED].includes(order.status))
             .filter(order => order.timeClosed === bar.time)
             .map(order => order.takeProfit)
-            .slice(0, 2)
+            .slice(0, 5)
 
           const result = [
             ...lines,
             ...Array(5 - lines.length).fill(undefined),
             ...buyOrders,
-            ...Array(5 - buyOrders.length).fill(undefined),
+            ...Array(15 - buyOrders.length).fill(undefined),
             ...sellOrders,
-            ...Array(2 - sellOrders.length).fill(undefined),
+            ...Array(5 - sellOrders.length).fill(undefined),
           ]
 
           return result
