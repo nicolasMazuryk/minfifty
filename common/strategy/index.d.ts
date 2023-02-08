@@ -14,6 +14,7 @@ export interface IBase {
   levels: number[] // TODO: remove levels. add EmergencyTriggerPrice instead
   isClosedInLoss: boolean
   isClosedInBreakEven: boolean
+  PNL: number
   stats: {
     percentDrop: number
     barsLength: number

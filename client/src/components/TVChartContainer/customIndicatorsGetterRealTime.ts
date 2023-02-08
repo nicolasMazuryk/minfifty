@@ -10,6 +10,8 @@ import {
 
 const strategy = new Strategy()
 
+const strategyBuyerIndex = new Strategy()
+
 const createPlots = (linePlots: number, shapePlots: number) => {
   const plots = []
   for (let i = 0; i < linePlots + shapePlots; i++) {
@@ -147,6 +149,101 @@ Promise<readonly CustomIndicator[]> =>
           ]
 
           return result
+        }
+      },
+    },
+    {
+      name: 'Base Strategy Buyer Index',
+      metainfo: {
+        _metainfoVersion: 51,
+
+        id: 'baseStrategyBuyerIndex@tv-basicstudies-1',
+        name: 'BaseStrategyBuyerIndex',
+        description: 'Base Strategy Buyer Index Description',
+        shortDescription: 'baseStrategyBuyerIndex',
+
+        isCustomIndicator: true,
+        is_hidden_study: false,
+        is_price_study: false,
+        linkedToSeries: true,
+
+        isTVScript: false,
+        isTVScriptStub: false,
+
+        format: {
+          type: 'percent',
+          precision: 2,
+        },
+        inputs: [],
+        plots: [
+          {
+            id: 'plot_0',
+            type: 'line',
+          },
+          {
+            id: 'plot_1',
+            type: 'line',
+          },
+          {
+            id: 'plot_2',
+            type: 'line',
+          },
+        ],
+        styles: {
+          plot_0: {
+            visible: true,
+            plottype: 0,
+            color: '#E55E64',
+            linestyle: 0,
+            linewidth: 2,
+            trackPrice: false,
+          },
+          plot_1: {
+            visible: true,
+            plottype: 0,
+            color: '#52A995',
+            linestyle: 0,
+            linewidth: 2,
+            trackPrice: false,
+          },
+          plot_2: {
+            visible: true,
+            plottype: 0,
+            color: '#000000',
+            linestyle: 0,
+            linewidth: 2,
+            trackPrice: false,
+          },
+        },
+      },
+      constructor: function () {
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
+        this.main = function (context, inputCallback) {
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          // @ts-ignore
+          this._context = context
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          // @ts-ignore
+          this._input = inputCallback
+
+          const { symbol } = context
+          const { time, open, high, low, close, volume, index } = symbol
+
+          if (index < 0) return
+
+          const bar = { time, open, high, low, close, volume }
+
+          // debugger
+
+          bar.time = new Date(bar.time)
+
+          strategyBuyerIndex.run(bar)
+
+          const [drop, bounce, delta] =
+            strategyBuyerIndex.buyerIndex[strategyBuyerIndex.buyerIndex.length - 1]
+
+          return [drop, bounce, delta]
         }
       },
     },
