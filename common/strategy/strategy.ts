@@ -36,6 +36,9 @@ import {
   ORDER_BREAK_EVEN_CLOSE_TRIGGER,
   ALLOWED_TRADE_THRESHOLD_BOUNCE,
   ALLOWED_TRADE_THRESHOLD_BARS,
+  IGNORE_BASE_ON_TOP_PRECEDING_BASES,
+  // IGNORE_BASE_ON_TOP_PRECEDING_BASES_DIFFERENCE_THRESHOLD,
+  IGNORE_BASE_ON_TOP_NUMBER_OF_IGNORED_BASES,
 } from './settings'
 
 // const round = roundToPrecision(TICKER_PRECISION.ETH)
@@ -51,11 +54,13 @@ export default class Strategy {
   public barIndex: number = -1
   public barIndexOffset: number = 0
   public isNewBase: boolean = false
+  public isIgnoredBase: boolean = false
   public newBaseBarIndex: number = 0
   public baseRetracementConfirmation: number = BASE_RETRACEMENT_CONFIRMATION
   public bases: IBase[] = []
   public closedBases: IBase[] = []
   public allBases: IBase[] = []
+  public allBasesCounter: number = 0
   // public closedInLossBases: IBase[] = []
   public orders: IOrder[] = []
   public closedOrders: IOrder[] = []
@@ -78,7 +83,7 @@ export default class Strategy {
     // this.logger.time('bar')
 
     // -- Debug --
-    if ([180].includes(this.barIndex)) {
+    if ([9].includes(this.barIndex)) {
       console.log('debug')
     }
 
@@ -119,10 +124,6 @@ export default class Strategy {
     return this.bars.slice(start - this.barIndexOffset, end - this.barIndexOffset)
   }
 
-  public sliceBuyerIndexByBarIndexOffset(start: number, end: number): number[][] {
-    return this.buyerIndex.slice(start - this.barIndexOffset, end - this.barIndexOffset)
-  }
-
   public calculateBuyerIndex(): void {
     if (this.barIndex < 2) {
       this.buyerIndex.push([0, 0, 0])
@@ -139,10 +140,7 @@ export default class Strategy {
 
     this.buyerIndex.push([drop, bounce, delta])
 
-    const recentBars = this.sliceBuyerIndexByBarIndexOffset(
-      Math.max(0, this.barIndex - ALLOWED_TRADE_THRESHOLD_BARS),
-      this.barIndex,
-    )
+    const recentBars = this.buyerIndex.slice(Math.max(0, this.buyerIndex.length - 1 - ALLOWED_TRADE_THRESHOLD_BARS))
 
     if (recentBars.some(([drop, bounce, delta]) => bounce >= ALLOWED_TRADE_THRESHOLD_BOUNCE)) {
       this.ignoreBuyOrders = false
@@ -156,10 +154,7 @@ export default class Strategy {
   public calculateBaseRetracementConfirmation(): void {
     if (this.barIndex < 1) return
 
-    const recentBars = this.sliceBuyerIndexByBarIndexOffset(
-      Math.max(0, this.barIndex - ALLOWED_TRADE_THRESHOLD_BARS),
-      this.barIndex,
-    )
+    const recentBars = this.buyerIndex.slice(Math.max(0, this.buyerIndex.length - 1 - ALLOWED_TRADE_THRESHOLD_BARS))
 
     const volatility = Math.max(
       Math.abs(Math.max(...recentBars.map(([drop, bounce]) => drop))),
@@ -179,6 +174,7 @@ export default class Strategy {
 
   private findNewBaseBarIndex(): void {
     this.isNewBase = false
+    this.isIgnoredBase = false
 
     // for (let barIndex = this.barIndex; barIndex >= 0; barIndex--) {
     //   if (barIndex <= this.newBaseBarIndex) return
@@ -210,7 +206,9 @@ export default class Strategy {
 
     if (
       previousBar.close / previousBar.low >= 1 + this.baseRetracementConfirmation ||
-      currentBar.high / previousBar.low >= 1 + this.baseRetracementConfirmation
+      (currentBar.high / previousBar.low >= 1 + this.baseRetracementConfirmation &&
+        // ignore cases when order is triggered on the same candle when base is confirmed
+        currentBar.low > previousBar.low)
     ) {
       for (let barIndex = this.barIndex - 1; barIndex >= 0; barIndex--) {
         if (barIndex <= this.newBaseBarIndex) return
@@ -222,10 +220,14 @@ export default class Strategy {
         )
 
         if (precedingBars.every(({ low }) => confirmedBarLow <= low)) {
-          // if (this.ignoreBaseOnTop(this.barIndex, confirmedBarLow)) continue
+          // if (this.ignoreBaseOnTopPercent(this.barIndex, confirmedBarLow)) continue
 
           this.newBaseBarIndex = barIndex
           this.isNewBase = true
+
+          if (this.ignoreTopBaseAndFollowingBase(confirmedBarLow)) {
+            this.isIgnoredBase = true
+          }
 
           break
         }
@@ -233,7 +235,47 @@ export default class Strategy {
     }
   }
 
-  public ignoreBaseOnTop(baseBarIndex: number, baseBarLow: number) {
+  public ignoreBaseOnTopHigherThanPrecedingRange(baseBarLow: number) {
+    const precedingBases = this.allBases.slice(
+      Math.max(0, this.allBases.length - 1 - IGNORE_BASE_ON_TOP_PRECEDING_BASES),
+    )
+
+    const highestPrecedingBase = max(precedingBases.map(base => base.price))
+
+    return baseBarLow >= highestPrecedingBase
+    // return baseBarLow >= highestPrecedingBase * (1 - IGNORE_BASE_ON_TOP_PRECEDING_BASES_DIFFERENCE_THRESHOLD)
+  }
+
+  public ignoreMultipleTopBases(baseBarLow: number) {
+    const precedingBases = this.allBases.slice(
+      Math.max(0, this.allBases.length - 1 - IGNORE_BASE_ON_TOP_PRECEDING_BASES),
+    )
+
+    const highestPrecedingBases = precedingBases
+      .sort((a, b) => b.price - a.price)
+      .slice(0, IGNORE_BASE_ON_TOP_NUMBER_OF_IGNORED_BASES)
+
+    return highestPrecedingBases.some(base => baseBarLow >= base.price)
+  }
+
+  public ignoreTopBaseAndFollowingBase(baseBarLow: number) {
+    const precedingBases = this.allBases.slice(
+      Math.max(0, this.allBases.length - 1 - IGNORE_BASE_ON_TOP_PRECEDING_BASES),
+    )
+
+    const highestPrecedingBase = precedingBases.sort((a, b) => b.price - a.price).shift()
+
+    if (!highestPrecedingBase) return
+
+    return (
+      // the current base is the top base
+      baseBarLow >= highestPrecedingBase.price ||
+      // the current base is next after the top base
+      highestPrecedingBase.barIndex === this.allBases[this.allBases.length - 1].barIndex
+    )
+  }
+
+  public ignoreBaseOnTopPercent(baseBarIndex: number, baseBarLow: number) {
     const precedingBars = this.sliceBarsByBarIndexOffset(
       Math.max(0, baseBarIndex - IGNORE_BASE_ON_TOP_PRECEDING_BARS),
       baseBarIndex,
@@ -322,6 +364,7 @@ export default class Strategy {
       .forEach(base => {
         base.isBroken = this.current <= base.levels[0]
         base.baseBrokenBarIndex = this.barIndex
+        base.baseBrokenTime = this.isRealTime ? new Date() : this.bar.time
       })
   }
 
@@ -335,7 +378,9 @@ export default class Strategy {
       price: basePrice,
       isBroken: false,
       isRespected: false,
+      isIgnored: this.isIgnoredBase,
       baseBrokenBarIndex: 0,
+      baseBrokenTime: null,
       baseBounceTop: 0,
       takeProfit: round(basePrice * (1 - TAKE_PROFIT_BELOW_BASE)),
       breakEven: 999999,
@@ -360,11 +405,13 @@ export default class Strategy {
       this.bases[0] = base
     }
 
-    this.openBaseOrders(base)
+    if (!this.isIgnoredBase) {
+      this.openBaseOrders(base)
+    }
 
     // Disable to increase performance
     // Enable to analyse and measure all detected bases
-    // this.allBases.push(base)
+    this.allBases.push(base)
   }
 
   private openBaseOrders(base: IBase) {
@@ -523,10 +570,10 @@ export default class Strategy {
   public handleClosePreordersInBreakEven(base: IBase) {
     const breakEvenTriggerLow = base.price * (1 - ORDER_BREAK_EVEN_CLOSE_TRIGGER)
 
-    if (this.current <= breakEvenTriggerLow) {
+    if (this.current <= breakEvenTriggerLow || base.breakEven < 999999) {
       this.calculateBaseBreakEven(base)
 
-      base.takeProfit = base.breakEven
+      // base.takeProfit = base.breakEven // to be removed
 
       this.orders
         .filter(order => order.baseBarIndex === base.barIndex)
@@ -713,6 +760,7 @@ export default class Strategy {
         order.barIndexClosed = this.barIndex
         order.fee = order.fee + order.quantity * order.stopLoss * TRADING_FEE
         order.PNL = (order.stopLoss - order.price) * order.quantity - order.fee
+        // needed to display sell order on chart. TODO: refactor
         order.takeProfit = order.stopLoss
       }
     })
@@ -782,8 +830,22 @@ export default class Strategy {
 
     if (this.barIndex > 0 && this.barIndex % BAR_CLEANUP_INTERVAL === 0) {
       this.bars = this.bars.slice(this.bars.length - 1 - REMAINING_BAR_OFFSET)
-      this.buyerIndex = this.buyerIndex.slice(this.buyerIndex.length - 1 - REMAINING_BAR_OFFSET)
       this.barIndexOffset = this.barIndex - REMAINING_BAR_OFFSET
+    }
+
+    const BAYER_INDEX_CLEANUP_INTERVAL = 100
+    const REMAINING_BAYER_INDEX_OFFSET = 50
+
+    if (this.buyerIndex.length > 0 && this.buyerIndex.length % BAYER_INDEX_CLEANUP_INTERVAL === 0) {
+      this.buyerIndex = this.buyerIndex.slice(this.buyerIndex.length - 1 - REMAINING_BAYER_INDEX_OFFSET)
+    }
+
+    const ALL_BASES_CLEANUP_INTERVAL = 50
+    const REMAINING_ALL_BASES_OFFSET = 25
+
+    if (this.allBases.length > 0 && this.allBases.length % ALL_BASES_CLEANUP_INTERVAL === 0) {
+      this.allBasesCounter = this.allBasesCounter + REMAINING_ALL_BASES_OFFSET
+      this.allBases = this.allBases.slice(this.allBases.length - 1 - REMAINING_ALL_BASES_OFFSET)
     }
   }
 
@@ -941,6 +1003,7 @@ export default class Strategy {
     maxSimultaneousBrokenBases: 0,
 
     allBases: 0,
+    allIgnoredBases: 0,
     allBrokenBases: 0,
     closedInBreakEvenBases: 0,
     closedInLossBases: 0,
@@ -993,6 +1056,10 @@ export default class Strategy {
 
     // Bases Statistics
     this.statistics.allBases = Math.max(this.statistics.allBases, this.allBasesCount)
+    this.statistics.allIgnoredBases = Math.max(
+      this.statistics.allIgnoredBases,
+      this.allIgnoredBasesCount,
+    )
     this.statistics.allBrokenBases = Math.max(
       this.statistics.allBrokenBases,
       this.allBrokenBasesCount,
@@ -1041,7 +1108,15 @@ export default class Strategy {
   }
 
   public get allBasesCount() {
-    return this.allBases.length
+    return this.allBasesCounter + this.allBases.length
+  }
+
+  public get allIgnoredBases() {
+    return this.allBases.filter(base => base.isIgnored)
+  }
+
+  public get allIgnoredBasesCount() {
+    return this.allIgnoredBases.length
   }
 
   public get allBrokenBases() {
