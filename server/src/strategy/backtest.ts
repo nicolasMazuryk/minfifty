@@ -61,15 +61,10 @@ const strategy = new Strategy()
 
   await logStrategyPerformance(strategy)
 
-  const result = strategy.closedBases.sort((a, b) => a.PNL - b.PNL)
+  const closedBases = strategy.closedBases.sort((a, b) => a.PNL - b.PNL)
 
-  logger.info(result.length)
+  logger.info(closedBases.length)
 
-  logger.info({
-    Bars: strategy.barIndex,
-    Orders: strategy.closedOrders.length,
-    Bases: strategy.closedBases.length,
-  })
   logger.info('Started real-time mode')
 
   // await wait(1000 * 60 * 60 * 24) // wait for 1 day

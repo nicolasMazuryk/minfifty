@@ -10,7 +10,7 @@ export const NUMBER_OF_LEVELS = 10
 export const LEVEL_STEP = 0.5 / 100
 export const LEVEL_STEP_MULTIPLIER = 1
 
-export const ORDER_NUMBER_OF_LEVELS = 35 // 44 => 20 => 15
+export const ORDER_NUMBER_OF_LEVELS = 50 // 44 => 20 => 15
 export const ORDER_LEVEL_STEP = 0.04 / 100 // 0.15
 export const ORDER_LEVEL_STOP_LOSS = 1 / 100 // 2
 export const ORDER_OPEN_TRADE_WINDOW_BARS = 5 // 20 after base => 30

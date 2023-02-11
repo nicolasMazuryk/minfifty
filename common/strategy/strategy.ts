@@ -37,7 +37,7 @@ import {
   ALLOWED_TRADE_THRESHOLD_BOUNCE,
   ALLOWED_TRADE_THRESHOLD_BARS,
   IGNORE_BASE_ON_TOP_PRECEDING_BASES,
-  // IGNORE_BASE_ON_TOP_PRECEDING_BASES_DIFFERENCE_THRESHOLD,
+  IGNORE_BASE_ON_TOP_PRECEDING_BASES_DIFFERENCE_THRESHOLD,
   IGNORE_BASE_ON_TOP_NUMBER_OF_IGNORED_BASES,
 } from './settings'
 
@@ -140,7 +140,9 @@ export default class Strategy {
 
     this.buyerIndex.push([drop, bounce, delta])
 
-    const recentBars = this.buyerIndex.slice(Math.max(0, this.buyerIndex.length - 1 - ALLOWED_TRADE_THRESHOLD_BARS))
+    const recentBars = this.buyerIndex.slice(
+      Math.max(0, this.buyerIndex.length - 1 - ALLOWED_TRADE_THRESHOLD_BARS),
+    )
 
     if (recentBars.some(([drop, bounce, delta]) => bounce >= ALLOWED_TRADE_THRESHOLD_BOUNCE)) {
       this.ignoreBuyOrders = false
@@ -154,7 +156,9 @@ export default class Strategy {
   public calculateBaseRetracementConfirmation(): void {
     if (this.barIndex < 1) return
 
-    const recentBars = this.buyerIndex.slice(Math.max(0, this.buyerIndex.length - 1 - ALLOWED_TRADE_THRESHOLD_BARS))
+    const recentBars = this.buyerIndex.slice(
+      Math.max(0, this.buyerIndex.length - 1 - ALLOWED_TRADE_THRESHOLD_BARS),
+    )
 
     const volatility = Math.max(
       Math.abs(Math.max(...recentBars.map(([drop, bounce]) => drop))),
@@ -242,8 +246,11 @@ export default class Strategy {
 
     const highestPrecedingBase = max(precedingBases.map(base => base.price))
 
-    return baseBarLow >= highestPrecedingBase
-    // return baseBarLow >= highestPrecedingBase * (1 - IGNORE_BASE_ON_TOP_PRECEDING_BASES_DIFFERENCE_THRESHOLD)
+    // return baseBarLow >= highestPrecedingBase
+    return (
+      baseBarLow >=
+      highestPrecedingBase * (1 - IGNORE_BASE_ON_TOP_PRECEDING_BASES_DIFFERENCE_THRESHOLD)
+    )
   }
 
   public ignoreMultipleTopBases(baseBarLow: number) {
@@ -837,7 +844,9 @@ export default class Strategy {
     const REMAINING_BAYER_INDEX_OFFSET = 50
 
     if (this.buyerIndex.length > 0 && this.buyerIndex.length % BAYER_INDEX_CLEANUP_INTERVAL === 0) {
-      this.buyerIndex = this.buyerIndex.slice(this.buyerIndex.length - 1 - REMAINING_BAYER_INDEX_OFFSET)
+      this.buyerIndex = this.buyerIndex.slice(
+        this.buyerIndex.length - 1 - REMAINING_BAYER_INDEX_OFFSET,
+      )
     }
 
     const ALL_BASES_CLEANUP_INTERVAL = 50
