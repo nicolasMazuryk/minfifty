@@ -1,12 +1,12 @@
 export interface IBase {
   barIndex: number
   price: number
+  baseBrokenTime: Date | null
+  baseBrokenBarIndex: number
   isBroken: boolean
   isRespected: boolean
   isIgnored: boolean
   breakEven: number
-  baseBrokenBarIndex: number
-  baseBrokenTime: Date | null
   baseBounceTop: number
   takeProfit: number
   warningPriceLow: number

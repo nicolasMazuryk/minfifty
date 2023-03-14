@@ -6,13 +6,15 @@ import { roundToPrecision, average, max, min, logger } from './utils'
 
 import {
   INITIAL_CAPITAL,
-  ORDER_QUANTITY,
+  // ORDER_QUANTITY,
+  ORDER_AMOUNT,
   TRADING_FEE,
   BASE_RETRACEMENT_CONFIRMATION,
   BASE_PRECEDING_BARS,
   // NUMBER_OF_LEVELS,
   // LEVEL_STEP,
   LEVEL_STEP_MULTIPLIER,
+  ORDER_STEP_MULTIPLIER,
   EMERGENCY_LEVEL_NUMBER,
   EMERGENCY_TAKE_PROFIT_RETRACEMENT,
   TAKE_PROFIT_BELOW_BASE,
@@ -39,7 +41,7 @@ import {
   IGNORE_BASE_ON_TOP_PRECEDING_BASES,
   IGNORE_BASE_ON_TOP_PRECEDING_BASES_DIFFERENCE_THRESHOLD,
   IGNORE_BASE_ON_TOP_NUMBER_OF_IGNORED_BASES,
-} from './settings'
+} from './settings';
 
 // const round = roundToPrecision(TICKER_PRECISION.ETH)
 const round = roundToPrecision(2)
@@ -229,7 +231,11 @@ export default class Strategy {
           this.newBaseBarIndex = barIndex
           this.isNewBase = true
 
-          if (this.ignoreTopBaseAndFollowingBase(confirmedBarLow)) {
+          if (
+            this.ignoreTopBaseAndFollowingBase(confirmedBarLow) ||
+            this.ignoreBaseOnTopHigherThanPrecedingRange(confirmedBarLow) ||
+            this.ignoreMultipleTopBases(confirmedBarLow))
+          {
             this.isIgnoredBase = true
           }
 
@@ -383,11 +389,11 @@ export default class Strategy {
     const base = {
       barIndex: this.newBaseBarIndex,
       price: basePrice,
+      baseBrokenTime: null,
+      baseBrokenBarIndex: 0,
       isBroken: false,
       isRespected: false,
       isIgnored: this.isIgnoredBase,
-      baseBrokenBarIndex: 0,
-      baseBrokenTime: null,
       baseBounceTop: 0,
       takeProfit: round(basePrice * (1 - TAKE_PROFIT_BELOW_BASE)),
       breakEven: 999999,
@@ -431,7 +437,7 @@ export default class Strategy {
       barIndexClosed: null,
       type: ORDER_TYPE.LIMIT,
       side: ORDER_SIDE.BUY,
-      quantity: ORDER_QUANTITY,
+      // quantity: ORDER_QUANTITY,
       takeProfit: base.takeProfit,
       fee: 0,
       PNL: 0,
@@ -442,11 +448,16 @@ export default class Strategy {
         base.price * (1 - ORDER_LEVEL_STEP * Math.pow(level, LEVEL_STEP_MULTIPLIER)),
       )
 
+      const quantity = (ORDER_AMOUNT * Math.pow(ORDER_STEP_MULTIPLIER, level)) / price
+      const amount = quantity * price
+
       const order = {
         ...orderDetails,
         level: level,
         price: price,
-        amount: ORDER_QUANTITY * price,
+        // amount: ORDER_QUANTITY * price,
+        amount: amount,
+        quantity: quantity,
         stopLoss: base.stopLoss,
       }
 
@@ -572,6 +583,12 @@ export default class Strategy {
         (minOrderPrice + (maxOrderPrice - minOrderPrice) * BREAK_EVEN_TRIGGER) *
           (1 + TRADING_FEE * 2),
       ) || 999999
+
+    const totalOrderAmount = round(orders.reduce((acc, order) => acc + order.amount * (1 + TRADING_FEE * 2), 0))
+    const totalOrderQuantity = orders.reduce((acc, order) => acc + order.quantity, 0)
+
+    base.breakEven = round(totalOrderAmount / totalOrderQuantity) || 999999
+
   }
 
   public handleClosePreordersInBreakEven(base: IBase) {

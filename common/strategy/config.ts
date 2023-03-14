@@ -1,6 +1,6 @@
 // 1 year period up to today
-// export const START_PERIOD_TIME = '2021-01-01T00:00:00+00:00'
-// export const END_PERIOD_TIME = '2021-12-31T23:59:00+00:00'
+export const START_PERIOD_TIME = '2021-01-01T00:00:00+00:00'
+export const END_PERIOD_TIME = '2021-12-31T23:59:00+00:00'
 
 // downtrend -75%
 // export const START_PERIOD_TIME = '2022-04-01T00:00:00+00:00'
@@ -26,10 +26,11 @@
 // export const START_PERIOD_TIME = '2021-12-01T00:00:00+00:00'
 // export const END_PERIOD_TIME = '2021-12-31T23:59:00+00:00'
 
-// export const START_PERIOD_TIME = '2022-04-07T20:00:00+00:00'
-// export const END_PERIOD_TIME = '2022-04-07T23:59:00+00:00'
-// export const START_PERIOD_TIME = '2022-04-07T08:00:00+00:00'
-// export const END_PERIOD_TIME = '2022-04-07T13:59:00+00:00'
+// export const START_PERIOD_TIME = '2022-04-06T13:00:00+00:00'
+// export const END_PERIOD_TIME = '2022-04-06T15:59:00+00:00'
 
-export const START_PERIOD_TIME = '2022-05-01T00:00:00+00:00'
-export const END_PERIOD_TIME = '2022-05-01T23:59:00+00:00'
+// export const START_PERIOD_TIME = '2023-02-01T00:00:00+00:00'
+// export const END_PERIOD_TIME = '2023-03-30T23:59:00+00:00'
+
+// export const START_PERIOD_TIME = '2022-09-01T00:00:00+00:00'
+// export const END_PERIOD_TIME = '2022-09-31T23:59:00+00:00'
