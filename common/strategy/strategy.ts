@@ -61,6 +61,7 @@ export default class Strategy {
   public baseRetracementConfirmation: number = BASE_RETRACEMENT_CONFIRMATION
   public bases: IBase[] = []
   public closedBases: IBase[] = []
+  public ignoredBases: IBase[] = []
   public allBases: IBase[] = []
   public allBasesCounter: number = 0
   // public closedInLossBases: IBase[] = []
@@ -373,7 +374,7 @@ export default class Strategy {
 
   private setBaseBroken() {
     this.bases
-      .filter(base => !base.isBroken)
+      .filter(base => !base.isBroken && !base.isIgnored)
       .forEach(base => {
         base.isBroken = this.current <= base.levels[0]
         base.baseBrokenBarIndex = this.barIndex
@@ -420,6 +421,8 @@ export default class Strategy {
 
     if (!this.isIgnoredBase) {
       this.openBaseOrders(base)
+    } else {
+      this.ignoredBases.push(base)
     }
 
     // Disable to increase performance
@@ -1042,6 +1045,7 @@ export default class Strategy {
     // brokenBaseBarsAvg: 0,
     // brokenBaseBarsMedian: 0,
 
+    ignoredBasesToAllBases: 0,
     basesClosedInBreakEvenToAllBrokenBases: 0,
     basesClosedInLossToAllBrokenBases: 0,
   }
@@ -1115,6 +1119,10 @@ export default class Strategy {
     //   this.allBrokenBases.map(base => base.stats.barsLength),
     // )
 
+    this.statistics.ignoredBasesToAllBases = round(
+      (this.allIgnoredBasesCount / this.allBasesCounter) * 100,
+    )
+
     this.statistics.basesClosedInBreakEvenToAllBrokenBases = round(
       (this.closedInBreakEvenBasesCount / this.allBrokenBasesCount) * 100,
     )
@@ -1138,7 +1146,7 @@ export default class Strategy {
   }
 
   public get allIgnoredBases() {
-    return this.allBases.filter(base => base.isIgnored)
+    return this.ignoredBases
   }
 
   public get allIgnoredBasesCount() {
