@@ -71,6 +71,11 @@ export default class Strategy {
   public ignoreBuyOrders: boolean = false
   public isRealTime = false
   public current: number = 0
+  public cache: any = {
+    openOrders: 0,
+    closedOrders: 0,
+    lowestPrice: 999999,
+  }
 
   // public globalStrategy: GlobalStrategy = new GlobalStrategy()
 
@@ -114,7 +119,7 @@ export default class Strategy {
 
     this.performanceCleanup()
 
-    this.updateStatistics()
+    this.updateStatisticsOnTick()
 
     // this.logger.timeEnd('bar')
   }
@@ -374,11 +379,13 @@ export default class Strategy {
 
   private setBaseBroken() {
     this.bases
-      .filter(base => !base.isBroken && !base.isIgnored)
+      .filter(base => !base.isBroken)
       .forEach(base => {
-        base.isBroken = this.current <= base.levels[0]
-        base.baseBrokenBarIndex = this.barIndex
-        base.baseBrokenTime = this.isRealTime ? new Date() : this.bar.time
+        if (this.current <= base.levels[0]) {
+          base.isBroken = true
+          base.baseBrokenBarIndex = this.barIndex
+          base.baseBrokenTime = this.isRealTime ? new Date() : this.bar.time
+        }
       })
   }
 
@@ -1033,6 +1040,7 @@ export default class Strategy {
 
     allBases: 0,
     allIgnoredBases: 0,
+    allIgnoredBrokenBases: 0,
     allBrokenBases: 0,
     closedInBreakEvenBases: 0,
     closedInLossBases: 0,
@@ -1046,11 +1054,56 @@ export default class Strategy {
     // brokenBaseBarsMedian: 0,
 
     ignoredBasesToAllBases: 0,
+    ignoredBrokenBasesToAllBrokenBases: 0,
     basesClosedInBreakEvenToAllBrokenBases: 0,
     basesClosedInLossToAllBrokenBases: 0,
   }
+  // TODO: performance
+  public updateStatisticsOnTick() {
+    const openOrders = this.openTradesCount
+    const closedOrders = this.closedTradesCount
 
-  public updateStatistics() {
+    // recalculate liquidation price if the price goes lower
+    if (this.current < this.cache.lowestPrice) {
+      this.cache.lowestPrice = this.current
+
+      // this.statistics.maxLiquidationPrice = Math.max(
+      //   this.statistics.maxLiquidationPrice,
+      //   isNaN(this.liquidationPrice) ? 0 : this.liquidationPrice,
+      // )
+      this.statistics.maxToLiquidationPrice = round(
+        Math.min(
+          this.statistics.maxToLiquidationPrice,
+          isNaN(this.toLiquidationPrice) ? 100 : this.toLiquidationPrice,
+        ),
+      )
+      this.statistics.maxMarginBalanceLow = round(
+        Math.min(this.statistics.maxMarginBalanceLow, this.availableMargin),
+      )
+      // this.statistics.maxPriceDrawdown = Math.max(
+      //   this.statistics.maxPriceDrawdown,
+      //   this.priceDrawdown,
+      // )
+      // this.statistics.maxEquityDrawdown = Math.max(
+      //   this.statistics.maxEquityDrawdown,
+      //   this.equityDrawdown,
+      // )
+      this.statistics.isNotEnoughFunds = this.statistics.isNotEnoughFunds || this.availableMargin <= 0
+      this.statistics.isLiquidated =
+        this.statistics.isLiquidated || this.current <= this.liquidationPrice
+
+      this.statistics.maxSimultaneousBrokenBases = Math.max(
+        this.statistics.maxSimultaneousBrokenBases,
+        this.brokenBasesCount,
+      )
+    }
+
+    // reset lower price only if open orders or closed orders changed
+    if (this.cache.openOrders === openOrders && this.cache.closedOrders === closedOrders) return
+
+    this.cache.openOrders = openOrders
+    this.cache.closedOrders = closedOrders
+    this.cache.lowestPrice = 999999
     // --------------------------------------------------------------
     // Risk Statistics
     this.statistics.maxPositionSize = round(
@@ -1059,53 +1112,16 @@ export default class Strategy {
     this.statistics.maxOpenTrades = round(
       Math.max(this.statistics.maxOpenTrades, this.openTradesCount),
     )
-    // this.statistics.maxLiquidationPrice = Math.max(
-    //   this.statistics.maxLiquidationPrice,
-    //   isNaN(this.liquidationPrice) ? 0 : this.liquidationPrice,
-    // )
-    this.statistics.maxToLiquidationPrice = round(
-      Math.min(
-        this.statistics.maxToLiquidationPrice,
-        isNaN(this.toLiquidationPrice) ? 100 : this.toLiquidationPrice,
-      ),
-    )
-    this.statistics.maxMarginBalanceLow = round(
-      Math.min(this.statistics.maxMarginBalanceLow, this.availableMargin),
-    )
-    // this.statistics.maxPriceDrawdown = Math.max(
-    //   this.statistics.maxPriceDrawdown,
-    //   this.priceDrawdown,
-    // )
-    // this.statistics.maxEquityDrawdown = Math.max(
-    //   this.statistics.maxEquityDrawdown,
-    //   this.equityDrawdown,
-    // )
-    this.statistics.isNotEnoughFunds = this.statistics.isNotEnoughFunds || this.availableMargin <= 0
-    this.statistics.isLiquidated =
-      this.statistics.isLiquidated || this.current <= this.liquidationPrice
+  }
 
+  public updateStatisticsOnComplete() {
     // Bases Statistics
-    this.statistics.allBases = Math.max(this.statistics.allBases, this.allBasesCount)
-    this.statistics.allIgnoredBases = Math.max(
-      this.statistics.allIgnoredBases,
-      this.allIgnoredBasesCount,
-    )
-    this.statistics.allBrokenBases = Math.max(
-      this.statistics.allBrokenBases,
-      this.allBrokenBasesCount,
-    )
-    this.statistics.maxSimultaneousBrokenBases = Math.max(
-      this.statistics.maxSimultaneousBrokenBases,
-      this.brokenBasesCount,
-    )
-    this.statistics.closedInBreakEvenBases = Math.max(
-      this.statistics.closedInBreakEvenBases,
-      this.closedInBreakEvenBasesCount,
-    )
-    this.statistics.closedInLossBases = Math.max(
-      this.statistics.closedInLossBases,
-      this.closedInLossBasesCount,
-    )
+    this.statistics.allBases = this.allBasesCount
+    this.statistics.allIgnoredBases = this.allIgnoredBasesCount
+    this.statistics.allIgnoredBrokenBases = this.allIgnoredBrokenBasesCount
+    this.statistics.allBrokenBases = this.allBrokenBasesCount
+    this.statistics.closedInBreakEvenBases = this.closedInBreakEvenBasesCount
+    this.statistics.closedInLossBases = this.closedInLossBasesCount
 
     // this.statistics.baseDropMax = max(this.allBrokenBases.map(base => base.stats.percentDrop))
     // this.statistics.baseDropAvg = average(this.allBrokenBases.map(base => base.stats.percentDrop))
@@ -1121,6 +1137,10 @@ export default class Strategy {
 
     this.statistics.ignoredBasesToAllBases = round(
       (this.allIgnoredBasesCount / this.allBasesCounter) * 100,
+    )
+
+    this.statistics.ignoredBrokenBasesToAllBrokenBases = round(
+      (this.allIgnoredBrokenBasesCount / this.allBrokenBasesCount) * 100,
     )
 
     this.statistics.basesClosedInBreakEvenToAllBrokenBases = round(
@@ -1151,6 +1171,14 @@ export default class Strategy {
 
   public get allIgnoredBasesCount() {
     return this.allIgnoredBases.length
+  }
+
+  public get allIgnoredBrokenBases() {
+    return this.ignoredBases.filter(base => base.isBroken)
+  }
+
+  public get allIgnoredBrokenBasesCount() {
+    return this.allIgnoredBrokenBases.length
   }
 
   public get allBrokenBases() {

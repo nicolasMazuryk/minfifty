@@ -170,7 +170,7 @@ export async function syncRemainingBarsUpToDate(market: string, ticker: string) 
 
     const endTimestamp = Math.max(startTime, roundEpochToFullMinute(end) - 60 * 1000)
 
-    if (endTimestamp === start) return
+    if (endTimestamp <= start) return
 
     const remainingCandles: CandleChartResult[] = await binance.futuresCandles({
       symbol: ticker,

@@ -42,6 +42,8 @@ const strategy = new Strategy()
     strategy.run(bar)
   }
 
+  strategy.updateStatisticsOnComplete()
+
   logger.timeEnd('Strategy')
 
   strategy.isRealTime = true
