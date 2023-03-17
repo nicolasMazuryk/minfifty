@@ -1,13 +1,14 @@
 import { IBase, IBar, IOrder } from './index'
-import { ORDER_SIDE, ORDER_TYPE, ORDER_STATUS } from './constants'
+import { ORDER_SIDE, ORDER_TYPE, ORDER_STATUS, ORDER_BASE_TYPES } from './constants';
 import { roundToPrecision, average, max, min, logger } from './utils'
 
 // import GlobalStrategy from './strategy-global'
 
 import {
-  INITIAL_CAPITAL,
-  // ORDER_QUANTITY,
-  ORDER_AMOUNT,
+  INITIAL_CAPITAL_USDT,
+  ORDER_BASE_QUANTITY,
+  ORDER_BASE_AMOUNT,
+  ORDER_BASE_TYPE,
   TRADING_FEE,
   BASE_RETRACEMENT_CONFIRMATION,
   BASE_PRECEDING_BARS,
@@ -47,7 +48,8 @@ import {
 const round = roundToPrecision(2)
 
 export default class Strategy {
-  public initialCapital: number = INITIAL_CAPITAL
+  public initialCapital: number = INITIAL_CAPITAL_USDT
+  public initialCapitalCoin: number = 0
   // add this.getBarByIndex() method
   // add this.sliceBars() method
   // manage bars offset
@@ -93,6 +95,10 @@ export default class Strategy {
     // -- Debug --
     if ([9].includes(this.barIndex)) {
       console.log('debug')
+    }
+
+    if (this.barIndex === 0) {
+      this.initialCapitalCoin = this.initialCapital / this.bar.open
     }
 
     this.setBaseBroken()
@@ -447,10 +453,11 @@ export default class Strategy {
       barIndexClosed: null,
       type: ORDER_TYPE.LIMIT,
       side: ORDER_SIDE.BUY,
-      // quantity: ORDER_QUANTITY,
       takeProfit: base.takeProfit,
       fee: 0,
       PNL: 0,
+      feeCoin: 0,
+      PNLCoin: 0,
     }
 
     for (let level = 1; level <= ORDER_NUMBER_OF_LEVELS; level++) {
@@ -458,18 +465,30 @@ export default class Strategy {
         base.price * (1 - ORDER_LEVEL_STEP * Math.pow(level, LEVEL_STEP_MULTIPLIER)),
       )
 
-      const quantity = (ORDER_AMOUNT * Math.pow(ORDER_STEP_MULTIPLIER, level)) / price
-      const amount = quantity * price
-
-      const order = {
+      let order = {
         ...orderDetails,
+        quantity: 0,
+        amount: 0,
         level: level,
         price: price,
-        // amount: ORDER_QUANTITY * price,
-        amount: amount,
-        quantity: quantity,
         stopLoss: base.stopLoss,
       }
+
+      if (ORDER_BASE_TYPE === ORDER_BASE_TYPES.COIN) {
+        const quantity = ORDER_BASE_QUANTITY * Math.pow(ORDER_STEP_MULTIPLIER, level)
+
+        order.quantity = quantity
+        order.amount = quantity * price
+      }
+
+      if (ORDER_BASE_TYPE === ORDER_BASE_TYPES.USDT) {
+        const quantity = (ORDER_BASE_AMOUNT * Math.pow(ORDER_STEP_MULTIPLIER, level)) / price
+
+        order.quantity = quantity
+        order.amount = quantity * price
+      }
+
+
 
       base.levels.push(price)
 
@@ -520,6 +539,7 @@ export default class Strategy {
           order.barIndexOpen = this.barIndex
           order.status = ORDER_STATUS.FILLED
           order.fee = order.amount * TRADING_FEE
+          order.feeCoin = order.fee / order.price
         }
       })
     }
@@ -535,6 +555,8 @@ export default class Strategy {
         order.status = ORDER_STATUS.CLOSED
         order.fee = order.fee + order.quantity * closePrice * TRADING_FEE
         order.PNL = (closePrice - order.price) * order.quantity - order.fee
+        order.feeCoin = order.fee / closePrice
+        order.PNLCoin = order.PNL / closePrice
         order.takeProfit = closePrice
       })
   }
@@ -783,6 +805,7 @@ export default class Strategy {
           order.barIndexOpen = this.barIndex
           order.status = ORDER_STATUS.FILLED
           order.fee = order.amount * TRADING_FEE
+          order.feeCoin = order.fee / order.price
         }
       })
     }
@@ -794,6 +817,8 @@ export default class Strategy {
         order.barIndexClosed = this.barIndex
         order.fee = order.fee + order.quantity * order.stopLoss * TRADING_FEE
         order.PNL = (order.stopLoss - order.price) * order.quantity - order.fee
+        order.feeCoin = order.fee / order.stopLoss
+        order.PNLCoin = order.PNL / order.stopLoss
         // needed to display sell order on chart. TODO: refactor
         order.takeProfit = order.stopLoss
       }
@@ -809,6 +834,8 @@ export default class Strategy {
         order.status = ORDER_STATUS.COMPLETED
         order.fee = order.fee + order.quantity * order.takeProfit * TRADING_FEE
         order.PNL = (order.takeProfit - order.price) * order.quantity - order.fee
+        order.feeCoin = order.fee / order.takeProfit
+        order.PNLCoin = order.PNL / order.takeProfit
       }
     })
 
@@ -997,12 +1024,70 @@ export default class Strategy {
     return (((this.positionAvgPrice - this.current) * this.positionSize) / this.equity) * 100 // instead of this.equity we can use this.initialCapital
   }
 
+  // ---
+
+  public get buyAndHold() {
+    return round(((this.initialCapitalCoin * this.current) - this.initialCapital) )
+  }
+
+  public get buyAndHoldPercent() {
+    return round((((this.initialCapitalCoin * this.current) - this.initialCapital) / this.initialCapital) * 100)
+  }
+
+  public get equityCoin() {
+    return this.initialCapitalCoin + this.totalProfitCoin
+  }
+
+  public get netProfitCoin() {
+    return this.closedTrades.reduce((acc, order) => acc + order.PNLCoin, 0)
+  }
+
+  public get openProfitCoin() {
+    return this.openTrades.reduce(
+      (acc, order) => acc + (((this.current - order.price) * order.quantity - order.fee) / this.current),
+      0,
+    )
+  }
+
+  public get totalProfitCoin() {
+    return this.netProfitCoin + this.openProfitCoin
+  }
+
+  public get availableMarginCoin() {
+    return this.equityCoin * LEVERAGE_X - this.positionSize
+  }
+
+  public get borrowedCoin() {
+    return Math.max(this.positionSize - this.equityCoin, 0)
+  }
+
+  public get liquidationPriceCoin() {
+    return (this.borrowedCoin * (1 + MAINTANANCE_MARGIN)) / this.positionSize * this.positionAvgPrice
+  }
+
+  public get toLiquidationPriceCoin() {
+    return ((this.current - this.liquidationPriceCoin) / this.current) * 100
+  }
+
+  // ---
+
+
   public get realTimeStatistics() {
     return {
+      "buyAndHold,$": round(this.buyAndHold),
+      "buyAndHold,%": round(this.buyAndHoldPercent),
       equity: round(this.equity),
       netProfit: round(this.netProfit),
       openProfit: round(this.openProfit),
       totalProfit: round(this.totalProfit),
+      "--------": "--------",
+      equityCoin: round(this.equityCoin),
+      netProfitCoin: round(this.netProfitCoin),
+      openProfitCoin: round(this.openProfitCoin),
+      totalProfitCoin: round(this.totalProfitCoin),
+      equityCoinConverted: round(this.equityCoin * this.current),
+      totalProfitCoinConverted: round(this.totalProfitCoin * this.current),
+      "---------": "---------",
       // totalFee: this.totalFee,
       // positionSize: this.positionSize,
       // positionAvgPrice: this.positionAvgPrice,
@@ -1023,21 +1108,29 @@ export default class Strategy {
       ignoredTradesCount: this.ignoredTradesCount,
       winTradesCount: this.winTradesCount,
       lossTradesCount: this.lossTradesCount,
+      "----------": "----------",
     }
   }
 
   public statistics = {
     maxPositionSize: 0,
     maxOpenTrades: 0,
+    maxSimultaneousBrokenBases: 0,
+    "-----------": "-----------",
     // maxLiquidationPrice: 0,
     maxToLiquidationPrice: 100,
-    maxMarginBalanceLow: INITIAL_CAPITAL * LEVERAGE_X,
+    maxMarginBalanceLow: this.initialCapital * LEVERAGE_X,
     // maxPriceDrawdown: 0,
     // maxEquityDrawdown: 0,
     isNotEnoughFunds: false,
     isLiquidated: false,
-    maxSimultaneousBrokenBases: 0,
-
+    "------------": "------------",
+    maxToLiquidationPriceCoin: 100,
+    maxMarginBalanceLowCoin: this.initialCapitalCoin * LEVERAGE_X,
+    maxMarginBalanceLowCoinConvertedBack: 0,
+    isNotEnoughFundsCoin: false,
+    isLiquidatedCoin: false,
+    "-------------": "-------------",
     allBases: 0,
     allIgnoredBases: 0,
     allIgnoredBrokenBases: 0,
@@ -1071,15 +1164,35 @@ export default class Strategy {
       //   this.statistics.maxLiquidationPrice,
       //   isNaN(this.liquidationPrice) ? 0 : this.liquidationPrice,
       // )
+      this.statistics.maxMarginBalanceLow = round(
+        Math.min(this.statistics.maxMarginBalanceLow, this.availableMargin),
+      )
       this.statistics.maxToLiquidationPrice = round(
         Math.min(
           this.statistics.maxToLiquidationPrice,
           isNaN(this.toLiquidationPrice) ? 100 : this.toLiquidationPrice,
         ),
       )
-      this.statistics.maxMarginBalanceLow = round(
-        Math.min(this.statistics.maxMarginBalanceLow, this.availableMargin),
+      this.statistics.isNotEnoughFunds = this.statistics.isNotEnoughFunds || this.availableMargin <= 0
+      this.statistics.isLiquidated =
+        this.statistics.isLiquidated || this.current <= this.liquidationPrice
+
+
+      this.statistics.maxMarginBalanceLowCoin = round(
+        Math.min(this.statistics.maxMarginBalanceLowCoin, this.availableMarginCoin),
       )
+      this.statistics.maxMarginBalanceLowCoinConvertedBack = round(
+        Math.min(this.statistics.maxMarginBalanceLowCoinConvertedBack, this.availableMarginCoin * this.current),
+      )
+      this.statistics.maxToLiquidationPriceCoin = round(
+        Math.min(
+          this.statistics.maxToLiquidationPriceCoin,
+          isNaN(this.toLiquidationPriceCoin) ? 100 : this.toLiquidationPriceCoin,
+        ),
+      )
+      this.statistics.isNotEnoughFundsCoin = this.statistics.isNotEnoughFundsCoin || this.availableMarginCoin <= 0
+      this.statistics.isLiquidatedCoin =
+        this.statistics.isLiquidatedCoin || this.current <= this.liquidationPriceCoin
       // this.statistics.maxPriceDrawdown = Math.max(
       //   this.statistics.maxPriceDrawdown,
       //   this.priceDrawdown,
@@ -1088,9 +1201,6 @@ export default class Strategy {
       //   this.statistics.maxEquityDrawdown,
       //   this.equityDrawdown,
       // )
-      this.statistics.isNotEnoughFunds = this.statistics.isNotEnoughFunds || this.availableMargin <= 0
-      this.statistics.isLiquidated =
-        this.statistics.isLiquidated || this.current <= this.liquidationPrice
 
       this.statistics.maxSimultaneousBrokenBases = Math.max(
         this.statistics.maxSimultaneousBrokenBases,

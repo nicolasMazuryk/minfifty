@@ -22,6 +22,11 @@ export const ORDER_TYPE = {
   LIMIT: 'LIMIT',
 }
 
+export const ORDER_BASE_TYPES = {
+  COIN: 'COIN',
+  USDT: 'USDT',
+}
+
 export const ORDER_STATUS = {
   OPEN: 'OPEN',
   FILLED: 'FILLED',

@@ -1,7 +1,8 @@
 // Strategy Settings
-export const INITIAL_CAPITAL = 1000
-// export const ORDER_QUANTITY = 0.015
-export const ORDER_AMOUNT = 22
+export const INITIAL_CAPITAL_USDT = 1000
+export const ORDER_BASE_TYPE = 'USDT'
+export const ORDER_BASE_QUANTITY = 0.015
+export const ORDER_BASE_AMOUNT = 22
 export const TRADING_FEE = 0.02 / 100
 
 export const BASE_RETRACEMENT_CONFIRMATION = 0.4 / 100 // 0.6 ///// 0.14

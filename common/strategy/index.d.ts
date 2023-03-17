@@ -60,6 +60,9 @@ export interface IOrder {
   stopLoss: number
   fee: number
   PNL: number
+
+  feeCoin: number
+  PNLCoin: number
 }
 
 export interface IMarketData {
