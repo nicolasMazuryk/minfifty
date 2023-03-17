@@ -63,9 +63,10 @@ const strategy = new Strategy()
 
   await logStrategyPerformance(strategy)
 
-  const closedBases = strategy.closedBases.sort((a, b) => a.PNL - b.PNL)
+  // const closedBases = strategy.closedBases.sort((a, b) => a.PNL - b.PNL)
+  const closedInLossBases = strategy.closedInLossBases
 
-  logger.info(closedBases.length)
+  logger.info(closedInLossBases.length)
 
   logger.info('Started real-time mode')
 

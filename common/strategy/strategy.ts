@@ -421,6 +421,7 @@ export default class Strategy {
       PNL: 0,
       stats: {
         percentDrop: 0,
+        percentBounce: 0,
         barsLength: 0,
       },
     }
@@ -699,8 +700,24 @@ export default class Strategy {
   }
 
   public updateBaseStats(base: IBase) {
+    const IGNORE_BASE_BOUNCE_CALCULATION_UNTIL_PERCENT = 1
     const percentDrop = round((1 - this.current / base.price) * 100)
-    base.stats.percentDrop = Math.max(base.stats.percentDrop, percentDrop)
+
+    let currentHigh
+
+    if (percentDrop > base.stats.percentDrop) {
+      base.stats.percentDrop = percentDrop
+
+      currentHigh = this.bar.close
+    } else {
+      currentHigh = this.bar.high
+    }
+
+    // do not calculate bounce if current candle high is higher than base price
+    if (base.stats.percentDrop > IGNORE_BASE_BOUNCE_CALCULATION_UNTIL_PERCENT && this.bar.high < base.price) {
+      const percentBounce = round(((base.stats.percentDrop - (1 - (currentHigh / base.price)) * 100) / base.stats.percentDrop) * 100)
+      base.stats.percentBounce = Math.max(base.stats.percentBounce, percentBounce)
+    }
 
     if (base.baseBrokenBarIndex) {
       const barsLength = this.barIndex - base.baseBrokenBarIndex

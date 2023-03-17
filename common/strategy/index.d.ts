@@ -19,6 +19,7 @@ export interface IBase {
   PNL: number
   stats: {
     percentDrop: number
+    percentBounce: number
     barsLength: number
   }
 }
