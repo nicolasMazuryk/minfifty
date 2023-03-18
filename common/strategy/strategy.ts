@@ -585,17 +585,19 @@ export default class Strategy {
 
         // this.updateTakeProfitWhenWarningLevelIsReached()
 
-        this.handleClosePreordersInBreakEven(base)
-
         // this.handleEmergencyTakeProfit(base)
 
         // this.updateBaseStats(base)
+
+        this.handleClosePreordersInBreakEven(base)
 
         this.setBaseRespected(base)
       })
   }
 
   private calculateBaseBreakEven(base: IBase) {
+    this.executeFillOrders()
+
     const orders = this.orders
       .filter(order => order.baseBarIndex === base.barIndex)
       .filter(order => order.status === ORDER_STATUS.FILLED)
@@ -764,7 +766,7 @@ export default class Strategy {
         base.isClosedInBreakEven = true
       }
 
-      if (higherPrice >= base.emergencyTakeProfit || lowerPrice <= base.stopLoss) {
+      if ((higherPrice >= base.emergencyTakeProfit || lowerPrice <= base.stopLoss) && !base.isClosedInBreakEven) {
         base.isClosedInLoss = true
       }
     }
@@ -815,17 +817,7 @@ export default class Strategy {
       })
     }
 
-    if (!this.ignoreBuyOrders) {
-      this.orders.forEach(order => {
-        if (order.status === ORDER_STATUS.OPEN && entryPrice <= order.price) {
-          order.timeOpen = this.isRealTime ? new Date() : this.bar.time
-          order.barIndexOpen = this.barIndex
-          order.status = ORDER_STATUS.FILLED
-          order.fee = order.amount * TRADING_FEE
-          order.feeCoin = order.fee / order.price
-        }
-      })
-    }
+    this.executeFillOrders()
 
     this.orders.forEach(order => {
       if (order.status === ORDER_STATUS.FILLED && this.current <= order.stopLoss) {
@@ -866,6 +858,21 @@ export default class Strategy {
 
     // this.orders = this.orders.filter((order) => order.status !== ORDER_STATUS.COMPLETED)
   }
+
+  private executeFillOrders() {
+    if (!this.ignoreBuyOrders) {
+      this.orders.forEach(order => {
+        if (order.status === ORDER_STATUS.OPEN && this.current <= order.price) {
+          order.timeOpen = this.isRealTime ? new Date() : this.bar.time
+          order.barIndexOpen = this.barIndex
+          order.status = ORDER_STATUS.FILLED
+          order.fee = order.amount * TRADING_FEE
+          order.feeCoin = order.fee / order.price
+        }
+      })
+    }
+  }
+
   // TODO: refactor this piece of code
   private getOrderTakeProfitExitPrice(order: IOrder) {
     // eslint-disable-next-line @typescript-eslint/no-shadow
