@@ -581,15 +581,15 @@ export default class Strategy {
     this.bases
       .filter(base => base.isBroken)
       .forEach(base => {
-        // this.calculateBaseBreakEven(base)
-
         // this.updateTakeProfitWhenWarningLevelIsReached()
 
         // this.handleEmergencyTakeProfit(base)
 
         // this.updateBaseStats(base)
 
-        this.handleClosePreordersInBreakEven(base)
+        this.handleCloseOrdersInBreakEven(base)
+
+        // this.closeNestedBasesInBreakEven(base)
 
         this.setBaseRespected(base)
       })
@@ -602,44 +602,47 @@ export default class Strategy {
       .filter(order => order.baseBarIndex === base.barIndex)
       .filter(order => order.status === ORDER_STATUS.FILLED)
 
-    // base.breakEven =
-    //   round(
-    //     (orders.reduce((acc, order) => acc + order.price, 0) / orders.length) *
-    //       (1 + TRADING_FEE * 2),
-    //   ) || 999999
-
     const BREAK_EVEN_TRIGGER = 0.5
 
-    const minOrderPrice = min(orders.map(order => order.price))
-    const maxOrderPrice = max(orders.map(order => order.price))
+    if (ORDER_BASE_TYPE === ORDER_BASE_TYPES.USDT) {
+      const minOrderPrice = min(orders.map(order => order.price))
+      const maxOrderPrice = max(orders.map(order => order.price))
 
-    base.breakEven =
-      round(
-        (minOrderPrice + (maxOrderPrice - minOrderPrice) * BREAK_EVEN_TRIGGER) *
+      base.breakEven =
+        round(
+          (minOrderPrice + (maxOrderPrice - minOrderPrice) * BREAK_EVEN_TRIGGER) *
           (1 + TRADING_FEE * 2),
-      ) || 999999
+        ) || 999999
+    }
+    // TODO: calculate dynamic BREAK_EVEN_TRIGGER = 0.5 for COIN
+    if (ORDER_BASE_TYPE === ORDER_BASE_TYPES.COIN) {
+      const totalOrderAmount = round(orders.reduce((acc, order) => acc + order.amount * (1 + TRADING_FEE * 2), 0))
+      const totalOrderQuantity = orders.reduce((acc, order) => acc + order.quantity, 0)
 
-    const totalOrderAmount = round(orders.reduce((acc, order) => acc + order.amount * (1 + TRADING_FEE * 2), 0))
-    const totalOrderQuantity = orders.reduce((acc, order) => acc + order.quantity, 0)
+      base.breakEven = round(totalOrderAmount / totalOrderQuantity) || 999999
+    }
 
-    base.breakEven = round(totalOrderAmount / totalOrderQuantity) || 999999
-
+    orders.forEach(order => {
+        order.takeProfit = base.breakEven
+      })
   }
 
-  public handleClosePreordersInBreakEven(base: IBase) {
+  public handleCloseOrdersInBreakEven(base: IBase) {
     const breakEvenTriggerLow = base.price * (1 - ORDER_BREAK_EVEN_CLOSE_TRIGGER)
 
     if (this.current <= breakEvenTriggerLow || base.breakEven < 999999) {
       this.calculateBaseBreakEven(base)
+    }
+  }
 
-      // base.takeProfit = base.breakEven // to be removed
+  public closeNestedBasesInBreakEven(base: IBase) {
+    const NUMBER_OF_NESTED_BROKEN_BASES_TO_CLOSE_IN_BREAK_EVEN = 1
+    const brokenBasesToCloseInBreakEven = this.bases.filter(base => base.isBroken).slice(0, -NUMBER_OF_NESTED_BROKEN_BASES_TO_CLOSE_IN_BREAK_EVEN)
+    const isBaseToBeClosedInBreakEven = brokenBasesToCloseInBreakEven.includes(base)
 
-      this.orders
-        .filter(order => order.baseBarIndex === base.barIndex)
-        .filter(order => order.status === ORDER_STATUS.FILLED)
-        .forEach(order => {
-          order.takeProfit = base.breakEven
-        })
+
+    if (isBaseToBeClosedInBreakEven || base.breakEven < 999999) {
+      this.calculateBaseBreakEven(base)
     }
   }
 
