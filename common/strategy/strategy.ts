@@ -1,5 +1,5 @@
 import { IBase, IBar, IOrder } from './index'
-import { ORDER_SIDE, ORDER_TYPE, ORDER_STATUS, ORDER_BASE_TYPES } from './constants';
+import { ORDER_SIDE, ORDER_TYPE, ORDER_STATUS, ORDER_BASE_TYPES } from './constants'
 import { roundToPrecision, average, max, min, logger } from './utils'
 
 // import GlobalStrategy from './strategy-global'
@@ -42,7 +42,7 @@ import {
   IGNORE_BASE_ON_TOP_PRECEDING_BASES,
   IGNORE_BASE_ON_TOP_PRECEDING_BASES_DIFFERENCE_THRESHOLD,
   IGNORE_BASE_ON_TOP_NUMBER_OF_IGNORED_BASES,
-} from './settings';
+} from './settings'
 
 // const round = roundToPrecision(TICKER_PRECISION.ETH)
 const round = roundToPrecision(2)
@@ -489,8 +489,6 @@ export default class Strategy {
         order.amount = quantity * price
       }
 
-
-
       base.levels.push(price)
 
       // Trading Rule #3 ignore Trading Levels Close To the Base
@@ -611,20 +609,22 @@ export default class Strategy {
       base.breakEven =
         round(
           (minOrderPrice + (maxOrderPrice - minOrderPrice) * BREAK_EVEN_TRIGGER) *
-          (1 + TRADING_FEE * 2),
+            (1 + TRADING_FEE * 2),
         ) || 999999
     }
     // TODO: calculate dynamic BREAK_EVEN_TRIGGER = 0.5 for COIN
     if (ORDER_BASE_TYPE === ORDER_BASE_TYPES.COIN) {
-      const totalOrderAmount = round(orders.reduce((acc, order) => acc + order.amount * (1 + TRADING_FEE * 2), 0))
+      const totalOrderAmount = round(
+        orders.reduce((acc, order) => acc + order.amount * (1 + TRADING_FEE * 2), 0),
+      )
       const totalOrderQuantity = orders.reduce((acc, order) => acc + order.quantity, 0)
 
       base.breakEven = round(totalOrderAmount / totalOrderQuantity) || 999999
     }
 
     orders.forEach(order => {
-        order.takeProfit = base.breakEven
-      })
+      order.takeProfit = base.breakEven
+    })
   }
 
   public handleCloseOrdersInBreakEven(base: IBase) {
@@ -637,9 +637,10 @@ export default class Strategy {
 
   public closeNestedBasesInBreakEven(base: IBase) {
     const NUMBER_OF_NESTED_BROKEN_BASES_TO_CLOSE_IN_BREAK_EVEN = 1
-    const brokenBasesToCloseInBreakEven = this.bases.filter(base => base.isBroken).slice(0, -NUMBER_OF_NESTED_BROKEN_BASES_TO_CLOSE_IN_BREAK_EVEN)
+    const brokenBasesToCloseInBreakEven = this.bases
+      .filter(base => base.isBroken)
+      .slice(0, -NUMBER_OF_NESTED_BROKEN_BASES_TO_CLOSE_IN_BREAK_EVEN)
     const isBaseToBeClosedInBreakEven = brokenBasesToCloseInBreakEven.includes(base)
-
 
     if (isBaseToBeClosedInBreakEven || base.breakEven < 999999) {
       this.calculateBaseBreakEven(base)
@@ -719,8 +720,14 @@ export default class Strategy {
     }
 
     // do not calculate bounce if current candle high is higher than base price
-    if (base.stats.percentDrop > IGNORE_BASE_BOUNCE_CALCULATION_UNTIL_PERCENT && this.bar.high < base.price) {
-      const percentBounce = round(((base.stats.percentDrop - (1 - (currentHigh / base.price)) * 100) / base.stats.percentDrop) * 100)
+    if (
+      base.stats.percentDrop > IGNORE_BASE_BOUNCE_CALCULATION_UNTIL_PERCENT &&
+      this.bar.high < base.price
+    ) {
+      const percentBounce = round(
+        ((base.stats.percentDrop - (1 - currentHigh / base.price) * 100) / base.stats.percentDrop) *
+          100,
+      )
       base.stats.percentBounce = Math.max(base.stats.percentBounce, percentBounce)
     }
 
@@ -769,7 +776,10 @@ export default class Strategy {
         base.isClosedInBreakEven = true
       }
 
-      if ((higherPrice >= base.emergencyTakeProfit || lowerPrice <= base.stopLoss) && !base.isClosedInBreakEven) {
+      if (
+        (higherPrice >= base.emergencyTakeProfit || lowerPrice <= base.stopLoss) &&
+        !base.isClosedInBreakEven
+      ) {
         base.isClosedInLoss = true
       }
     }
@@ -1054,11 +1064,13 @@ export default class Strategy {
   // ---
 
   public get buyAndHold() {
-    return round(((this.initialCapitalCoin * this.current) - this.initialCapital) )
+    return round(this.initialCapitalCoin * this.current - this.initialCapital)
   }
 
   public get buyAndHoldPercent() {
-    return round((((this.initialCapitalCoin * this.current) - this.initialCapital) / this.initialCapital) * 100)
+    return round(
+      ((this.initialCapitalCoin * this.current - this.initialCapital) / this.initialCapital) * 100,
+    )
   }
 
   public get equityCoin() {
@@ -1071,7 +1083,8 @@ export default class Strategy {
 
   public get openProfitCoin() {
     return this.openTrades.reduce(
-      (acc, order) => acc + (((this.current - order.price) * order.quantity - order.fee) / this.current),
+      (acc, order) =>
+        acc + ((this.current - order.price) * order.quantity - order.fee) / this.current,
       0,
     )
   }
@@ -1089,7 +1102,9 @@ export default class Strategy {
   }
 
   public get liquidationPriceCoin() {
-    return (this.borrowedCoin * (1 + MAINTANANCE_MARGIN)) / this.positionSize * this.positionAvgPrice
+    return (
+      ((this.borrowedCoin * (1 + MAINTANANCE_MARGIN)) / this.positionSize) * this.positionAvgPrice
+    )
   }
 
   public get toLiquidationPriceCoin() {
@@ -1098,23 +1113,22 @@ export default class Strategy {
 
   // ---
 
-
   public get realTimeStatistics() {
     return {
-      "buyAndHold,$": round(this.buyAndHold),
-      "buyAndHold,%": round(this.buyAndHoldPercent),
+      'buyAndHold,$': round(this.buyAndHold),
+      'buyAndHold,%': round(this.buyAndHoldPercent),
       equity: round(this.equity),
       netProfit: round(this.netProfit),
       openProfit: round(this.openProfit),
       totalProfit: round(this.totalProfit),
-      "--------": "--------",
+      '--------': '--------',
       equityCoin: round(this.equityCoin),
       netProfitCoin: round(this.netProfitCoin),
       openProfitCoin: round(this.openProfitCoin),
       totalProfitCoin: round(this.totalProfitCoin),
       equityCoinConverted: round(this.equityCoin * this.current),
       totalProfitCoinConverted: round(this.totalProfitCoin * this.current),
-      "---------": "---------",
+      '---------': '---------',
       // totalFee: this.totalFee,
       // positionSize: this.positionSize,
       // positionAvgPrice: this.positionAvgPrice,
@@ -1135,7 +1149,7 @@ export default class Strategy {
       ignoredTradesCount: this.ignoredTradesCount,
       winTradesCount: this.winTradesCount,
       lossTradesCount: this.lossTradesCount,
-      "----------": "----------",
+      '----------': '----------',
     }
   }
 
@@ -1143,7 +1157,7 @@ export default class Strategy {
     maxPositionSize: 0,
     maxOpenTrades: 0,
     maxSimultaneousBrokenBases: 0,
-    "-----------": "-----------",
+    '-----------': '-----------',
     // maxLiquidationPrice: 0,
     maxToLiquidationPrice: 100,
     maxMarginBalanceLow: this.initialCapital * LEVERAGE_X,
@@ -1151,13 +1165,13 @@ export default class Strategy {
     // maxEquityDrawdown: 0,
     isNotEnoughFunds: false,
     isLiquidated: false,
-    "------------": "------------",
+    '------------': '------------',
     maxToLiquidationPriceCoin: 100,
     maxMarginBalanceLowCoin: this.initialCapitalCoin * LEVERAGE_X,
     maxMarginBalanceLowCoinConvertedBack: 0,
     isNotEnoughFundsCoin: false,
     isLiquidatedCoin: false,
-    "-------------": "-------------",
+    '-------------': '-------------',
     allBases: 0,
     allIgnoredBases: 0,
     allIgnoredBrokenBases: 0,
@@ -1200,16 +1214,19 @@ export default class Strategy {
           isNaN(this.toLiquidationPrice) ? 100 : this.toLiquidationPrice,
         ),
       )
-      this.statistics.isNotEnoughFunds = this.statistics.isNotEnoughFunds || this.availableMargin <= 0
+      this.statistics.isNotEnoughFunds =
+        this.statistics.isNotEnoughFunds || this.availableMargin <= 0
       this.statistics.isLiquidated =
         this.statistics.isLiquidated || this.current <= this.liquidationPrice
-
 
       this.statistics.maxMarginBalanceLowCoin = round(
         Math.min(this.statistics.maxMarginBalanceLowCoin, this.availableMarginCoin),
       )
       this.statistics.maxMarginBalanceLowCoinConvertedBack = round(
-        Math.min(this.statistics.maxMarginBalanceLowCoinConvertedBack, this.availableMarginCoin * this.current),
+        Math.min(
+          this.statistics.maxMarginBalanceLowCoinConvertedBack,
+          this.availableMarginCoin * this.current,
+        ),
       )
       this.statistics.maxToLiquidationPriceCoin = round(
         Math.min(
@@ -1217,7 +1234,8 @@ export default class Strategy {
           isNaN(this.toLiquidationPriceCoin) ? 100 : this.toLiquidationPriceCoin,
         ),
       )
-      this.statistics.isNotEnoughFundsCoin = this.statistics.isNotEnoughFundsCoin || this.availableMarginCoin <= 0
+      this.statistics.isNotEnoughFundsCoin =
+        this.statistics.isNotEnoughFundsCoin || this.availableMarginCoin <= 0
       this.statistics.isLiquidatedCoin =
         this.statistics.isLiquidatedCoin || this.current <= this.liquidationPriceCoin
       // this.statistics.maxPriceDrawdown = Math.max(
