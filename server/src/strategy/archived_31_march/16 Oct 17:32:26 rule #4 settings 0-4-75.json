@@ -1,0 +1,21 @@
+{
+  "equity": 1010.7480774999999,
+  "netProfit": 14.356398899999975,
+  "openProfit": -3.6083214000000217,
+  "totalProfit": 10.748077499999955,
+  "grossProfit": 34.80623819999997,
+  "grossLoss": -20.4498393,
+  "closedTradesCount": 67,
+  "winTradesCount": 51,
+  "lossTradesCount": 16,
+  "maxPositionSize": 0.8000000000000002,
+  "maxOpenTrades": 16,
+  "maxToLiquidationPrice": 94.83962007905134,
+  "maxMarginBalanceLow": 940.9550919999997,
+  "isNotEnoughFunds": false,
+  "isLiquidated": false,
+  "allBases": 108,
+  "allBrokenBases": 22,
+  "maxSimultaneousBrokenBases": 3,
+  "closedInLossBases": 1
+}

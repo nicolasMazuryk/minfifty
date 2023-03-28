@@ -243,13 +243,13 @@ export default class Strategy {
           this.newBaseBarIndex = barIndex
           this.isNewBase = true
 
-          if (
-            this.ignoreTopBaseAndFollowingBase(confirmedBarLow) ||
-            this.ignoreBaseOnTopHigherThanPrecedingRange(confirmedBarLow) ||
-            this.ignoreMultipleTopBases(confirmedBarLow))
-          {
-            this.isIgnoredBase = true
-          }
+          // if (
+          //   this.ignoreTopBaseAndFollowingBase(confirmedBarLow) ||
+          //   this.ignoreBaseOnTopHigherThanPrecedingRange(confirmedBarLow) ||
+          //   this.ignoreMultipleTopBases(confirmedBarLow))
+          // {
+          //   this.isIgnoredBase = true
+          // }
 
           break
         }
@@ -532,7 +532,9 @@ export default class Strategy {
     // if base is broken and respected on the same candle (long wick)
     // we need to trigger orders execution before closing this order
     if (this.isBaseBrokenOnCurrentBar(base)) {
-      this.orders.forEach(order => {
+      this.orders
+        .filter(order => order.baseBarIndex === base.barIndex)
+        .forEach(order => {
         if (order.status === ORDER_STATUS.OPEN && this.current <= order.price) {
           order.timeOpen = this.isRealTime ? new Date() : this.bar.time
           order.barIndexOpen = this.barIndex
@@ -594,7 +596,7 @@ export default class Strategy {
   }
 
   private calculateBaseBreakEven(base: IBase) {
-    this.executeFillOrders()
+    // this.executeFillOrders()
 
     const orders = this.orders
       .filter(order => order.baseBarIndex === base.barIndex)
@@ -748,41 +750,31 @@ export default class Strategy {
     const isBarLimitExceeded =
       BASE_BARS_LENGTH_LIMIT && this.barIndex - base.barIndex >= BASE_BARS_LENGTH_LIMIT
 
-    if (
-      higherPrice >= base.takeProfit ||
-      higherPrice >= base.breakEven ||
-      // higherPrice >= base.emergencyTakeProfit ||
-      lowerPrice <= base.stopLoss ||
-      isBarLimitExceeded
-    ) {
-      const closePrice =
-        higherPrice >= base.takeProfit
-          ? base.takeProfit
-          : higherPrice >= base.breakEven
-          ? base.breakEven
-          : // : higherPrice >= base.emergencyTakeProfit
-          // ? base.emergencyTakeProfit
-          lowerPrice <= base.stopLoss
-          ? base.stopLoss
-          : this.bar.close
+    if (lowerPrice <= base.stopLoss) {
+      this.executeFillOrders()
+      this.closeBaseOrders(base, base.stopLoss)
+      base.isClosedInLoss = true
 
-      this.closeBaseOrders(base, closePrice)
+    } else if (higherPrice >= base.takeProfit) {
+      this.executeFillOrders()
+      this.closeBaseOrders(base, base.takeProfit)
+      base.isRespected = true
 
-      if (higherPrice >= base.takeProfit) {
-        base.isRespected = true
-      }
+    } else if (higherPrice >= base.breakEven) {
+      this.executeFillOrders()
+      this.closeBaseOrders(base, base.breakEven)
+      base.isClosedInBreakEven = true
 
-      if (higherPrice >= base.breakEven) {
-        base.isClosedInBreakEven = true
-      }
-
-      if (
-        (higherPrice >= base.emergencyTakeProfit || lowerPrice <= base.stopLoss) &&
-        !base.isClosedInBreakEven
-      ) {
-        base.isClosedInLoss = true
-      }
+    } else if (isBarLimitExceeded) {
+      this.executeFillOrders()
+      this.closeBaseOrders(base, this.bar.close)
     }
+
+    // if (higherPrice >= base.emergencyTakeProfit) {
+    //   this.executeFillOrders()
+    //   this.closeBaseOrders(base, base.emergencyTakeProfit)
+    //   base.isClosedInLoss = true
+    // }
   }
 
   private isBaseBrokenOnCurrentBar(base: IBase) {
