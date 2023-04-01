@@ -51,13 +51,11 @@ const round = roundToPrecision(2)
 export default class Strategy {
   public initialCapital: number = INITIAL_CAPITAL_USDT
   public initialCapitalCoin: number = 0
-  // add this.getBarByIndex() method
-  // add this.sliceBars() method
-  // manage bars offset
   public bars: IBar[] = []
   public bar!: IBar
   public barIndex: number = -1
   public barIndexOffset: number = 0
+  public isNewBar: boolean = true
   public isNewBase: boolean = false
   public isIgnoredBase: boolean = false
   public newBaseBarIndex: number = 0
@@ -83,11 +81,7 @@ export default class Strategy {
   // public globalStrategy: GlobalStrategy = new GlobalStrategy()
 
   public run(bar: IBar): void {
-    // TODO: update last bar instead of pushing new bar to array in real-time mode
-    this.bars.push(bar)
-    this.barIndex++
-    this.bar = bar
-    this.current = this.isRealTime ? this.bar.close : this.bar.low
+    this.addBar(bar)
 
     // this.globalStrategy.run(bar)
 
@@ -141,12 +135,16 @@ export default class Strategy {
 
   public calculateBuyerIndex(): void {
     if (this.barIndex < 2) {
-      this.buyerIndex.push([0, 0, 0])
+      if (this.buyerIndex.length < 2) {
+        this.buyerIndex.push([0, 0, 0])
+      }
       return
     }
 
-    const previousBar = this.getBarByBarIndexOffset(this.barIndex - 2)
-    const currentBar = this.getBarByBarIndexOffset(this.barIndex - 1)
+    if (!this.bar.isFinal) return
+
+    const previousBar = this.getBarByBarIndexOffset(this.barIndex - 1)
+    const currentBar = this.getBarByBarIndexOffset(this.barIndex)
 
     const drop = round((previousBar.high / currentBar.low - 1) * 100) || 0.01
     const bounce = round((currentBar.high / previousBar.low - 1) * 100)
@@ -171,6 +169,8 @@ export default class Strategy {
   public calculateBaseRetracementConfirmation(): void {
     if (this.barIndex < 1) return
 
+    if (!this.bar.isFinal) return
+
     const recentBars = this.buyerIndex.slice(
       Math.max(0, this.buyerIndex.length - 1 - ALLOWED_TRADE_THRESHOLD_BARS),
     )
@@ -189,6 +189,32 @@ export default class Strategy {
       BASE_RETRACEMENT_CONFIRMATION,
       dynamicVolatilityBaseRetracementConfirmation,
     ])
+  }
+
+  private addBar(bar: IBar): void {
+    // backtest
+    if (!this.isRealTime) {
+      this.bars.push(bar)
+      this.barIndex++
+    }
+    // real time
+    if (this.isRealTime) {
+      if (!this.isNewBar) {
+        this.bars[this.barIndex] = bar
+        logger.info()
+      }
+      if (this.isNewBar) {
+        this.bars.push(bar)
+        this.barIndex++
+        this.isNewBar = false
+      }
+      if (bar.isFinal) {
+        this.isNewBar = true
+      }
+    }
+
+    this.bar = bar
+    this.current = this.isRealTime ? this.bar.close : this.bar.low
   }
 
   private findNewBaseBarIndex(): void {
@@ -447,7 +473,7 @@ export default class Strategy {
 
     // Disable to increase performance
     // Enable to analyse and measure all detected bases
-    this.allBases.push(base)
+    // this.allBases.push(base)
   }
 
   private openBaseOrders(base: IBase) {

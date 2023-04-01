@@ -1,25 +1,21 @@
 // eslint-disable-next-line import/order
 import '../alias-runtime'
 
-// import { MarketData } from '@/models'
-
 import { IBar } from '@common/strategy'
 import { START_PERIOD_TIME, END_PERIOD_TIME } from '@common/strategy/config'
 import { MARKET, TICKER } from '@common/strategy/constants'
 import Strategy from '@common/strategy/strategy'
-import {
-  logger,
-  // wait
-} from '@common/strategy/utils'
+import { logger, wait } from '@common/strategy/utils'
 
-// import binance from '@/external/binance'
+import binance from '@/external/binance'
+import { MarketData } from '@/models'
 import {
   getBacktestBars,
   logStrategyPerformance,
-  // marketDataToBar,
+  marketDataToBar,
   syncRemainingBarsUpToDate,
   // validateMarketDataIntegrity,
-  // wsCandleToMarketData,
+  wsCandleToMarketData,
 } from '@/strategy/helpers'
 
 const strategy = new Strategy()
@@ -42,33 +38,32 @@ const strategy = new Strategy()
     strategy.run(bar)
   }
 
-  strategy.updateStatisticsOnComplete()
+  // strategy.updateStatisticsOnComplete()
 
   logger.timeEnd('Strategy')
 
   strategy.isRealTime = true
 
-  // binance.ws.futuresCandles(TICKER.ETH, '1m', async (candle) => {
-  //   const marketData = wsCandleToMarketData(MARKET.FUTURES, candle)
-  //   const bar = marketDataToBar(marketData)
-  //
-  //   // strategy.run(bar)
-  //
-  //   logger.info(bar.time)
-  //
-  //   if (candle.isFinal) {
-  //     // await MarketData.bulkCreate([marketData])
-  //   }
-  // })
+  binance.ws.futuresCandles(TICKER.ETH, '1m', async (candle) => {
+    const marketData = wsCandleToMarketData(MARKET.FUTURES, candle)
+    const bar = marketDataToBar(marketData)
+
+    strategy.run(bar)
+
+    logger.info(new Date(bar.time), bar.time)
+
+    if (bar.isFinal) {
+      await MarketData.bulkCreate([marketData])
+    }
+  })
 
   await logStrategyPerformance(strategy)
 
   // const closedBases = strategy.closedBases.sort((a, b) => a.PNL - b.PNL)
-  const closedInLossBases = strategy.closedInLossBases
-
-  logger.info(closedInLossBases.length)
+  // const closedInLossBases = strategy.closedInLossBases
+  // logger.info(closedInLossBases.length)
 
   logger.info('Started real-time mode')
 
-  // await wait(1000 * 60 * 60 * 24) // wait for 1 day
+  await wait(1000 * 60 * 60 * 24) // wait for 1 day
 })().catch(logger.error)

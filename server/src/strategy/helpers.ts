@@ -68,6 +68,7 @@ export const wsCandleToMarketData = (market: string, candle: Candle): IMarketDat
     quoteVolume,
     buyVolume,
     quoteBuyVolume,
+    isFinal,
   } = candle
 
   return {
@@ -86,16 +87,26 @@ export const wsCandleToMarketData = (market: string, candle: Candle): IMarketDat
     trades,
     takerBuyBaseAssetVolume: buyVolume,
     takerBuyQuoteAssetVolume: quoteBuyVolume,
+    isFinal,
   }
 }
 
-export const marketDataToBar = ({ time, open, high, low, close, volume }: IMarketData): IBar => ({
+export const marketDataToBar = ({
   time,
+  open,
+  high,
+  low,
+  close,
+  volume,
+  isFinal,
+}: IMarketData): IBar => ({
+  time: new Date(time),
   open: parseFloat(open),
   high: parseFloat(high),
   low: parseFloat(low),
   close: parseFloat(close),
   volume: parseFloat(volume),
+  isFinal: isFinal,
 })
 
 export const getBacktestBars = async (

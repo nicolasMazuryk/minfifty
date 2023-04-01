@@ -42,6 +42,7 @@ export interface IBar {
   low: number
   close: number
   volume: number
+  isFinal?: boolean
 }
 
 export interface IOrder {
@@ -82,6 +83,7 @@ export interface IMarketData {
   trades: number
   takerBuyBaseAssetVolume: string
   takerBuyQuoteAssetVolume: string
+  isFinal?: boolean
 }
 
 export interface IChartIndicator {
