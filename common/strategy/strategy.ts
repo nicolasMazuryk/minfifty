@@ -42,7 +42,8 @@ import {
   IGNORE_BASE_ON_TOP_PRECEDING_BASES,
   IGNORE_BASE_ON_TOP_PRECEDING_BASES_DIFFERENCE_THRESHOLD,
   IGNORE_BASE_ON_TOP_NUMBER_OF_IGNORED_BASES,
-} from './settings'
+  MAX_SIMULTANEOUS_BROKEN_BASES,
+} from './settings';
 
 // const round = roundToPrecision(TICKER_PRECISION.ETH)
 const round = roundToPrecision(2)
@@ -242,6 +243,11 @@ export default class Strategy {
 
           this.newBaseBarIndex = barIndex
           this.isNewBase = true
+
+          // limit Max Simultaneous Broken Bases
+          if (this.bases.filter(base => base.isBroken).length >= MAX_SIMULTANEOUS_BROKEN_BASES) {
+            this.isIgnoredBase = true
+          }
 
           // if (
           //   this.ignoreTopBaseAndFollowingBase(confirmedBarLow) ||
@@ -602,6 +608,8 @@ export default class Strategy {
       .filter(order => order.baseBarIndex === base.barIndex)
       .filter(order => order.status === ORDER_STATUS.FILLED)
 
+    if (!orders.length) return
+
     const BREAK_EVEN_TRIGGER = 0.5
 
     if (ORDER_BASE_TYPE === ORDER_BASE_TYPES.USDT) {
@@ -622,6 +630,10 @@ export default class Strategy {
       const totalOrderQuantity = orders.reduce((acc, order) => acc + order.quantity, 0)
 
       base.breakEven = round(totalOrderAmount / totalOrderQuantity) || 999999
+    }
+
+    if (LEVEL_STEP_MULTIPLIER > 1) {
+      base.breakEven = average(orders.map(order => order.price)) * (1 + TRADING_FEE * 2)
     }
 
     orders.forEach(order => {
@@ -856,7 +868,8 @@ export default class Strategy {
     this.bases
       .filter(base => base.isRespected || base.isClosedInBreakEven || base.isClosedInLoss)
       .forEach(base => {
-        base.PNL = this.orders
+
+        base.PNL = [...this.orders, ...this.closedOrders]
           .filter(order => order.baseBarIndex === base.barIndex)
           .reduce((acc, order) => acc + order.PNL, 0)
       })
