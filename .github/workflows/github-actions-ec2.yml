@@ -1,19 +1,33 @@
 name: AWS EC2 Deployment
 
-# Trigger deployment only on push to master branch
 on:
   push:
     branches:
       - master
 
 jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16.16.0'
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm ci
+
+      - run: npm run build
+
   deploy:
     name: Deploy to EC2
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Deploy
         uses: easingthemes/ssh-deploy@main
@@ -22,3 +36,7 @@ jobs:
           REMOTE_HOST: ${{ secrets.HOST_DNS }}
           REMOTE_USER: ${{ secrets.USERNAME }}
           TARGET: ${{ secrets.TARGET_DIR }}
+          SOURCE: "server/"
+          SCRIPT_AFTER: |
+            npm install --production
+            pm2 restart ecosystem.config.js

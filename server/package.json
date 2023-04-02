@@ -22,6 +22,8 @@
   },
   "license": "ISC",
   "devDependencies": {
+    "@types/csv-parse": "^1.2.2",
+    "@types/uuidv4": "^5.0.0",
     "@types/axios": "^0.14.0",
     "@types/body-parser": "^1.19.2",
     "@types/bunyan": "^1.8.8",
@@ -60,8 +62,6 @@
     "typescript": "^4.7.4"
   },
   "dependencies": {
-    "@types/csv-parse": "^1.2.2",
-    "@types/uuidv4": "^5.0.0",
     "axios": "^0.27.2",
     "binance-api-node": "^0.11.46",
     "body-parser": "^1.20.0",
