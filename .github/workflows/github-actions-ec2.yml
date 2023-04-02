@@ -6,21 +6,6 @@ on:
       - master
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v3
-      - name: Setup Node
-        uses: actions/setup-node@v3
-        with:
-          node-version: '16.16.0'
-          cache: 'npm'
-      - name: Install dependencies
-        run: npm ci
-
-      - run: npm run build
-
   deploy:
     name: Deploy to EC2
     runs-on: ubuntu-latest
@@ -36,7 +21,25 @@ jobs:
           REMOTE_HOST: ${{ secrets.HOST_DNS }}
           REMOTE_USER: ${{ secrets.USERNAME }}
           TARGET: ${{ secrets.TARGET_DIR }}
-          SOURCE: "server/"
           SCRIPT_AFTER: |
-            npm install --production
+            export NVM_DIR=~/.nvm
+            source ~/.nvm/nvm.sh
+            cd ${{ secrets.TARGET_DIR }}/strategy
+            npm install
+            npm run build
+            touch .env
+            echo SQL_HOST=localhost >> .env
+            echo SQL_PORT=5432 >> .env
+            echo SQL_DB=minfifty_dev >> .env
+            echo SQL_USER=postgres >> .env
+            echo SQL_PASS=Testing123! >> .env
+            echo BINANCE_API_KEY=${BINANCE_ACCOUNT22_API_KEY} >> .env
+            echo BINANCE_API_SECRET=${BINANCE_ACCOUNT22_API_SECRET} >> .env
+            echo BINANCE_SPOT_API_URL=https://api.binance.com >> .env
+            echo BINANCE_SPOT_WS_URL=wss://stream.binance.com/ws >> .env
+            echo BINANCE_FUTURES_API_URL=https://fapi.binance.com >> .env
+            echo BINANCE_FUTURES_WS_URL=wss://fstream.binance.com/ws >> .env
+            cd ..
+            mkdir -p logs
+            mv strategy/.env.example ./.env.example
             pm2 restart ecosystem.config.js

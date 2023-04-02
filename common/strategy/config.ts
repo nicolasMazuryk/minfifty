@@ -20,7 +20,7 @@
 
 // 1 day -> real-time
 export const START_PERIOD_TIME = '2023-04-02T00:00:00+00:00'
-export const END_PERIOD_TIME = '2023-04-02T23:59:00+00:00'
+export const END_PERIOD_TIME = '2023-04-10T23:59:00+00:00'
 
 
 // debug

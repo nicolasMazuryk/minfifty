@@ -11,10 +11,11 @@ import { parse } from 'csv-parse'
 import unzip from 'extract-zip'
 
 import { MarketData } from '@/models'
+
 import {
   syncRemainingBarsUpToDate,
   // validateMarketDataIntegrity,
-} from '@/strategy/helpers'
+} from './helpers'
 
 const writeFileAsync = fs.promises.writeFile
 

@@ -7,8 +7,9 @@ import { MARKET, TICKER } from '@common/strategy/constants'
 import Strategy from '@common/strategy/strategy'
 import { logger, wait } from '@common/strategy/utils'
 
-import binance from '@/external/binance'
 import { MarketData } from '@/models'
+
+import binance from './binance'
 import {
   getBacktestBars,
   logStrategyPerformance,
@@ -16,7 +17,7 @@ import {
   syncRemainingBarsUpToDate,
   // validateMarketDataIntegrity,
   wsCandleToMarketData,
-} from '@/strategy/helpers'
+} from './helpers'
 
 const strategy = new Strategy()
 
@@ -50,11 +51,10 @@ const strategy = new Strategy()
 
     strategy.run(bar)
 
-    logger.info(new Date(bar.time), bar.time)
-
     if (bar.isFinal) {
       await MarketData.bulkCreate([marketData])
     }
+    logger.info(new Date(), bar.close)
   })
 
   await logStrategyPerformance(strategy)

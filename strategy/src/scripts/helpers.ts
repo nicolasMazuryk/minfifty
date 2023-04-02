@@ -7,8 +7,9 @@ import { countMinutes, logger, roundEpochToFullMinute } from '@common/strategy/u
 import { CandleChartResult, Candle } from 'binance-api-node'
 import Sequelize from 'sequelize'
 
-import binance from '@/external/binance'
 import { MarketData } from '@/models'
+
+import binance from './binance'
 
 const { Op } = Sequelize
 

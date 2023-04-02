@@ -45,5 +45,5 @@ server/package-lock.json
 client/build/
 server/build/
 
-server/src/strategy/market-data/
-server/src/strategy/performance/
+strategy/src/scripts/market-data/
+strategy/src/scripts/performance/

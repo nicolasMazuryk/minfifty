@@ -1,0 +1,9 @@
+const { resolve } = require('path');
+
+module.exports = {
+//  'config': resolve('src', 'config', 'migrations.js'),
+//  'migrations-path': resolve('src', 'migrations')
+
+  'config': resolve('build', 'strategy', 'src', 'config', 'migrations.js'),
+  'migrations-path': resolve('build', 'strategy', 'src', 'migrations')
+};
