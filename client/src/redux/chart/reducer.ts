@@ -1,4 +1,4 @@
-import { IChartIndicator } from '@common/strategy'
+import { IChartIndicator } from '@common/strategy/types'
 import { combineReducers } from 'redux'
 
 import { GET_CHART_INDICATOR_SUCCESS } from './actions'

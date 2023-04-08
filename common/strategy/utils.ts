@@ -1,8 +1,8 @@
 export const logger = {
   // eslint-disable-next-line no-console
-  info: (...args: any) => console.log(...args),
+  info: (...args: any) => console.log(`[${new Date().toLocaleString('pl-PL')}]`, ...args),
   // eslint-disable-next-line no-console
-  error: (...args: any) => console.error(...args),
+  error: (...args: any) => console.error(`[${new Date().toLocaleString('pl-PL')}]`, ...args),
   // eslint-disable-next-line no-console
   time: (...args: any) => console.time(...args),
   // eslint-disable-next-line no-console
@@ -46,4 +46,14 @@ export const getHourlyTime = (time: Date) => {
   date.setSeconds(0)
   date.setMilliseconds(0)
   return date
+}
+
+export const chunkArray = (array: any, chunkSize: number): [][] => {
+  const results: [][] = [];
+
+  while (array.length) {
+    results.push(array.splice(0, chunkSize));
+  }
+
+  return results;
 }

@@ -33,12 +33,13 @@ jobs:
             echo SQL_DB=minfifty_dev >> .env
             echo SQL_USER=postgres >> .env
             echo SQL_PASS=Testing123! >> .env
-            echo BINANCE_API_KEY=${BINANCE_ACCOUNT22_API_KEY} >> .env
-            echo BINANCE_API_SECRET=${BINANCE_ACCOUNT22_API_SECRET} >> .env
-            echo BINANCE_SPOT_API_URL=https://api.binance.com >> .env
-            echo BINANCE_SPOT_WS_URL=wss://stream.binance.com/ws >> .env
-            echo BINANCE_FUTURES_API_URL=https://fapi.binance.com >> .env
-            echo BINANCE_FUTURES_WS_URL=wss://fstream.binance.com/ws >> .env
+            echo NODE_ENV=development >> .env
+            echo BINANCE_API_KEY=${BINANCE_ACCOUNT21_API_KEY} >> .env
+            echo BINANCE_API_SECRET=${BINANCE_ACCOUNT21_API_SECRET} >> .env
+            echo BINANCE_SPOT_API_URL=https://testnet.binance.vision >> .env
+            echo BINANCE_SPOT_WS_URL=wss://stream.binance.vision >> .env
+            echo BINANCE_FUTURES_API_URL=https://testnet.binancefuture.com >> .env
+            echo BINANCE_FUTURES_WS_URL=wss://stream.binancefuture.com/ws >> .env
             cd ..
             mkdir -p logs
             mv strategy/.env.example ./.env.example

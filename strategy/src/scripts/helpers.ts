@@ -1,8 +1,8 @@
 import fs from 'fs'
 import path from 'path'
 
-import { IBar, IMarketData } from '@common/strategy'
-import Strategy from '@common/strategy/strategy'
+import Strategy from '@common/strategy'
+import { IBar, IMarketData } from '@common/strategy/types'
 import { countMinutes, logger, roundEpochToFullMinute } from '@common/strategy/utils'
 import { CandleChartResult, Candle } from 'binance-api-node'
 import Sequelize from 'sequelize'

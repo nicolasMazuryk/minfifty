@@ -1,4 +1,4 @@
-import { IChartIndicator } from '@common/strategy'
+import { IChartIndicator } from '@common/strategy/types'
 import { wait } from '@common/strategy/utils'
 
 import api from '@/api'

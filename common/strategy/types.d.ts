@@ -1,3 +1,6 @@
+import { FuturesOrder } from 'binance-api-node'
+import { uuid } from 'uuidv4';
+
 export interface IBase {
   barIndex: number
   price: number
@@ -12,6 +15,7 @@ export interface IBase {
   warningPriceLow: number
   emergencyTakeProfit: number
   emergencyPriceLow: number
+  breakEvenPriceLow: number
   stopLoss: number
   levels: number[] // TODO: remove levels. add EmergencyTriggerPrice instead
   isClosedInLoss: boolean
@@ -46,6 +50,8 @@ export interface IBar {
 }
 
 export interface IOrder {
+  id: uuid
+  originalOrderId: uuid | undefined
   baseBarIndex: number
   level: number
   timeOpen: Date | null
@@ -65,6 +71,8 @@ export interface IOrder {
 
   feeCoin: number
   PNLCoin: number
+
+  binance: FuturesOrder | undefined
 }
 
 export interface IMarketData {

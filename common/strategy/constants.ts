@@ -9,7 +9,7 @@ export const TICKER = {
 }
 
 export const TICKER_PRECISION = {
-  [TICKER.ETH]: 2,
+  [TICKER.ETH]: 3,
 }
 
 export const ORDER_SIDE = {
@@ -17,9 +17,11 @@ export const ORDER_SIDE = {
   SELL: 'SELL',
 }
 
-export const ORDER_TYPE = {
-  MARKET: 'MARKET',
-  LIMIT: 'LIMIT',
+export const enum ORDER_TYPE {
+  MARKET = 'MARKET',
+  LIMIT = 'LIMIT',
+  STOP_MARKET = 'STOP_MARKET',
+  TAKE_PROFIT = 'TAKE_PROFIT',
 }
 
 export const ORDER_BASE_TYPES = {

@@ -1,11 +1,12 @@
 // eslint-disable-next-line import/order
 import '../alias-runtime'
 
-import { IBar } from '@common/strategy'
+import Strategy from '@common/strategy'
 import { START_PERIOD_TIME, END_PERIOD_TIME } from '@common/strategy/config'
 import { MARKET, TICKER } from '@common/strategy/constants'
-import Strategy from '@common/strategy/strategy'
+import { IBar } from '@common/strategy/types'
 import { logger, wait } from '@common/strategy/utils'
+import { Candle } from 'binance-api-node'
 
 import { MarketData } from '@/models'
 
@@ -36,26 +37,25 @@ const strategy = new Strategy()
   )
 
   for (const bar of bars) {
-    strategy.run(bar)
+    await strategy.run(bar)
   }
-
-  // strategy.updateStatisticsOnComplete()
 
   logger.timeEnd('Strategy')
 
   strategy.isRealTime = true
 
-  binance.ws.futuresCandles(TICKER.ETH, '1m', async (candle) => {
+  binance.ws.futuresCandles(TICKER.ETH, '1m', async (candle: Candle) => {
     const marketData = wsCandleToMarketData(MARKET.FUTURES, candle)
     const bar = marketDataToBar(marketData)
 
-    strategy.run(bar)
+    await strategy.run(bar)
 
     if (bar.isFinal) {
       await MarketData.bulkCreate([marketData])
     }
-    logger.info(new Date(), bar.close)
   })
+
+  strategy.updateStatisticsOnComplete()
 
   await logStrategyPerformance(strategy)
 
@@ -65,5 +65,5 @@ const strategy = new Strategy()
 
   logger.info('Started real-time mode')
 
-  await wait(1000 * 60 * 60 * 24) // wait for 1 day
+  await wait(1000 * 60 * 60 * 24 * 7) // wait for 30 days
 })().catch(logger.error)

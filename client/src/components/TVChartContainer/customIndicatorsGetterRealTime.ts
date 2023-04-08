@@ -1,5 +1,5 @@
 import { ORDER_STATUS } from '@common/strategy/constants'
-import Strategy from '@common/strategy/strategy'
+import Strategy from '@common/strategy/strategy_backtest'
 
 import {
   CustomIndicator,
