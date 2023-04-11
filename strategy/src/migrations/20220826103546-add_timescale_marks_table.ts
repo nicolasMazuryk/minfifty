@@ -33,6 +33,13 @@ export const up = (queryInterface: QueryInterface): Promise<void> =>
       { transaction },
     )
 
+    await queryInterface.sequelize.query(
+      `ALTER TABLE timescale_marks ALTER COLUMN time TYPE timestamp with time zone;`,
+      {
+        transaction,
+      },
+    )
+
     await queryInterface.sequelize.query("SELECT create_hypertable('timescale_marks', 'time');", {
       transaction,
     })

@@ -5,7 +5,8 @@ import '../alias-runtime'
 import fs from 'fs'
 import path from 'path'
 
-import { wait } from '@common/strategy/utils'
+import { MARKET, TICKER } from '@common/strategy/constants'
+import { wait, logger } from '@common/strategy/utils'
 import axios from 'axios'
 import { parse } from 'csv-parse'
 import unzip from 'extract-zip'
@@ -22,42 +23,26 @@ const writeFileAsync = fs.promises.writeFile
 const destFolder = path.join(__dirname, './market-data')
 
 // const START_DATE = '2020-01'
-// const END_DATE = '2022-08'
+// const END_DATE = '2023-03'
 
-const START_DATE = '2020-01'
-const END_DATE = '2022-08'
+const START_DATE = '2017-08'
+const END_DATE = '2023-03'
 
 const PARSE_HISTORICAL_DATA = false
-
-const TICKER = {
-  BTC: 'BTCUSDT',
-  ETH: 'ETHUSDT',
-}
-
-const MARKET = {
-  SPOT: 'SPOT',
-  FUTURES: 'FUTURES',
-}
-
-// error logging function
-const logger = {
-  // eslint-disable-next-line no-console
-  info: (message: string) => console.log(message),
-  // eslint-disable-next-line no-console
-  error: (message: any) => console.error(message),
-}
-
+// Spot Data Url
 const getBinanceDataProviderUrl = (market: string, ticker: string, year: number, month: string) =>
-  `https://data.binance.vision/data/${market.toLowerCase()}/um/monthly/klines/${ticker}/1m/${ticker}-1m-${year}-${month}.zip`
+  `https://data.binance.vision/data/${market.toLowerCase()}/monthly/klines/${ticker}/1m/${ticker}-1m-${year}-${month}.zip`
 
-// axios asynchronously download binary file and write to filesystem by path
+// // Futures Data Url
+// const getBinanceDataProviderUrl = (market: string, ticker: string, year: number, month: string) =>
+//   `https://data.binance.vision/data/${market.toLowerCase()}/um/monthly/klines/${ticker}/1m/${ticker}-1m-${year}-${month}.zip`
+
 async function download(url: string, dest: string) {
   logger.info(`Downloading ${url} to ${dest}`)
   const response = await axios.get(url, { responseType: 'arraybuffer' })
   return writeFileAsync(dest, response.data)
 }
 
-// function unzip downloaded binary file and remove it from filesystem
 async function unzipBinanceDataBinaryFile(dest: string) {
   logger.info(`Unzipping ${dest}`)
   await unzip(dest, { dir: destFolder })
@@ -154,12 +139,12 @@ async function downloadBinanceData(
           await download(url, zipDest)
           await unzipBinanceDataBinaryFile(zipDest)
           await seedDatabaseFromCsv(csvDest, market, ticker)
-          await wait(6000)
+          await wait(20000)
         }
 
         if (PARSE_HISTORICAL_DATA) {
           await seedDatabaseFromCsv(csvDest, market, ticker)
-          await wait(6000)
+          await wait(20000)
         }
       } catch (error) {
         logger.error(error)
@@ -169,7 +154,7 @@ async function downloadBinanceData(
 }
 
 ;(async () => {
-  await downloadBinanceData(MARKET.FUTURES, TICKER.ETH, START_DATE, END_DATE)
-  await syncRemainingBarsUpToDate(MARKET.FUTURES, TICKER.ETH)
-  // await validateMarketDataIntegrity(MARKET.FUTURES, TICKER.ETH)
+  await downloadBinanceData(MARKET.SPOT, TICKER.ETH, START_DATE, END_DATE)
+  await syncRemainingBarsUpToDate(MARKET.SPOT, TICKER.ETH)
+  // await validateMarketDataIntegrity(MARKET.SPOT, TICKER.ETH)
 })().catch(logger.error)

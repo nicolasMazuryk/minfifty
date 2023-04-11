@@ -15,6 +15,7 @@ lerna-debug.log*
 node_modules/
 client/node_modules/
 server/node_modules/
+strategy/node_modules/
 
 package-lock.json
 client/package-lock.json
@@ -44,6 +45,11 @@ server/package-lock.json
 ### Project Specific template
 client/build/
 server/build/
+strategy/build/
+
+server/src/scripts/market-data/
+server/src/scripts/performance/
 
 strategy/src/scripts/market-data/
 strategy/src/scripts/performance/
+strategy/src/scripts/archived_31_march

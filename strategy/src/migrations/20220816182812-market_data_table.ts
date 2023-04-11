@@ -32,6 +32,14 @@ export const up = (queryInterface: QueryInterface): Promise<void> =>
       { transaction },
     )
 
+    await queryInterface.sequelize.query(
+      `ALTER TABLE market_data ALTER COLUMN time TYPE timestamp with time zone;
+            ALTER TABLE market_data ALTER COLUMN "timeClose" TYPE timestamp with time zone;`,
+      {
+        transaction,
+      },
+    )
+
     await queryInterface.sequelize.query("SELECT create_hypertable('market_data', 'time');", {
       transaction,
     })
