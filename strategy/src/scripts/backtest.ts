@@ -22,6 +22,19 @@ import {
 
 const strategy = new Strategy()
 
+const UNPROCESSED_BARS_STACK: IBar[] = []
+
+let isProcessing = false
+const runUnprocessedBarsStack = async () => {
+  isProcessing = true
+  while (UNPROCESSED_BARS_STACK.length > 0) {
+    const bar = UNPROCESSED_BARS_STACK.shift()
+
+    await strategy.run(bar!)
+  }
+  isProcessing = false
+}
+
 ;(async () => {
   await syncRemainingBarsUpToDate(MARKET.FUTURES, TICKER.ETH)
   logger.info('Synced remaining bars up to date')
@@ -30,7 +43,7 @@ const strategy = new Strategy()
   logger.time('Strategy')
 
   const bars: IBar[] = await getBacktestBars(
-    MARKET.FUTURES,
+    MARKET.SPOT,
     TICKER.ETH,
     START_PERIOD_TIME,
     END_PERIOD_TIME,
@@ -48,12 +61,28 @@ const strategy = new Strategy()
     const marketData = wsCandleToMarketData(MARKET.FUTURES, candle)
     const bar = marketDataToBar(marketData)
 
-    await strategy.run(bar)
+    UNPROCESSED_BARS_STACK.push(bar)
 
     if (bar.isFinal) {
       await MarketData.bulkCreate([marketData])
     }
   })
+
+  setInterval(async () => {
+    if (isProcessing) return
+    await runUnprocessedBarsStack()
+  }, 1000)
+
+  //
+  // binance.ws.futuresUser(async (msg) => {
+  //   if (msg.eventType !== 'ORDER_TRADE_UPDATE') return
+  //   const event: OrderUpdate = msg
+  //
+  //   // const marketData = wsCandleToMarketData(MARKET.FUTURES, candle)
+  //   // const bar = marketDataToBar(marketData)
+  //   //
+  //   // await strategy.run(bar)
+  // })
 
   strategy.updateStatisticsOnComplete()
 
@@ -65,5 +94,5 @@ const strategy = new Strategy()
 
   logger.info('Started real-time mode')
 
-  await wait(1000 * 60 * 60 * 24 * 7) // wait for 30 days
+  await wait(1000 * 60 * 60 * 24 * 7) // wait for 7 days
 })().catch(logger.error)

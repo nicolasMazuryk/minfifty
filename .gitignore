@@ -47,6 +47,8 @@ client/build/
 server/build/
 strategy/build/
 
+strategy/logs/
+
 server/src/scripts/market-data/
 server/src/scripts/performance/
 

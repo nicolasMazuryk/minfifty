@@ -77,6 +77,7 @@ export default class Strategy {
   public buyerIndex: number[][] = []
   public ignoreBuyOrders: boolean = false
   public isRealTime = false
+  public isExecuting = false
   public current: number = 0
   public cache: any = {
     openOrders: 0,
@@ -87,6 +88,7 @@ export default class Strategy {
   // public globalStrategy: GlobalStrategy = new GlobalStrategy()
 
   public async run(bar: IBar): Promise<void> {
+    this.isExecuting = true
     this.addBar(bar)
 
     // this.globalStrategy.run(bar)
@@ -129,6 +131,7 @@ export default class Strategy {
     this.updateStatisticsOnTick()
 
     // this.logger.timeEnd('bar')
+    this.isExecuting = false
   }
 
   public getBarByBarIndexOffset(barIndex: number): IBar {

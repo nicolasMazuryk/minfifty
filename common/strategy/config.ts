@@ -18,12 +18,11 @@
 // export const START_PERIOD_TIME = '2022-07-01T00:00:00+00:00'
 // export const END_PERIOD_TIME = '2022-09-30T23:59:00+00:00'
 
+// debug
+// export const START_PERIOD_TIME = '2021-05-19T11:00:00+00:00'
+// export const END_PERIOD_TIME = '2021-05-19T14:55:00+00:00'
+
 // 1 day -> real-time
 export const START_PERIOD_TIME = new Date()
 // export const START_PERIOD_TIME = '2023-04-08T00:00:00+00:00'
 export const END_PERIOD_TIME = '2023-04-30T23:59:00+00:00'
-
-
-// debug
-// export const START_PERIOD_TIME = '2021-05-19T11:00:00+00:00'
-// export const END_PERIOD_TIME = '2021-05-19T14:55:00+00:00'
