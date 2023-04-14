@@ -1,12 +1,18 @@
 import * as process from 'process'
 
-import { ORDER_STATUS, ORDER_TYPE, TICKER } from '@common/strategy/constants'
+import {
+  // ORDER_STATUS,
+  ORDER_TYPE,
+  // ORDER_TYPE_BINANCE_ORDER_FIELD,
+  ORDER_TYPE_ID_FIELD,
+  TICKER,
+} from '@common/strategy/constants'
 import { IOrder } from '@common/strategy/types'
 import { chunkArray, logger } from '@common/strategy/utils'
 import Binance, {
   TimeInForce,
   OrderSide,
-  FuturesOrder,
+  // FuturesOrder,
   NewFuturesOrder,
   // WorkingType_LT,
   // NewOrderRespType_LT, PositionSide_LT,
@@ -40,31 +46,37 @@ const CANCEL_BATCH_ORDERS_BINANCE_LIMIT = 10
 const getOrderOptionsByType = (order: IOrder, type: ORDER_TYPE) => {
   if (type === ORDER_TYPE.LIMIT) {
     return {
+      symbol: TICKER.ETH,
       side: OrderSide.BUY,
       type: ORDER_TYPE.LIMIT,
       timeInForce: TimeInForce.GTC,
       quantity: order.quantity.toString(),
       price: order.price.toString(),
+      newClientOrderId: order.limitOrderId,
     }
   }
 
   if (type === ORDER_TYPE.STOP_MARKET) {
     return {
+      symbol: TICKER.ETH,
       type: ORDER_TYPE.STOP_MARKET,
       side: OrderSide.SELL,
       quantity: order.quantity.toString(),
       stopPrice: order.stopLoss.toString(),
       // takeProfit: (999999).toString(),
+      newClientOrderId: order.stopLimitOrderId,
     }
   }
 
   if (type === ORDER_TYPE.TAKE_PROFIT) {
     return {
+      symbol: TICKER.ETH,
       side: OrderSide.SELL,
       type: ORDER_TYPE.LIMIT,
       timeInForce: TimeInForce.GTC,
       quantity: order.quantity.toString(),
-      price: order.price.toString(),
+      price: order.takeProfit.toString(),
+      newClientOrderId: order.takeProfitOrderId,
     }
   }
 }
@@ -89,19 +101,24 @@ export const handleBinanceError = (response: any[], request: any[], orders: IOrd
       (responseItem) => !responseItem!.code,
     )
 
-export const openBatchOrders = async (orders: IOrder[], type: ORDER_TYPE): Promise<IOrder[]> => {
+const logBatchOrdersArguments = (action: string, orders: IOrder[], type: ORDER_TYPE) => {
   logger.info(
-    'OPEN',
-    orders.map((order) => `${order.type} ${order.id}`),
+    action,
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    orders.map((order) => `${type} ${order[ORDER_TYPE_ID_FIELD[type]]}`),
   )
+}
+
+export const openBatchOrders = async (orders: IOrder[], type: ORDER_TYPE) => {
+  logBatchOrdersArguments('OPEN', orders, type)
+
   const binance = getBinance()
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
-  const batchOrders: NewFuturesOrder[] = orders.map((order: IOrder) => ({
-    ...getOrderOptionsByType(order, type),
-    symbol: TICKER.ETH,
-    newClientOrderId: order.id,
-  }))
+  const batchOrders: NewFuturesOrder[] = orders.map((order: IOrder) =>
+    getOrderOptionsByType(order, type),
+  )
 
   const chunks = chunkArray(batchOrders, OPEN_BATCH_ORDERS_BINANCE_LIMIT)
 
@@ -115,25 +132,19 @@ export const openBatchOrders = async (orders: IOrder[], type: ORDER_TYPE): Promi
     ),
   )
 
-  const binanceOrdersFlat = handleBinanceError(binanceOrders.flat(), chunks.flat(), orders)
-
-  return orders
-    .map((order) => ({
-      ...order,
-      binance: binanceOrdersFlat.find(
-        (binanceOrder: FuturesOrder) => binanceOrder.clientOrderId === order.id,
-      ),
-    }))
-    .sort((a, b) => a.level - b.level)
+  handleBinanceError(binanceOrders.flat(), chunks.flat(), orders)
 }
 
-export const cancelBatchOrders = async (orders: IOrder[]): Promise<IOrder[]> => {
-  logger.info(
-    'CANCEL',
-    orders.map((order) => `${order.type} ${order.id}`),
-  )
+export const cancelBatchOrders = async (orders: IOrder[], type: ORDER_TYPE) => {
+  logBatchOrdersArguments('CANCEL', orders, type)
+
   const binance = getBinance()
-  const origClientOrderIdList = orders.map((order) => order.id)
+
+  const origClientOrderIdList = orders
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    .map((order) => order[ORDER_TYPE_ID_FIELD[type]])
+    .filter((id) => Boolean(id))
 
   const chunks = chunkArray(origClientOrderIdList, CANCEL_BATCH_ORDERS_BINANCE_LIMIT)
 
@@ -146,20 +157,7 @@ export const cancelBatchOrders = async (orders: IOrder[]): Promise<IOrder[]> => 
     ),
   )
 
-  const binanceOrdersFlat: FuturesOrder[] = handleBinanceError(
-    binanceOrders.flat(),
-    chunks.flat(),
-    orders,
-  )
-
-  orders.forEach((order) => {
-    order.status = ORDER_STATUS.CANCELED
-    order.binance = binanceOrdersFlat.find(
-      (binanceOrder) => binanceOrder.clientOrderId === order.id,
-    )
-  })
-
-  return orders
+  handleBinanceError(binanceOrders.flat(), chunks.flat(), orders)
 }
 
 export default binance

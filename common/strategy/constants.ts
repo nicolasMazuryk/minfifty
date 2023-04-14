@@ -18,10 +18,21 @@ export const ORDER_SIDE = {
 }
 
 export const enum ORDER_TYPE {
-  MARKET = 'MARKET',
   LIMIT = 'LIMIT',
   STOP_MARKET = 'STOP_MARKET',
   TAKE_PROFIT = 'TAKE_PROFIT',
+}
+
+export const ORDER_TYPE_ID_FIELD = {
+  [ORDER_TYPE.LIMIT]: 'limitOrderId',
+  [ORDER_TYPE.STOP_MARKET]: 'stopLimitOrderId',
+  [ORDER_TYPE.TAKE_PROFIT]: 'takeProfitOrderId',
+}
+
+export const ORDER_TYPE_BINANCE_ORDER_FIELD = {
+  [ORDER_TYPE.LIMIT]: 'binanceLimit',
+  [ORDER_TYPE.STOP_MARKET]: 'binanceStopLoss',
+  [ORDER_TYPE.TAKE_PROFIT]: 'binanceTakeProfit',
 }
 
 export const ORDER_BASE_TYPES = {
@@ -30,10 +41,15 @@ export const ORDER_BASE_TYPES = {
 }
 
 export const ORDER_STATUS = {
-  OPEN: 'OPEN',
+  NEW: 'NEW',
   FILLED: 'FILLED',
+  CANCELED: 'CANCELED',
+
+  TAKE_PROFIT: 'TAKE_PROFIT',
+  STOP_LOSS: 'STOP_LOSS',
+  BREAK_EVEN: 'BREAK_EVEN',
+
   COMPLETED: 'COMPLETED',
   CLOSED: 'CLOSED',
-  CANCELED: 'CANCELED',
   IGNORED: 'IGNORED',
 }

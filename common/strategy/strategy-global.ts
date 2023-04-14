@@ -1,4 +1,4 @@
-import { IGlobalBase, IBar } from './index'
+import { IGlobalBase, IBar } from './types'
 import { roundToPrecision, max, min, getHourlyTime, logger } from './utils'
 
 import {
@@ -123,7 +123,7 @@ export default class GlobalStrategy {
       barIndex: this.newBaseBarIndex,
       price: basePrice,
       // isBroken: false,
-      // isRespected: false,
+      // isClosedInProfit: false,
       stats: {
         percentDrop: 0,
         barsLength: 0,
@@ -150,7 +150,7 @@ export default class GlobalStrategy {
   //       this.setBaseRespected(base)
   //     })
   //
-  //   this.bases = this.bases.filter(base => !base.isRespected)
+  //   this.bases = this.bases.filter(base => !base.isClosedInProfit)
   // }
 
   public updateBaseStats(base: IGlobalBase) {
@@ -176,7 +176,7 @@ export default class GlobalStrategy {
   //     lowerPrice <= base.stopLoss ||
   //     isBarLimitExceeded
   //   ) {
-  //     base.isRespected = true
+  //     base.isClosedInProfit = true
   //
   //     const closePrice =
   //       higherPrice >= base.takeProfit

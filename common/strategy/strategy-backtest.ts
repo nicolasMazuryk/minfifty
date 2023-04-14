@@ -410,7 +410,7 @@ export default class Strategy {
 
       this.bases.shift() // just testing / less order triggers / try without it
 
-      // base.isRespected = true
+      // base.isClosedInProfit = true
     }
   }
 
@@ -437,7 +437,7 @@ export default class Strategy {
       baseBrokenTime: null,
       baseBrokenBarIndex: 0,
       isBroken: false,
-      isRespected: false,
+      isClosedInProfit: false,
       isIgnored: this.isIgnoredBase,
       baseBounceTop: 0,
       takeProfit: round(basePrice * (1 - TAKE_PROFIT_BELOW_BASE)),
@@ -479,7 +479,7 @@ export default class Strategy {
   private openBaseOrders(base: IBase) {
     const orderDetails = {
       baseBarIndex: base.barIndex,
-      status: ORDER_STATUS.OPEN,
+      status: ORDER_STATUS.NEW,
       timeOpen: null,
       timeClosed: null,
       barIndexOpen: null,
@@ -492,7 +492,7 @@ export default class Strategy {
       feeCoin: 0,
       PNLCoin: 0,
       originalOrderId: undefined,
-      binance: undefined
+      binanceLimit: undefined
     }
 
     for (let level = 1; level <= ORDER_NUMBER_OF_LEVELS; level++) {
@@ -555,7 +555,7 @@ export default class Strategy {
   private cancelBaseOrders(base: IBase) {
     this.orders
       .filter(order => order.baseBarIndex === base.barIndex)
-      .filter(order => order.status === ORDER_STATUS.OPEN)
+      .filter(order => order.status === ORDER_STATUS.NEW)
       .forEach(order => {
         order.status = ORDER_STATUS.CANCELED
       })
@@ -570,7 +570,7 @@ export default class Strategy {
       this.orders
         .filter(order => order.baseBarIndex === base.barIndex)
         .forEach(order => {
-        if (order.status === ORDER_STATUS.OPEN && this.current <= order.price) {
+        if (order.status === ORDER_STATUS.NEW && this.current <= order.price) {
           order.timeOpen = this.isRealTime ? new Date() : this.bar.time
           order.barIndexOpen = this.barIndex
           order.status = ORDER_STATUS.FILLED
@@ -799,7 +799,7 @@ export default class Strategy {
     } else if (higherPrice >= base.takeProfit) {
       this.executeFillOrders()
       this.closeBaseOrders(base, base.takeProfit)
-      base.isRespected = true
+      base.isClosedInProfit = true
 
     } else if (higherPrice >= base.breakEven) {
       this.executeFillOrders()
@@ -857,7 +857,7 @@ export default class Strategy {
 
     if (this.ignoreBuyOrders) {
       this.orders.forEach(order => {
-        if (order.status === ORDER_STATUS.OPEN && entryPrice <= order.price) {
+        if (order.status === ORDER_STATUS.NEW && entryPrice <= order.price) {
           order.status = ORDER_STATUS.IGNORED
         }
       })
@@ -895,7 +895,7 @@ export default class Strategy {
     })
 
     this.bases
-      .filter(base => base.isRespected || base.isClosedInBreakEven || base.isClosedInLoss)
+      .filter(base => base.isClosedInProfit || base.isClosedInBreakEven || base.isClosedInLoss)
       .forEach(base => {
 
         base.PNL = [...this.orders, ...this.closedOrders]
@@ -909,7 +909,7 @@ export default class Strategy {
   private executeFillOrders() {
     if (!this.ignoreBuyOrders) {
       this.orders.forEach(order => {
-        if (order.status === ORDER_STATUS.OPEN && this.current <= order.price) {
+        if (order.status === ORDER_STATUS.NEW && this.current <= order.price) {
           order.timeOpen = this.isRealTime ? new Date() : this.bar.time
           order.barIndexOpen = this.barIndex
           order.status = ORDER_STATUS.FILLED
@@ -949,12 +949,12 @@ export default class Strategy {
 
     this.closedBases.push(
       ...this.bases.filter(
-        base => base.isRespected || base.isClosedInBreakEven || base.isClosedInLoss,
+        base => base.isClosedInProfit || base.isClosedInBreakEven || base.isClosedInLoss,
       ),
     )
 
     this.bases = this.bases.filter(
-      base => !base.isRespected && !base.isClosedInBreakEven && !base.isClosedInLoss,
+      base => !base.isClosedInProfit && !base.isClosedInBreakEven && !base.isClosedInLoss,
     )
 
     const BAR_CLEANUP_INTERVAL = 10000

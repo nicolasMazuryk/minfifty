@@ -1,4 +1,4 @@
-// import Strategy from './strategy_backtest'
-import Strategy from './strategy_binance'
+// import Strategy from './strategy-backtest'
+import Strategy from './strategy-real-time'
 
 export default Strategy

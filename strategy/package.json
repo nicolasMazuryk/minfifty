@@ -8,7 +8,8 @@
   },
   "scripts": {
     "sync-market-data": "npx ts-node --project tsconfig.json src/scripts/sync-market-data.ts",
-    "backtest": "npx ts-node --project tsconfig.json src/scripts/backtest.ts",
+    "backtest": "npx ts-node --project tsconfig.json src/scripts/run-backtest.ts",
+    "real-time": "npx ts-node --project tsconfig.json src/scripts/run-real-time.ts",
     "build": "rm -rf build && tsc -b",
     "prettify": "prettier --write .",
     "lint": "eslint  --fix \"{src,tests}/**/*.{ts,js}\"",

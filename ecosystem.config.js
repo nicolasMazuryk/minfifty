@@ -1,7 +1,7 @@
 module.exports = {
   apps : [{
     name   : "strategy",
-    script : "strategy/build/strategy/src/scripts/backtest.js",
+    script : "strategy/build/strategy/src/scripts/run-real-time.js",
     out_file: "/home/ubuntu/app/logs/out.log",
     error_file: "/home/ubuntu/app/logs/error.log",
     env: {

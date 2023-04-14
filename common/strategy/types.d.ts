@@ -1,4 +1,4 @@
-import { FuturesOrder } from 'binance-api-node'
+import { OrderUpdate } from 'binance-api-node'
 import { uuid } from 'uuidv4';
 
 export interface IBase {
@@ -7,32 +7,33 @@ export interface IBase {
   baseBrokenTime: Date | null
   baseBrokenBarIndex: number
   isBroken: boolean
-  isRespected: boolean
   isIgnored: boolean
-  breakEven: number
   baseBounceTop: number
   takeProfit: number
+  breakEven: number
+  stopLoss: number
   warningPriceLow: number
   emergencyTakeProfit: number
   emergencyPriceLow: number
   breakEvenPriceLow: number
-  stopLoss: number
   levels: number[] // TODO: remove levels. add EmergencyTriggerPrice instead
-  isClosedInLoss: boolean
+  isClosedInProfit: boolean
   isClosedInBreakEven: boolean
+  isClosedInLoss: boolean
   PNL: number
   stats: {
     percentDrop: number
     percentBounce: number
     barsLength: number
-  }
+  },
+  orders: IOrder[]
 }
 
 export interface IGlobalBase {
   barIndex: number
   price: number
   // isBroken: boolean
-  // isRespected: boolean
+  // isClosedInProfit: boolean
   stats: {
     percentDrop: number
     barsLength: number
@@ -50,21 +51,22 @@ export interface IBar {
 }
 
 export interface IOrder {
-  id: uuid
-  originalOrderId: uuid | undefined
+  limitOrderId: uuid
+  stopLimitOrderId: uuid
+  takeProfitOrderId: uuid
+
   baseBarIndex: number
   level: number
   timeOpen: Date | null
   timeClosed: Date | null
   barIndexOpen: number | null
   barIndexClosed: number | null
-  type: string
-  side: string
   price: number
   quantity: number
   amount: number
   status: string
   takeProfit: number
+  breakEven: number
   stopLoss: number
   fee: number
   PNL: number
@@ -72,7 +74,11 @@ export interface IOrder {
   feeCoin: number
   PNLCoin: number
 
-  binance: FuturesOrder | undefined
+  binanceLimit: OrderUpdate | undefined
+  binanceTakeProfit: OrderUpdate | undefined
+  binanceStopLoss: OrderUpdate | undefined
+
+  base: IBase
 }
 
 export interface IMarketData {
