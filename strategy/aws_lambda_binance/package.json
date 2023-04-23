@@ -1,0 +1,10 @@
+{
+  "name": "aws_lambda_binance",
+  "type": "module",
+  "scripts": {
+    "aws:lambda": "node index.cjs"
+  },
+  "dependencies": {
+    "binance-api-node": "^0.12.4"
+  }
+}
