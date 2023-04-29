@@ -1,0 +1,10 @@
+{
+  "name": "aws_lambda_binance",
+  "type": "module",
+  "scripts": {
+    "aws:lambda": "node index.cjs"
+  },
+  "dependencies": {
+    "bybit-api": "^3.5.7"
+  }
+}
