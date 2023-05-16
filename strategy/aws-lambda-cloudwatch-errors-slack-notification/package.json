@@ -1,0 +1,11 @@
+{
+  "name": "aws-lambda-cloudwatch-errors-slack-notification",
+  "type": "module",
+  "scripts": {
+    "aws:lambda:error": "node index.cjs"
+  },
+  "dependencies": {
+    "axios": "^1.4.0",
+    "zlib": "^1.0.5"
+  }
+}
