@@ -2,22 +2,22 @@
 export const INITIAL_CAPITAL_USDT = 1000
 export const ORDER_BASE_TYPE = 'USDT'
 export const ORDER_BASE_QUANTITY = 0.015
-export const ORDER_BASE_AMOUNT = 10
+export const ORDER_BASE_AMOUNT = 6
 export const TRADING_FEE = 0.005 / 100
 
-export const BASE_RETRACEMENT_CONFIRMATION = 0.1 / 100 // 0.6 ///// 0.14
-export const BASE_PRECEDING_BARS = 1 // 10 // before base ///// 3
+export const BASE_RETRACEMENT_CONFIRMATION = 0.05 / 100 // 0.6 ///// 0.14
+export const BASE_PRECEDING_BARS = 0 // 10 // before base ///// 3
 
 export const NUMBER_OF_LEVELS = 10
 export const LEVEL_STEP = 0.5 / 100
-export const LEVEL_STEP_MULTIPLIER = 1.1
+export const LEVEL_STEP_MULTIPLIER = 1 // 1.1
 export const ORDER_STEP_MULTIPLIER = 1
 
-export const ORDER_NUMBER_OF_LEVELS = 5 // 44 => 20 => 15
-export const ORDER_LEVEL_STEP = 0.04 / 100 // 0.15
-export const ORDER_LEVEL_STOP_LOSS = 0.25 / 100 // 2
+export const ORDER_NUMBER_OF_LEVELS = 6 // 44 => 20 => 15
+export const ORDER_LEVEL_STEP = 0.01 / 100 // 0.15
+export const ORDER_LEVEL_STOP_LOSS = 0.5 / 100 // 2
 export const ORDER_OPEN_TRADE_WINDOW_BARS = 100 // 20 after base => 30
-export const ORDER_BREAK_EVEN_CLOSE_TRIGGER = 0.1 / 100 // (0.7%) 1%
+export const ORDER_BREAK_EVEN_CLOSE_TRIGGER = 0.03 / 100 // (0.7%) 1%
 
 export const EMERGENCY_LEVEL_NUMBER = 10
 export const EMERGENCY_TAKE_PROFIT_RETRACEMENT = 0 / 100

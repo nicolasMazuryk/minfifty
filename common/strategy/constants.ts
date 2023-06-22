@@ -19,14 +19,16 @@ export const ORDER_SIDE = {
 
 export const enum ORDER_TYPE {
   LIMIT = 'LIMIT',
-  STOP_MARKET = 'STOP_MARKET',
   TAKE_PROFIT = 'TAKE_PROFIT',
+  STOP_MARKET = 'STOP_MARKET',
+  MARKET = 'MARKET',
 }
 
 export const ORDER_TYPE_ID_FIELD = {
   [ORDER_TYPE.LIMIT]: 'limitOrderId',
-  [ORDER_TYPE.STOP_MARKET]: 'stopLimitOrderId',
   [ORDER_TYPE.TAKE_PROFIT]: 'takeProfitOrderId',
+  [ORDER_TYPE.STOP_MARKET]: 'stopLimitOrderId',
+  [ORDER_TYPE.MARKET]: 'stopLimitOrderId',
 }
 
 export const ORDER_TYPE_BINANCE_ORDER_FIELD = {

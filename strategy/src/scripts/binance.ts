@@ -1,22 +1,9 @@
 import * as process from 'process'
 
-import {
-  // ORDER_STATUS,
-  ORDER_TYPE,
-  // ORDER_TYPE_BINANCE_ORDER_FIELD,
-  ORDER_TYPE_ID_FIELD,
-  TICKER,
-} from '@common/strategy/constants'
+import { ORDER_TYPE, ORDER_TYPE_ID_FIELD, TICKER } from '@common/strategy/constants'
 import { IOrder } from '@common/strategy/types'
 import { chunkArray, logger } from '@common/strategy/utils'
-import Binance, {
-  TimeInForce,
-  OrderSide,
-  // FuturesOrder,
-  NewFuturesOrder,
-  // WorkingType_LT,
-  // NewOrderRespType_LT, PositionSide_LT,
-} from 'binance-api-node'
+import Binance, { NewFuturesOrder, OrderSide, TimeInForce } from 'binance-api-node'
 import dotenv from 'dotenv-safe'
 
 import '../alias-runtime'
@@ -79,26 +66,57 @@ const getOrderOptionsByType = (order: IOrder, type: ORDER_TYPE) => {
       newClientOrderId: order.takeProfitOrderId,
     }
   }
+  // in case price is below STOP_MARKET SELL stopPrice - the order will fail. We need to forcefully close the loss using MARKET order
+  if (type === ORDER_TYPE.MARKET) {
+    return {
+      symbol: TICKER.ETH,
+      side: OrderSide.SELL,
+      type: ORDER_TYPE.MARKET,
+      quantity: order.quantity.toString(),
+      newClientOrderId: order.stopLimitOrderId,
+    }
+  }
 }
 
-export const handleBinanceError = (response: any[], request: any[], orders: IOrder[]) =>
+const handleFailedToPlaceStopMarketOrderBinanceError = async (
+  responseItem: any,
+  orderRequestParams: any,
+  order: IOrder,
+) => {
+  const errorCode = -2021 // 'Order would immediately trigger.'
+
+  if (responseItem.code !== errorCode) return responseItem
+  if (orderRequestParams.type === ORDER_TYPE.STOP_MARKET) {
+    await openBatchOrders([order], ORDER_TYPE.MARKET)
+  }
+  return responseItem
+}
+
+export const handleBinanceError = async (response: any[], request: any[], orders: IOrder[]) =>
   response
-    .map((responseItem: any, index: number) => {
+    .map(async (responseItem: any, index: number) => {
       // log error, add original orders to logs
-      if (responseItem!.code) {
+      if (responseItem.code) {
         logger.error({
           error: responseItem,
           request: request[index],
           orders: orders[index],
           // log JSON.stringify(this) as well
         })
+
+        await handleFailedToPlaceStopMarketOrderBinanceError(
+          responseItem,
+          request[index],
+          orders[index],
+        )
       }
+
       return responseItem
     })
     .filter(
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
-      (responseItem) => !responseItem!.code,
+      (responseItem) => !responseItem.code,
     )
 
 const logBatchOrdersArguments = (action: string, orders: IOrder[], type: ORDER_TYPE) => {
@@ -110,7 +128,7 @@ const logBatchOrdersArguments = (action: string, orders: IOrder[], type: ORDER_T
   )
 }
 
-export const openBatchOrders = async (orders: IOrder[], type: ORDER_TYPE) => {
+export async function openBatchOrders(orders: IOrder[], type: ORDER_TYPE) {
   logBatchOrdersArguments('OPEN', orders, type)
 
   const binance = getBinance()
@@ -132,10 +150,10 @@ export const openBatchOrders = async (orders: IOrder[], type: ORDER_TYPE) => {
     ),
   )
 
-  handleBinanceError(binanceOrders.flat(), chunks.flat(), orders)
+  await handleBinanceError(binanceOrders.flat(), chunks.flat(), orders)
 }
 
-export const cancelBatchOrders = async (orders: IOrder[], type: ORDER_TYPE) => {
+export async function cancelBatchOrders(orders: IOrder[], type: ORDER_TYPE) {
   logBatchOrdersArguments('CANCEL', orders, type)
 
   const binance = getBinance()
@@ -157,7 +175,7 @@ export const cancelBatchOrders = async (orders: IOrder[], type: ORDER_TYPE) => {
     ),
   )
 
-  handleBinanceError(binanceOrders.flat(), chunks.flat(), orders)
+  await handleBinanceError(binanceOrders.flat(), chunks.flat(), orders)
 }
 
 export default binance

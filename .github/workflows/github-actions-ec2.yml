@@ -34,8 +34,8 @@ jobs:
             echo SQL_USER=postgres >> .env
             echo SQL_PASS=Testing123! >> .env
             echo NODE_ENV=development >> .env
-            echo BINANCE_API_KEY=${BINANCE_ACCOUNT21_API_KEY} >> .env
-            echo BINANCE_API_SECRET=${BINANCE_ACCOUNT21_API_SECRET} >> .env
+            echo BINANCE_API_KEY=${BINANCE_ACCOUNT1_API_KEY} >> .env
+            echo BINANCE_API_SECRET=${BINANCE_ACCOUNT10_API_SECRET} >> .env
             echo BINANCE_SPOT_API_URL=https://testnet.binance.vision >> .env
             echo BINANCE_SPOT_WS_URL=wss://stream.binance.vision >> .env
             echo BINANCE_FUTURES_API_URL=https://testnet.binancefuture.com >> .env
