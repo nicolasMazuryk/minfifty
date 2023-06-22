@@ -5,6 +5,8 @@ const Binance = require('binance-api-node').default
 const BINANCE_FUTURES_API_URL = "https://fapi.binance.com"
 
 const binance = Binance({
+  // apiKey: '${BINANCE_API_KEY}', // main futures account
+  // apiSecret: '${BINANCE_ACCOUNT20_API_SECRET}',
   apiKey: process.env.BINANCE_API_KEY,
   apiSecret: process.env.BINANCE_API_SECRET,
   httpFutures: BINANCE_FUTURES_API_URL,
@@ -27,12 +29,14 @@ const retry = async (fn, parameters, retries = 12, delay = 1000) => {
   }
 }
 
+// const run = async(event, context) => {
+
 module.exports.handler = async(event, context) => {
   console.log(event.body)
 
   const [side, symbol, priceStr, quantityStr] = event.body.split(' ')
 
-  const exchange = await binance.futuresExchangeInfo()
+  const exchange = await retry(binance.futuresExchangeInfo, undefined, 8)
   const { pricePrecision, quantityPrecision } = exchange.symbols.find(item => item.symbol === symbol)
 
   const price = Number(priceStr.replace('p=','')).toFixed(pricePrecision)
@@ -51,3 +55,8 @@ module.exports.handler = async(event, context) => {
 
   return { statusCode: 200 }
 }
+
+
+// (async () => {
+//   await run({ body: 'buy ETHUSDT p=1000 q=0.01 a=USDM' })
+// })()

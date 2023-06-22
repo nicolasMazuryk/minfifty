@@ -220,7 +220,7 @@ export default class Strategy {
 
     // Disable to increase performance
     // Enable to analyse and measure all detected bases
-    this.allBases.push(base)
+    // this.allBases.push(base)
   }
 
   private async openBaseOrders(base: IBase) {
