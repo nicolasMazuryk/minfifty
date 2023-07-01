@@ -2,12 +2,19 @@ import fs from 'fs'
 import path from 'path'
 
 import Strategy from '@common/strategy'
-import { IBar, IMarketData } from '@common/strategy/types'
+import {
+  ORDER_STATUS,
+  ORDER_TYPE,
+  ORDER_TYPE_BINANCE_ORDER_FIELD,
+  ORDER_TYPE_ID_FIELD,
+} from '@common/strategy/constants'
+import { IBar, IBase, IMarketData } from '@common/strategy/types'
 import { countMinutes, logger, roundEpochToFullMinute } from '@common/strategy/utils'
-import { CandleChartResult, Candle } from 'binance-api-node'
+import { Candle, CandleChartResult, OrderSide, OrderUpdate } from 'binance-api-node'
 import Sequelize from 'sequelize'
 
 import { MarketData } from '@/models'
+import { UNPROCESSED_ORDER_EVENT_STACK } from '@/scripts/run-real-time'
 
 import binance from './binance'
 
@@ -110,6 +117,98 @@ export const marketDataToBar = ({
   isFinal: isFinal,
 })
 
+export const barToWsCandle = ({
+  time,
+  open,
+  high,
+  low,
+  close,
+  volume,
+  isFinal,
+}: IMarketData): Candle => ({
+  eventType: 'kline',
+  eventTime: new Date(time).getTime(),
+  symbol: 'ETHUSDT',
+  startTime: new Date(time).getTime(),
+  closeTime: new Date(time).getTime(),
+  firstTradeId: 0,
+  lastTradeId: 0,
+  open: open.toString(),
+  high: high.toString(),
+  low: low.toString(),
+  close: close.toString(),
+  volume: volume.toString(),
+  trades: 0,
+  interval: '1m',
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
+  isFinal: isFinal,
+  quoteVolume: '0',
+  buyVolume: '0',
+  quoteBuyVolume: '0',
+})
+
+export const batchOrderParamsToFutureOrder = (orderParams: any, orderIdCounter: number) => ({
+  orderId: orderIdCounter,
+  symbol: orderParams.symbol,
+  status: 'NEW',
+  clientOrderId: orderParams.newClientOrderId,
+  price: orderParams.price,
+  avgPrice: '0.00000',
+  origQty: orderParams.quantity,
+  executedQty: '0',
+  cumQty: '0',
+  cumQuote: '0',
+  timeInForce: 'GTC',
+  type: orderParams.type,
+  reduceOnly: false,
+  closePosition: false,
+  side: orderParams.side,
+  positionSide: 'BOTH',
+  // REVIEW
+  stopPrice: orderParams.stopPrice === '0' ? orderParams.takeProfit : orderParams.stopPrice,
+  workingType: 'CONTRACT_PRICE',
+  priceProtect: false,
+  origType: orderParams.type,
+  updateTime: Date.now(),
+})
+
+export const futuresOrderToOrderUpdateEvent = (order: any) => ({
+  eventType: 'ORDER_TRADE_UPDATE',
+  eventTime: Date.now(),
+  transactionTime: order.updateTime,
+  symbol: order.symbol,
+  clientOrderId: order.clientOrderId,
+  side: order.side,
+  orderType: order.type,
+  timeInForce: order.timeInForce,
+  quantity: order.origQty,
+  price: order.price,
+  averagePrice: order.avgPrice,
+  stopPrice: order.stopPrice,
+  executionType: order.status,
+  orderStatus: order.status,
+  orderId: order.orderId,
+  lastTradeQuantity: '0',
+  totalTradeQuantity: '0',
+  priceLastTrade: '0',
+  commissionAsset: 'USDT',
+  commission: '0',
+  orderTime: order.updateTime,
+  tradeId: 0,
+  bidsNotional: '0',
+  asksNotional: '0',
+  isMaker: false,
+  isReduceOnly: false,
+  workingType: 'CONTRACT_PRICE',
+  originalOrderType: order.type,
+  positionSide: order.positionSide,
+  closePosition: false,
+  activationPrice: undefined,
+  callbackRate: undefined,
+  realizedProfit: '0',
+})
+
 export const getBacktestBars = async (
   market: string,
   ticker: string,
@@ -183,7 +282,8 @@ export async function syncRemainingBarsUpToDate(market: string, ticker: string) 
     const endTimestamp = Math.max(startTime, roundEpochToFullMinute(end) - 60 * 1000)
 
     if (endTimestamp <= start) return
-
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    //@ts-ignore
     const remainingCandles: CandleChartResult[] = await binance.futuresCandles({
       symbol: ticker,
       interval: '1m',
@@ -220,4 +320,103 @@ export const logStrategyPerformance = async (strategy: Strategy) => {
   await writeFileAsync(destFile, JSON.stringify(strategyPerformance, null, 2))
 
   logger.info(strategyPerformance)
+}
+
+export const isAllOpenOrdersClosed = (base: IBase, type: ORDER_TYPE) => {
+  const orderStatuses =
+    type === ORDER_TYPE.TAKE_PROFIT
+      ? [ORDER_STATUS.FILLED, ORDER_STATUS.TAKE_PROFIT, ORDER_STATUS.BREAK_EVEN]
+      : [ORDER_STATUS.FILLED, ORDER_STATUS.STOP_LOSS]
+
+  const limitOrders = base.orders.filter((order) => orderStatuses.includes(order.status))
+
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
+  const binanceOrderFieldName = ORDER_TYPE_BINANCE_ORDER_FIELD[type]
+
+  const closingOrders = base.orders.filter(
+    (order) =>
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      order[binanceOrderFieldName] &&
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      order[binanceOrderFieldName].orderStatus === ORDER_STATUS.FILLED,
+  )
+
+  return limitOrders.length === closingOrders.length
+}
+
+export const sortUnprocessedEvents = (unprocessedOrderEventStack: OrderUpdate[]) =>
+  unprocessedOrderEventStack.sort((a: OrderUpdate, b: OrderUpdate) => {
+    if (a.side === 'BUY' && a.orderType === 'LIMIT' && a.orderStatus === 'NEW') return -1
+    if (b.side === 'BUY' && b.orderType === 'LIMIT' && b.orderStatus === 'NEW') return 1
+
+    if (a.side === 'BUY' && a.orderType === 'LIMIT' && a.orderStatus === 'FILLED') return -1
+    if (b.side === 'BUY' && b.orderType === 'LIMIT' && b.orderStatus === 'FILLED') return 1
+
+    if (a.side === 'SELL' && a.orderType === 'STOP_MARKET' && a.orderStatus === 'NEW') return -1
+    if (b.side === 'SELL' && b.orderType === 'STOP_MARKET' && b.orderStatus === 'NEW') return 1
+
+    if (a.side === 'SELL' && a.orderType === 'LIMIT' && a.orderStatus === 'NEW') return -1
+    if (b.side === 'SELL' && b.orderType === 'LIMIT' && b.orderStatus === 'NEW') return 1
+
+    if (a.side === 'SELL' && a.orderType === 'MARKET' && a.orderStatus === 'NEW') return -1
+    if (b.side === 'SELL' && b.orderType === 'MARKET' && b.orderStatus === 'NEW') return 1
+
+    if (a.side === 'SELL' && a.orderType === 'MARKET' && a.orderStatus === 'FILLED') return -1
+    if (b.side === 'SELL' && b.orderType === 'MARKET' && b.orderStatus === 'FILLED') return 1
+
+    if (a.side === 'SELL' && a.orderType === 'LIMIT' && a.orderStatus === 'FILLED') return -1
+    if (b.side === 'SELL' && b.orderType === 'LIMIT' && b.orderStatus === 'FILLED') return 1
+
+    if (a.side === 'BUY' && a.orderType === 'LIMIT' && a.orderStatus === 'CANCELED') return -1
+    if (b.side === 'BUY' && b.orderType === 'LIMIT' && b.orderStatus === 'CANCELED') return 1
+
+    if (a.side === 'SELL' && a.orderType === 'STOP_MARKET' && a.orderStatus === 'CANCELED')
+      return -1
+    if (b.side === 'SELL' && b.orderType === 'STOP_MARKET' && b.orderStatus === 'CANCELED') return 1
+
+    if (a.side === 'SELL' && a.orderType === 'LIMIT' && a.orderStatus === 'CANCELED') return -1
+    if (b.side === 'SELL' && b.orderType === 'LIMIT' && b.orderStatus === 'CANCELED') return 1
+
+    return 0
+  })
+
+export const isTakeProfitOrderTriggered = (base: IBase) => {
+  const sellLimitFilledEventIds = UNPROCESSED_ORDER_EVENT_STACK.filter(
+    (event) =>
+      event.side === OrderSide.SELL &&
+      event.orderType === ORDER_TYPE.LIMIT &&
+      event.orderStatus === ORDER_STATUS.FILLED,
+  ).map((event) => event.clientOrderId)
+
+  if (!sellLimitFilledEventIds.length) return false
+
+  const takeProfitOrderIds = base.orders
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    .map((order) => order[ORDER_TYPE_ID_FIELD[ORDER_TYPE.TAKE_PROFIT]])
+    .filter((id) => Boolean(id))
+
+  return takeProfitOrderIds.some((id) => sellLimitFilledEventIds.includes(id))
+}
+
+export const isStopLossOrderTriggered = (base: IBase) => {
+  const sellMarketFilledEventIds = UNPROCESSED_ORDER_EVENT_STACK.filter(
+    (event) =>
+      event.side === OrderSide.SELL &&
+      event.orderType === ORDER_TYPE.MARKET &&
+      event.orderStatus === ORDER_STATUS.FILLED,
+  ).map((event) => event.clientOrderId)
+
+  if (!sellMarketFilledEventIds.length) return false
+
+  const stopLossOrderIds = base.orders
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    .map((order) => order[ORDER_TYPE_ID_FIELD[ORDER_TYPE.MARKET]])
+    .filter((id) => Boolean(id))
+
+  return stopLossOrderIds.some((id) => sellMarketFilledEventIds.includes(id))
 }

@@ -57,3 +57,14 @@ export const chunkArray = (array: any, chunkSize: number): [][] => {
 
   return results;
 }
+
+export const waitUntilArrayIsEmpty = (array: any) => {
+  return new Promise<void>(resolve => {
+    const interval = setInterval(() => {
+      if (array.length === 0) {
+        clearInterval(interval)
+        resolve()
+      }
+    }, 10)
+  });
+}

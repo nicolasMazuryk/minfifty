@@ -1,15 +1,28 @@
 // eslint-disable-next-line import/order
 import '../alias-runtime'
 
+import process from 'process'
+
 import Strategy from '@common/strategy'
-import { MARKET, ORDER_STATUS, TICKER } from '@common/strategy/constants'
+import { MARKET, ORDER_STATUS, ORDER_TYPE, TICKER } from '@common/strategy/constants'
 import { IBar } from '@common/strategy/types'
 import { logger, wait } from '@common/strategy/utils'
 import { Candle, OrderStatus, OrderUpdate } from 'binance-api-node'
 
 import binance from './binance'
-import { marketDataToBar, wsCandleToMarketData } from './helpers'
+import { binanceBacktest } from './binance_backtest'
+import {
+  isAllOpenOrdersClosed,
+  isStopLossOrderTriggered,
+  isTakeProfitOrderTriggered,
+  marketDataToBar,
+  sortUnprocessedEvents,
+  wsCandleToMarketData,
+} from './helpers'
+
 // import { TRADING_FEE } from '@common/strategy/settings'
+
+const isRealTime = process.env.NODE_ENV !== 'backtest'
 
 const strategy = new Strategy()
 
@@ -31,11 +44,8 @@ const handleOrderUpdate = async (event: OrderUpdate) => {
         // order.fee = order.amount * TRADING_FEE
         // order.feeCoin = order.fee / order.price
 
-        const isBreakEvenRecalculated = await strategy.calculateBaseBreakEven(order.base)
-
-        if (!isBreakEvenRecalculated) await strategy.openTakeProfitOrders([order])
-
-        await strategy.openStopLossOrders([order])
+        if (!isStopLossOrderTriggered(order.base)) await strategy.openTakeProfitOrders([order])
+        if (!isTakeProfitOrderTriggered(order.base)) await strategy.openStopLossOrders([order])
       }
 
       if (event.orderStatus === ORDER_STATUS.CANCELED) {
@@ -50,14 +60,27 @@ const handleOrderUpdate = async (event: OrderUpdate) => {
     if (event.clientOrderId === order.takeProfitOrderId) {
       order.binanceTakeProfit = event
 
+      if (event.orderStatus === ORDER_STATUS.NEW) {
+        await strategy.calculateBaseBreakEven(order.base)
+      }
+
       if (event.orderStatus === ORDER_STATUS.FILLED) {
-        if (order.breakEven > order.takeProfit) {
+        const isAllOpenTakeProfitOrdersClosed = isAllOpenOrdersClosed(
+          order.base,
+          ORDER_TYPE.TAKE_PROFIT,
+        )
+
+        if (order.breakEven === 999999) {
           order.status = ORDER_STATUS.TAKE_PROFIT
-          order.base.isClosedInProfit = true
+          if (isAllOpenTakeProfitOrdersClosed) {
+            order.base.isClosedInProfit = true
+          }
         }
-        if (order.breakEven < order.takeProfit) {
+        if (order.breakEven < 999999) {
           order.status = ORDER_STATUS.BREAK_EVEN
-          order.base.isClosedInBreakEven = true
+          if (isAllOpenTakeProfitOrdersClosed) {
+            order.base.isClosedInBreakEven = true
+          }
         }
 
         order.timeClosed = new Date(event.orderTime)
@@ -68,7 +91,7 @@ const handleOrderUpdate = async (event: OrderUpdate) => {
         // order.PNLCoin = order.PNL / order.takeProfit
 
         await strategy.cancelBaseOrders(order.base)
-        await strategy.cancelStopLossOrders(order.base)
+        await strategy.cancelStopLossOrders([order])
       }
       break
     }
@@ -89,10 +112,17 @@ const handleOrderUpdate = async (event: OrderUpdate) => {
         // needed to display sell order on chart. TODO: refactor
         order.takeProfit = order.stopLoss
 
-        await strategy.cancelTakeProfitOrders(order.base)
         await strategy.cancelBaseOrders(order.base)
+        await strategy.cancelTakeProfitOrders([order])
 
-        order.base.isClosedInLoss = true
+        const isAllOpenStopMarketOrdersClosed = isAllOpenOrdersClosed(
+          order.base,
+          ORDER_TYPE.STOP_MARKET,
+        )
+
+        if (isAllOpenStopMarketOrdersClosed) {
+          order.base.isClosedInLoss = true
+        }
       }
       break
     }
@@ -100,7 +130,7 @@ const handleOrderUpdate = async (event: OrderUpdate) => {
 }
 
 // --------------------
-const UNPROCESSED_BARS_STACK: IBar[] = []
+export const UNPROCESSED_BARS_STACK: IBar[] = []
 
 let isProcessingBarsStack = false
 const runUnprocessedBarsStack = async () => {
@@ -116,16 +146,25 @@ const runUnprocessedBarsStack = async () => {
 setInterval(async () => {
   if (isProcessingBarsStack) return
   await runUnprocessedBarsStack()
-}, 500)
+}, 0)
 
 // --------------------
-const UNPROCESSED_ORDER_EVENT_STACK: OrderUpdate[] = []
+export let UNPROCESSED_ORDER_EVENT_STACK: OrderUpdate[] = []
 
 let isProcessingOrderEventStack = false
 const runUnprocessedOrderEventStack = async () => {
   isProcessingOrderEventStack = true
   while (UNPROCESSED_ORDER_EVENT_STACK.length > 0) {
-    const event = UNPROCESSED_ORDER_EVENT_STACK.shift()
+    UNPROCESSED_ORDER_EVENT_STACK.forEach((event) =>
+      logger.info(
+        `UNPROCESSED_ORDER_EVENT_STACK: ${event.side} ${event.orderType} ${event.orderStatus} ${event.clientOrderId}`,
+      ),
+    )
+    logger.info(`------------------------------------------------------------------`)
+
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    const event: OrderUpdate = UNPROCESSED_ORDER_EVENT_STACK.shift()
 
     await handleOrderUpdate(event!)
   }
@@ -135,11 +174,9 @@ const runUnprocessedOrderEventStack = async () => {
 setInterval(async () => {
   if (isProcessingOrderEventStack) return
   await runUnprocessedOrderEventStack()
-}, 500)
+}, 0)
 // --------------------
 ;(async () => {
-  strategy.isRealTime = true
-
   binance.ws.futuresCandles(TICKER.ETH, '1m', async (candle: Candle) => {
     const marketData = wsCandleToMarketData(MARKET.FUTURES, candle)
     const bar = marketDataToBar(marketData)
@@ -149,22 +186,28 @@ setInterval(async () => {
 
   binance.ws.futuresUser(async (msg) => {
     if (msg.eventType !== 'ORDER_TRADE_UPDATE') return
-    if ([OrderStatus.PARTIALLY_FILLED, OrderStatus.PENDING_CANCEL].includes(msg.orderStatus)) return
+    if (
+      [OrderStatus.EXPIRED, OrderStatus.PARTIALLY_FILLED, OrderStatus.PENDING_CANCEL].includes(
+        msg.orderStatus,
+      )
+    )
+      return
     if ([OrderStatus.REJECTED].includes(msg.orderStatus)) {
       logger.error(`UNEXPECTED ORDER STATUS: ${msg.orderStatus}`, msg)
     }
 
-    UNPROCESSED_ORDER_EVENT_STACK.push(msg)
+    UNPROCESSED_ORDER_EVENT_STACK = sortUnprocessedEvents([...UNPROCESSED_ORDER_EVENT_STACK, msg])
 
-    logger.info(msg)
-
-    // const marketData = wsCandleToMarketData(MARKET.FUTURES, candle)
-    // const bar = marketDataToBar(marketData)
-    //
-    // await strategy.run(bar)
+    // UNPROCESSED_ORDER_EVENT_STACK.push(msg)
   })
 
-  logger.info('Started real-time mode')
+  strategy.isRealTime = isRealTime
+
+  if (!isRealTime) {
+    await binanceBacktest.run(strategy)
+  }
+
+  logger.info('Strategy is ready to receive events.')
 
   await wait(1000 * 60 * 60 * 24 * 7) // wait for 7 days
 })().catch(logger.error)

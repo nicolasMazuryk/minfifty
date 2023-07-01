@@ -23,6 +23,6 @@
 // export const END_PERIOD_TIME = '2021-05-19T14:55:00+00:00'
 
 // 1 day -> real-time
-export const START_PERIOD_TIME = new Date()
-// export const START_PERIOD_TIME = '2023-04-08T00:00:00+00:00'
+// export const START_PERIOD_TIME = new Date()
+export const START_PERIOD_TIME = '2023-06-24T00:00:00+00:00'
 export const END_PERIOD_TIME = '2023-12-31T23:59:00+00:00'

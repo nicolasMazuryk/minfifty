@@ -8,7 +8,7 @@
   },
   "scripts": {
     "sync-market-data": "npx ts-node --project tsconfig.json src/scripts/sync-market-data.ts",
-    "backtest": "npx ts-node --project tsconfig.json src/scripts/run-backtest.ts",
+    "backtest": "NODE_ENV=backtest npx ts-node --project tsconfig.json src/scripts/run-real-time.ts",
     "real-time": "npx ts-node --project tsconfig.json src/scripts/run-real-time.ts",
     "build": "rm -rf build && tsc -b",
     "prettify": "prettier --write .",
@@ -27,7 +27,7 @@
     "@types/node": "^18.6.3",
     "@types/pg": "^8.6.5",
     "@types/sequelize": "^4.28.14",
-    "@types/uuid": "^9.0.1",
+    "@types/uuid": "^9.0.2",
     "@types/uuidv4": "^5.0.0",
     "@typescript-eslint/eslint-plugin": "^5.0.0",
     "@typescript-eslint/parser": "^5.0.0",
