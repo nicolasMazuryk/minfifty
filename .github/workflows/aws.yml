@@ -35,7 +35,7 @@ env:
   ECR_REPOSITORY: base-strategy           # set this to your Amazon ECR repository name
   ECS_SERVICE: base-strategy-service                 # set this to your Amazon ECS service name
   ECS_CLUSTER: base-strategy-cluster                 # set this to your Amazon ECS cluster name
-  ECS_TASK_DEFINITION: ../aws/base-strategy-task-revision6.json       # set this to the path to your Amazon ECS task definition
+  ECS_TASK_DEFINITION: .github/aws/base-strategy-task-revision11.json       # set this to the path to your Amazon ECS task definition
                                                # file, e.g. .aws/task-definition.json
   CONTAINER_NAME: base-strategy-container           # set this to the name of the container in the
                                                # containerDefinitions section of your task definition

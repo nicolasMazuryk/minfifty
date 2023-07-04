@@ -73,6 +73,7 @@
     "ext": "ts"
   },
   "_moduleAliases": {
-    "@": "build"
+    "@": "src",
+    "@common": "common"
   }
 }

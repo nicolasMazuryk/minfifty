@@ -4,4 +4,4 @@ import moduleAlias from 'module-alias'
 
 moduleAlias.addAlias('@', resolve(__dirname, './'))
 
-moduleAlias.addAlias('@common', resolve(__dirname, '../../common/'))
+moduleAlias.addAlias('@common', resolve(__dirname, '../common/'))

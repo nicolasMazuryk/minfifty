@@ -1,7 +1,0 @@
-            echo NODE_ENV=production >> .env
-            echo BINANCE_API_KEY=${BINANCE_ACCOUNT1_API_KEY} >> .env
-            echo BINANCE_API_SECRET=${BINANCE_ACCOUNT10_API_SECRET} >> .env
-            echo BINANCE_SPOT_API_URL=https://api.binance.com >> .env
-            echo BINANCE_SPOT_WS_URL=wss://stream.binance.com/ws >> .env
-            echo BINANCE_FUTURES_API_URL=https://fapi.binance.com >> .env
-            echo BINANCE_FUTURES_WS_URL=wss://fstream.binance.com/ws >> .env

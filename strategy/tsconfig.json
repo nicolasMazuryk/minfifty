@@ -17,9 +17,9 @@
     "resolveJsonModule": true,
     "paths": {
       "@/*": ["src/*"],
-      "@common/*": ["../common/*"]
+      "@common/*": ["common/*"]
     }
   },
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "common/**/*"],
   "exclude": ["node_modules", "build"]
 }

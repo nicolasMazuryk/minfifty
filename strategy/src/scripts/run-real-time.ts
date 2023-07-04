@@ -138,6 +138,7 @@ const runUnprocessedBarsStack = async () => {
   while (UNPROCESSED_BARS_STACK.length > 0) {
     const bar = UNPROCESSED_BARS_STACK.shift()
 
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     await strategy.run(bar!)
   }
   isProcessingBarsStack = false
@@ -166,6 +167,7 @@ const runUnprocessedOrderEventStack = async () => {
     // @ts-ignore
     const event: OrderUpdate = UNPROCESSED_ORDER_EVENT_STACK.shift()
 
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     await handleOrderUpdate(event!)
   }
   isProcessingOrderEventStack = false

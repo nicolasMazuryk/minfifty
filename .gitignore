@@ -43,9 +43,10 @@ server/package-lock.json
 .DS_Store
 
 ### Project Specific template
-client/build/
-server/build/
-strategy/build/
+build
+client/build
+server/build
+strategy/build
 
 strategy/logs/
 

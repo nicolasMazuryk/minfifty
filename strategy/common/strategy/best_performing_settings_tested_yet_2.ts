@@ -11,14 +11,14 @@ export const LEVEL_STEP = 0.5 / 100
 export const LEVEL_STEP_MULTIPLIER = 1
 
 export const ORDER_NUMBER_OF_LEVELS = 50 // 44 => 20 => 15
-export const ORDER_LEVEL_STEP = 0.10 / 100 // 0.15
+export const ORDER_LEVEL_STEP = 0.1 / 100 // 0.15
 export const ORDER_LEVEL_STOP_LOSS = 5 / 100 // 2
 export const ORDER_OPEN_TRADE_WINDOW_BARS = 5 // 20 after base => 30
 export const ORDER_BREAK_EVEN_CLOSE_TRIGGER = 1 / 100 // (0.7%) 1%
 
 export const EMERGENCY_LEVEL_NUMBER = 10
 export const EMERGENCY_TAKE_PROFIT_RETRACEMENT = 0 / 100
-export const TAKE_PROFIT_BELOW_BASE = 0.00 / 100 // 0.01% 0.02% 0.05%
+export const TAKE_PROFIT_BELOW_BASE = 0.0 / 100 // 0.01% 0.02% 0.05%
 export const BASE_BARS_LENGTH_LIMIT = 0
 
 export const LEVERAGE_X = 2

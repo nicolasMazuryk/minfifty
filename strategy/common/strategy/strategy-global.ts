@@ -1,6 +1,3 @@
-import { IGlobalBase, IBar } from './types'
-import { roundToPrecision, max, min, getHourlyTime, logger } from './utils'
-
 import {
   BASE_RETRACEMENT_CONFIRMATION,
   BASE_PRECEDING_BARS,
@@ -8,6 +5,8 @@ import {
   IGNORE_BASE_ON_TOP_THRESHOLD,
   BARS_UNTIL_BASE_CONFIRMATION_LIMIT,
 } from './settings-global'
+import { IGlobalBase, IBar } from './types'
+import { roundToPrecision, max, min, getHourlyTime, logger } from './utils'
 
 // const round = roundToPrecision(TICKER_PRECISION.ETH)
 const round = roundToPrecision(2)
@@ -97,7 +96,7 @@ export default class GlobalStrategy {
       baseBarIndex,
     )
 
-    const highestHigh = max(precedingBars.map(bar => bar.high))
+    const highestHigh = max(precedingBars.map((bar) => bar.high))
 
     return baseBarLow >= highestHigh * (1 - IGNORE_BASE_ON_TOP_THRESHOLD)
   }

@@ -9,7 +9,7 @@ export const logger = {
   timeEnd: (...args: any) => console.timeEnd(...args),
 }
 
-export const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
+export const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
 export const roundToPrecision = (precision: number) => (value: number) =>
   Number(value.toFixed(precision))
@@ -49,22 +49,21 @@ export const getHourlyTime = (time: Date) => {
 }
 
 export const chunkArray = (array: any, chunkSize: number): [][] => {
-  const results: [][] = [];
+  const results: [][] = []
 
   while (array.length) {
-    results.push(array.splice(0, chunkSize));
+    results.push(array.splice(0, chunkSize))
   }
 
-  return results;
+  return results
 }
 
-export const waitUntilArrayIsEmpty = (array: any) => {
-  return new Promise<void>(resolve => {
+export const waitUntilArrayIsEmpty = (array: any) =>
+  new Promise<void>((resolve) => {
     const interval = setInterval(() => {
       if (array.length === 0) {
         clearInterval(interval)
         resolve()
       }
     }, 10)
-  });
-}
+  })

@@ -12,7 +12,8 @@
   "private": true,
   "dependencies": {
     "server-workspace": "0.0.1",
-    "client-workspace": "0.0.1"
+    "client-workspace": "0.0.1",
+    "strategy-workspace": "0.0.1"
   },
   "scripts": {
     "prettify": "prettier --write .",

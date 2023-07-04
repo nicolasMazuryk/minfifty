@@ -1,5 +1,5 @@
 import { OrderUpdate } from 'binance-api-node'
-import { uuid } from 'uuidv4';
+import { uuid } from 'uuidv4'
 
 export interface IBase {
   barIndex: number
@@ -25,7 +25,7 @@ export interface IBase {
     percentDrop: number
     percentBounce: number
     barsLength: number
-  },
+  }
   orders: IOrder[]
 }
 

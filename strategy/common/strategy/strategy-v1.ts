@@ -1,12 +1,8 @@
-import { IBase, IBar, IOrder } from './types'
-import {
-  ORDER_TYPE,
-  ORDER_STATUS,
-  ORDER_BASE_TYPES,
-  ORDER_TYPE_BINANCE_ORDER_FIELD,
-} from './constants'
-import { roundToPrecision, average, max, min, logger } from './utils'
+import { uuid } from 'uuidv4'
 
+import { cancelBatchOrders, openBatchOrders } from '../../src/scripts/binance'
+
+import { ORDER_TYPE, ORDER_STATUS, ORDER_BASE_TYPES } from './constants'
 import {
   INITIAL_CAPITAL_USDT,
   ORDER_BASE_QUANTITY,
@@ -15,9 +11,13 @@ import {
   TRADING_FEE,
   BASE_RETRACEMENT_CONFIRMATION,
   BASE_PRECEDING_BARS,
+  // NUMBER_OF_LEVELS,
+  // LEVEL_STEP,
   LEVEL_STEP_MULTIPLIER,
   ORDER_STEP_MULTIPLIER,
+  EMERGENCY_LEVEL_NUMBER,
   TAKE_PROFIT_BELOW_BASE,
+  BASE_BARS_LENGTH_LIMIT,
   LEVERAGE_X,
   MAINTANANCE_MARGIN,
   ORDER_NUMBER_OF_LEVELS,
@@ -27,33 +27,29 @@ import {
   ORDER_BREAK_EVEN_CLOSE_TRIGGER,
   MAX_SIMULTANEOUS_BROKEN_BASES,
 } from './settings'
-import { cancelBatchOrders, openBatchOrders } from '@/scripts/binance'
-import { v4 } from 'uuid'
-import {
-  isTakeProfitOrderTriggered,
-  isStopLossOrderTriggered,
-} from '../../strategy/src/scripts/helpers'
+import { IBase, IBar, IOrder } from './types'
+import { roundToPrecision, average, max, min, logger } from './utils'
 
 const round = roundToPrecision(2)
 const roundTo3 = roundToPrecision(3)
 
 export default class Strategy {
   public initialCapital: number = INITIAL_CAPITAL_USDT
-  public initialCapitalCoin: number = 0
+  public initialCapitalCoin = 0
   public bars: IBar[] = []
   public bar!: IBar
-  public barIndex: number = -1
-  public barIndexOffset: number = 0
-  public isNewBar: boolean = true
-  public isNewBase: boolean = false
-  public isIgnoredBase: boolean = false
-  public newBaseBarIndex: number = 0
+  public barIndex = -1
+  public barIndexOffset = 0
+  public isNewBar = true
+  public isNewBase = false
+  public isIgnoredBase = false
+  public newBaseBarIndex = 0
   public baseRetracementConfirmation: number = BASE_RETRACEMENT_CONFIRMATION
   public bases: IBase[] = []
   public closedBases: IBase[] = []
   public ignoredBases: IBase[] = []
   public allBases: IBase[] = []
-  public allBasesCounter: number = 0
+  public allBasesCounter = 0
   // public closedInLossBases: IBase[] = []
   public orders: IOrder[] = []
   public closedOrders: IOrder[] = []
@@ -62,9 +58,9 @@ export default class Strategy {
   public takeProfitOrders: IOrder[] = []
   // public takeProfitHistoryOrders: IOrder[] = []
   public buyerIndex: number[][] = []
-  public ignoreBuyOrders: boolean = false
+  public ignoreBuyOrders = false
   public isRealTime = false
-  public current: number = 0
+  public current = 0
   public cache: any = {
     openOrders: 0,
     closedOrders: 0,
@@ -85,6 +81,8 @@ export default class Strategy {
     await this.ignoreOpenPreorderTradeIfExceedsLimitBarWindow()
 
     await this.processBrokenBases()
+
+    // await this.executeOrders()
 
     this.performanceCleanup()
 
@@ -153,7 +151,7 @@ export default class Strategy {
           this.isNewBase = true
 
           // limit Max Simultaneous Broken Bases
-          if (this.bases.filter(base => base.isBroken).length >= MAX_SIMULTANEOUS_BROKEN_BASES) {
+          if (this.bases.filter((base) => base.isBroken).length >= MAX_SIMULTANEOUS_BROKEN_BASES) {
             this.isIgnoredBase = true
           }
 
@@ -211,16 +209,14 @@ export default class Strategy {
     if (this.bases[0]?.isBroken) {
       this.bases.unshift(base)
     } else {
-      if (this.bases[0]) {
-        await this.cancelBaseOrders(this.bases[0])
-      }
+      this.bases[0] && (await this.cancelBaseOrders(this.bases[0]))
       this.bases[0] = base
     }
 
-    if (!this.isIgnoredBase) {
-      await this.openBaseOrders(base)
-    } else {
+    if (this.isIgnoredBase) {
       this.ignoredBases.push(base)
+    } else {
+      await this.openBaseOrders(base)
     }
 
     // Disable to increase performance
@@ -261,9 +257,9 @@ export default class Strategy {
 
       base.levels.push(price)
 
-      let order = {
+      const order = {
         ...orderDetails,
-        limitOrderId: v4(),
+        limitOrderId: uuid(),
         quantity: 0,
         amount: 0,
         level: level,
@@ -295,10 +291,7 @@ export default class Strategy {
   }
 
   public async cancelBaseOrders(base: IBase) {
-    const ordersToBeExecuted = base.orders.filter(order => order.status === ORDER_STATUS.NEW)
-
-    // set status to CANCELED before binance call, so it is not sent multiple times to binance. That removes error 'Unknown order sent.'
-    ordersToBeExecuted.forEach(order => (order.status = ORDER_STATUS.CANCELED))
+    const ordersToBeExecuted = base.orders.filter((order) => order.status === ORDER_STATUS.NEW)
 
     await cancelBatchOrders(ordersToBeExecuted, ORDER_TYPE.LIMIT)
   }
@@ -313,8 +306,8 @@ export default class Strategy {
     // }
 
     this.bases
-      .filter(base => base.isClosedInProfit || base.isClosedInBreakEven || base.isClosedInLoss)
-      .forEach(base => {
+      .filter((base) => base.isClosedInProfit || base.isClosedInBreakEven || base.isClosedInLoss)
+      .forEach((base) => {
         // base.PNL = [...this.orders, ...this.closedOrders]
         //   .filter(order => order.baseBarIndex === base.barIndex)
         //   .reduce((acc, order) => acc + order.PNL, 0)
@@ -322,40 +315,21 @@ export default class Strategy {
       })
   }
 
-  public async calculateBaseBreakEven(base: IBase) {
-    const currentBreakEven = base.breakEven
-
+  public async calculateBaseBreakEven(base: IBase): Promise<boolean> {
     const breakEvenTriggerPrice = base.price * (1 - ORDER_BREAK_EVEN_CLOSE_TRIGGER)
 
-    const orders = base.orders.filter(order => order.status === ORDER_STATUS.FILLED)
-    const minExecutedOrderPrice = min(orders.map(order => order.price))
+    const orders = base.orders.filter((order) => order.status === ORDER_STATUS.FILLED)
+    const minExecutedOrderPrice = min(orders.map((order) => order.price))
 
-    if (minExecutedOrderPrice > breakEvenTriggerPrice) return
+    if (minExecutedOrderPrice > breakEvenTriggerPrice) return false
 
-    // --------------------------------------------
-    // trigger cancel and reopen of TakeProfit orders only once:
-    // when all regular TakeProfit orders has been placed on binance with status NEW
-    const binanceOrderFieldName = ORDER_TYPE_BINANCE_ORDER_FIELD[ORDER_TYPE.TAKE_PROFIT]
-
-    const ordersToBeExecuted = base.orders.filter(
-      order =>
-        // @ts-ignore
-        order[binanceOrderFieldName] &&
-        // @ts-ignore
-        order[binanceOrderFieldName].orderStatus === ORDER_STATUS.NEW,
-    )
-
-    if (orders.length !== ordersToBeExecuted.length) return
-    // --------------------------------------------
-    // do not recalculate breakEven if at least one SELL LIMIT order in UNPROCESSED_ORDER_EVENT_STACK is triggered
-    if (isTakeProfitOrderTriggered(base) || isStopLossOrderTriggered(base)) return
-    // --------------------------------------------
+    // if (!orders.length) return
 
     const BREAK_EVEN_TRIGGER = 0.5
 
     if (ORDER_BASE_TYPE === ORDER_BASE_TYPES.USDT) {
-      const minOrderPrice = min(orders.map(order => order.price))
-      const maxOrderPrice = max(orders.map(order => order.price))
+      const minOrderPrice = min(orders.map((order) => order.price))
+      const maxOrderPrice = max(orders.map((order) => order.price))
 
       base.breakEven =
         round(
@@ -374,68 +348,249 @@ export default class Strategy {
     }
 
     if (LEVEL_STEP_MULTIPLIER > 1) {
-      base.breakEven = round(average(orders.map(order => order.price)) * (1 + TRADING_FEE * 2))
+      base.breakEven = round(average(orders.map((order) => order.price)) * (1 + TRADING_FEE * 2))
     }
 
-    orders.forEach(order => {
+    orders.forEach((order) => {
       order.breakEven = base.breakEven
       order.takeProfit = base.breakEven
     })
 
-    if (currentBreakEven === base.breakEven) return
+    await this.cancelTakeProfitOrders(base)
+    await this.openTakeProfitOrders(orders)
 
-    await this.cancelTakeProfitOrders(ordersToBeExecuted)
-    await this.openTakeProfitOrders(ordersToBeExecuted)
+    return true
+  }
+
+  public async handleCloseOrdersInBreakEven(base: IBase) {
+    const breakEvenTriggerLow = base.price * (1 - ORDER_BREAK_EVEN_CLOSE_TRIGGER)
+    if (
+      (this.current <= breakEvenTriggerLow || base.breakEven < 999999) &&
+      this.current < base.breakEvenPriceLow
+    ) {
+      await this.calculateBaseBreakEven(base)
+    }
+  }
+
+  public async setBaseRespected(base: IBase) {
+    const higherPrice =
+      this.isBaseBrokenOrEmergencyLevelHitOnCurrentBar(base) || this.isRealTime
+        ? this.bar.close
+        : this.bar.high
+
+    const lowerPrice = this.current
+
+    const isBarLimitExceeded =
+      BASE_BARS_LENGTH_LIMIT && this.barIndex - base.barIndex >= BASE_BARS_LENGTH_LIMIT
+
+    if (lowerPrice <= base.stopLoss) {
+      // await this.executeFillOrders()
+      // await this.cancelBaseOrders(base)
+      // await this.cancelTakeProfitOrders(base)
+      base.isClosedInLoss = true
+    } else if (higherPrice >= base.takeProfit) {
+      // await this.executeFillOrders()
+      await this.cancelBaseOrders(base)
+      await this.cancelStopLossOrders(base)
+      base.isClosedInProfit = true
+    } else if (higherPrice >= base.breakEven) {
+      // await this.executeFillOrders()
+      await this.cancelBaseOrders(base)
+      await this.cancelStopLossOrders(base)
+      base.isClosedInBreakEven = true
+    } else if (isBarLimitExceeded) {
+      // await this.executeFillOrders()
+      await this.cancelBaseOrders(base)
+    }
+  }
+
+  private isBaseBrokenOnCurrentBar(base: IBase) {
+    if (base === undefined) return
+
+    const isBaseBrokenOnCurrentBar =
+      !(this.getBarByBarIndexOffset(this.barIndex - 1).low <= base.levels[0]) &&
+      this.bar.low <= base.levels[0]
+
+    return isBaseBrokenOnCurrentBar
+  }
+
+  private isBaseBrokenOrEmergencyLevelHitOnCurrentBar(base: IBase) {
+    if (base === undefined) return
+
+    const isBaseBrokenOnCurrentBar = this.isBaseBrokenOnCurrentBar(base)
+
+    const breakEvenTriggerLow = base.price * (1 - ORDER_BREAK_EVEN_CLOSE_TRIGGER)
+
+    const isBreakEvenTriggeredOnCurrentBar =
+      !(this.getBarByBarIndexOffset(this.barIndex - 1).low <= breakEvenTriggerLow) &&
+      this.bar.low <= breakEvenTriggerLow
+
+    const emergencyLevel = base.levels[EMERGENCY_LEVEL_NUMBER - 1]
+
+    const isEmergencyLevelHitOnCurrentBar =
+      !(this.getBarByBarIndexOffset(this.barIndex - 1).low <= emergencyLevel) &&
+      this.bar.low <= emergencyLevel
+
+    return (
+      isBaseBrokenOnCurrentBar ||
+      isBreakEvenTriggeredOnCurrentBar ||
+      isEmergencyLevelHitOnCurrentBar
+    )
+  }
+
+  public async executeOrders() {
+    const entryPrice = this.current
+
+    if (this.ignoreBuyOrders) {
+      this.orders.forEach((order) => {
+        if (order.status === ORDER_STATUS.NEW && entryPrice <= order.price) {
+          order.status = ORDER_STATUS.IGNORED
+        }
+      })
+    }
+
+    // await this.executeFillOrders()
+
+    this.orders.forEach((order) => {
+      if (order.status === ORDER_STATUS.FILLED && this.current <= order.stopLoss) {
+        order.timeClosed = this.isRealTime ? new Date() : this.bar.time
+        order.status = ORDER_STATUS.COMPLETED
+        order.barIndexClosed = this.barIndex
+        order.fee = order.fee + order.quantity * order.stopLoss * TRADING_FEE
+        order.PNL = (order.stopLoss - order.price) * order.quantity - order.fee
+        order.feeCoin = order.fee / order.stopLoss
+        order.PNLCoin = order.PNL / order.stopLoss
+        // needed to display sell order on chart. TODO: refactor
+        order.takeProfit = order.stopLoss
+      }
+    })
+
+    this.orders.forEach((order) => {
+      if (
+        order.status === ORDER_STATUS.FILLED &&
+        this.getOrderTakeProfitExitPrice(order) >= order.takeProfit
+      ) {
+        order.timeClosed = this.isRealTime ? new Date() : this.bar.time
+        order.barIndexClosed = this.barIndex
+        order.status = ORDER_STATUS.COMPLETED
+        order.fee = order.fee + order.quantity * order.takeProfit * TRADING_FEE
+        order.PNL = (order.takeProfit - order.price) * order.quantity - order.fee
+        order.feeCoin = order.fee / order.takeProfit
+        order.PNLCoin = order.PNL / order.takeProfit
+      }
+    })
+
+    this.executeStopLossOrders()
+    this.executeTakeProfitOrders()
+
+    // this.orders = this.orders.filter((order) => order.status !== ORDER_STATUS.COMPLETED)
+  }
+
+  private executeStopLossOrders() {
+    this.stopLossOrders.forEach((order) => {
+      if (order.status === ORDER_STATUS.NEW && this.current <= order.stopLoss) {
+        order.timeClosed = this.isRealTime ? new Date() : this.bar.time
+        order.barIndexClosed = this.barIndex
+        order.status = ORDER_STATUS.COMPLETED
+        order.fee = order.quantity * order.stopLoss * TRADING_FEE
+        // order.PNL = (order.stopLoss - order.price) * order.quantity - order.fee
+        order.feeCoin = order.fee / order.stopLoss
+        // order.PNLCoin = order.PNL / order.stopLoss
+        // needed to display sell order on chart. TODO: refactor
+        order.takeProfit = order.stopLoss
+      }
+    })
+  }
+
+  private executeTakeProfitOrders() {
+    this.takeProfitOrders.forEach((order) => {
+      if (
+        order.status === ORDER_STATUS.NEW &&
+        this.getOrderTakeProfitExitPrice(order) >= order.takeProfit
+      ) {
+        order.timeClosed = this.isRealTime ? new Date() : this.bar.time
+        order.barIndexClosed = this.barIndex
+        order.status = ORDER_STATUS.COMPLETED
+        order.fee = order.quantity * order.takeProfit * TRADING_FEE
+        // order.PNL = (order.takeProfit - order.price) * order.quantity - order.fee
+        order.feeCoin = order.fee / order.takeProfit
+        // order.PNLCoin = order.PNL / order.takeProfit
+      }
+    })
+  }
+
+  public async executeFillOrders() {
+    if (!this.ignoreBuyOrders) {
+      for (const order of this.orders) {
+        if (order.status === ORDER_STATUS.NEW && this.current <= order.price) {
+          order.timeOpen = this.isRealTime ? new Date() : this.bar.time
+          order.barIndexOpen = this.barIndex
+          order.status = ORDER_STATUS.FILLED
+          order.fee = order.amount * TRADING_FEE
+          order.feeCoin = order.fee / order.price
+
+          await this.openStopLossOrders([order])
+          await this.openTakeProfitOrders([order])
+        }
+      }
+    }
   }
 
   public async openStopLossOrders(orders: IOrder[]) {
-    orders.forEach(order => (order.stopLimitOrderId = v4()))
+    orders.forEach((order) => (order.stopLimitOrderId = uuid()))
 
-    const orderType = isStopLossOrderTriggered(orders[0].base)
-      ? ORDER_TYPE.MARKET
-      : ORDER_TYPE.STOP_MARKET
-
-    await openBatchOrders(orders, orderType)
+    await openBatchOrders(orders, ORDER_TYPE.STOP_MARKET)
   }
 
-  public async cancelStopLossOrders(orders: IOrder[]) {
-    // const binanceOrderFieldName = ORDER_TYPE_BINANCE_ORDER_FIELD[ORDER_TYPE.STOP_MARKET]
-    // // @ts-ignore
-    // const ordersToBeExecuted = base.orders.filter(order => order[binanceOrderFieldName] && order[binanceOrderFieldName].orderStatus === ORDER_STATUS.NEW)
-
-    await cancelBatchOrders(orders, ORDER_TYPE.STOP_MARKET)
+  public async cancelStopLossOrders(base: IBase) {
+    await cancelBatchOrders(base.orders, ORDER_TYPE.STOP_MARKET)
   }
 
   public async openTakeProfitOrders(orders: IOrder[]) {
-    orders.forEach(order => (order.takeProfitOrderId = v4()))
+    orders.forEach((order) => (order.takeProfitOrderId = uuid()))
 
     await openBatchOrders(orders, ORDER_TYPE.TAKE_PROFIT)
   }
 
-  public async cancelTakeProfitOrders(orders: IOrder[]) {
-    await cancelBatchOrders(orders, ORDER_TYPE.TAKE_PROFIT)
+  public async cancelTakeProfitOrders(base: IBase) {
+    await cancelBatchOrders(base.orders, ORDER_TYPE.TAKE_PROFIT)
+  }
+
+  // TODO: refactor this piece of code
+  private getOrderTakeProfitExitPrice(order: IOrder) {
+    // eslint-disable-next-line @typescript-eslint/no-shadow
+    const base = this.bases.find((base) => base.barIndex === order.baseBarIndex)
+    const exitPrice =
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      this.isBaseBrokenOrEmergencyLevelHitOnCurrentBar(base!) ||
+      order.barIndexOpen === this.barIndex ||
+      this.isRealTime
+        ? this.bar.close
+        : this.bar.high
+
+    return exitPrice
   }
 
   private performanceCleanup() {
     this.closedOrders.push(
-      ...this.orders.filter(order =>
+      ...this.orders.filter((order) =>
         [ORDER_STATUS.COMPLETED, ORDER_STATUS.CLOSED, ORDER_STATUS.IGNORED].includes(order.status),
       ),
     )
 
     this.orders = this.orders.filter(
-      order =>
+      (order) =>
         ![ORDER_STATUS.COMPLETED, ORDER_STATUS.CLOSED, ORDER_STATUS.IGNORED].includes(order.status),
     )
 
     this.closedBases.push(
       ...this.bases.filter(
-        base => base.isClosedInProfit || base.isClosedInBreakEven || base.isClosedInLoss,
+        (base) => base.isClosedInProfit || base.isClosedInBreakEven || base.isClosedInLoss,
       ),
     )
 
     this.bases = this.bases.filter(
-      base => !base.isClosedInProfit && !base.isClosedInBreakEven && !base.isClosedInLoss,
+      (base) => !base.isClosedInProfit && !base.isClosedInBreakEven && !base.isClosedInLoss,
     )
 
     const BAR_CLEANUP_INTERVAL = 10000
@@ -465,7 +620,7 @@ export default class Strategy {
   }
 
   public get positionAvgPrice() {
-    return average(this.openTrades.map(order => order.price))
+    return average(this.openTrades.map((order) => order.price))
   }
 
   public get positionSize() {
@@ -492,19 +647,19 @@ export default class Strategy {
   }
 
   public get openTrades() {
-    return this.orders.filter(order => order.status === ORDER_STATUS.FILLED)
+    return this.orders.filter((order) => order.status === ORDER_STATUS.FILLED)
   }
 
   public get closedTrades() {
     // return this.closedOrders
 
-    return this.closedOrders.filter(order =>
+    return this.closedOrders.filter((order) =>
       [ORDER_STATUS.COMPLETED, ORDER_STATUS.CLOSED].includes(order.status),
     )
   }
 
   public get ignoredTrades() {
-    return this.closedOrders.filter(order => order.status === ORDER_STATUS.IGNORED)
+    return this.closedOrders.filter((order) => order.status === ORDER_STATUS.IGNORED)
   }
 
   public get totalFee() {
@@ -512,11 +667,11 @@ export default class Strategy {
   }
 
   public get winTrades() {
-    return this.closedTrades.filter(order => order.PNL > 0)
+    return this.closedTrades.filter((order) => order.PNL > 0)
   }
 
   public get lossTrades() {
-    return this.closedTrades.filter(order => order.PNL < 0)
+    return this.closedTrades.filter((order) => order.PNL < 0)
   }
 
   public get grossProfit() {
@@ -824,7 +979,7 @@ export default class Strategy {
 
   // Bases
   public get brokenBases() {
-    return this.bases.filter(base => base.isBroken)
+    return this.bases.filter((base) => base.isBroken)
   }
 
   public get brokenBasesCount() {
@@ -844,7 +999,7 @@ export default class Strategy {
   }
 
   public get allIgnoredBrokenBases() {
-    return this.ignoredBases.filter(base => base.isBroken)
+    return this.ignoredBases.filter((base) => base.isBroken)
   }
 
   public get allIgnoredBrokenBasesCount() {
@@ -852,7 +1007,7 @@ export default class Strategy {
   }
 
   public get allBrokenBases() {
-    return this.closedBases.filter(base => base.isBroken)
+    return this.closedBases.filter((base) => base.isBroken)
   }
 
   public get allBrokenBasesCount() {
@@ -860,7 +1015,7 @@ export default class Strategy {
   }
 
   public get closedInBreakEvenBases() {
-    return this.closedBases.filter(base => base.isClosedInBreakEven)
+    return this.closedBases.filter((base) => base.isClosedInBreakEven)
   }
 
   public get closedInBreakEvenBasesCount() {
@@ -868,7 +1023,7 @@ export default class Strategy {
   }
 
   public get closedInLossBases() {
-    return this.closedBases.filter(base => base.isClosedInLoss)
+    return this.closedBases.filter((base) => base.isClosedInLoss)
   }
 
   public get closedInLossBasesCount() {
@@ -894,3 +1049,19 @@ export default class Strategy {
 }
 
 // TODO: when architect refactoring - write down on paper dependency components and blocks and then order them properly
+
+// TODO: implement strategy alerts: strategy.alert()
+
+// TODO: implement strategy risk: strategy.risk.max_drawdown()
+// TODO: implement strategy risk: strategy.risk.max_intraday_loss()
+// TODO: implement strategy risk: strategy.risk.max_position_size()
+
+// TODO: implement ta: ta.atr()
+// TODO: implement ta: ta.change()
+// TODO: implement ta: ta.highest()
+// TODO: implement ta: ta.lowest()
+// TODO: implement ta: ta.range()
+// TODO: implement ta: ta.sma()
+// TODO: implement ta: ta.ema()
+
+// TODO: statistics: each base performance statistics
