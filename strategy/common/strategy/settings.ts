@@ -5,7 +5,7 @@ export const ORDER_BASE_QUANTITY = 0.015
 export const ORDER_BASE_AMOUNT = 6
 export const TRADING_FEE = 0.02 / 100
 
-export const BASE_RETRACEMENT_CONFIRMATION = 0.12 / 100 // 0.6 ///// 0.14
+export const BASE_RETRACEMENT_CONFIRMATION = 0.06 / 100 // 0.6 ///// 0.14
 export const BASE_PRECEDING_BARS = 3 // 10 // before base ///// 3
 
 export const NUMBER_OF_LEVELS = 10
@@ -14,10 +14,10 @@ export const LEVEL_STEP_MULTIPLIER = 1 // 1.1
 export const ORDER_STEP_MULTIPLIER = 1
 
 export const ORDER_NUMBER_OF_LEVELS = 50 // 44 => 20 => 15
-export const ORDER_LEVEL_STEP = 0.08 / 100 // 0.15
-export const ORDER_LEVEL_STOP_LOSS = 4.15 / 100 // 2
+export const ORDER_LEVEL_STEP = 0.06 / 100 // 0.15
+export const ORDER_LEVEL_STOP_LOSS = 3.15 / 100 // 2
 export const ORDER_OPEN_TRADE_WINDOW_BARS = 100 // 20 after base => 30
-export const ORDER_BREAK_EVEN_CLOSE_TRIGGER = 2 / 100 // (0.7%) 1%
+export const ORDER_BREAK_EVEN_CLOSE_TRIGGER = 1.5 / 100 // (0.7%) 1%
 
 export const EMERGENCY_LEVEL_NUMBER = 10
 export const EMERGENCY_TAKE_PROFIT_RETRACEMENT = 0 / 100

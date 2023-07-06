@@ -1,9 +1,9 @@
 {
-    "taskDefinitionArn": "arn:aws:ecs:eu-central-1:846941037195:task-definition/base-strategy-task:11",
+    "taskDefinitionArn": "arn:aws:ecs:eu-central-1:846941037195:task-definition/base-strategy-task:15",
     "containerDefinitions": [
         {
             "name": "base-strategy-container",
-            "image": "846941037195.dkr.ecr.eu-central-1.amazonaws.com/base-strategy:c661148c0a75891ea44866c1e4780c0e5ac3ad01",
+            "image": "846941037195.dkr.ecr.eu-central-1.amazonaws.com/base-strategy:56361c3b598d9ac354562d42e7af1ecee752e498",
             "cpu": 0,
             "portMappings": [
                 {
@@ -44,7 +44,7 @@
     "family": "base-strategy-task",
     "executionRoleArn": "arn:aws:iam::846941037195:role/ecsTaskExecutionRole",
     "networkMode": "bridge",
-    "revision": 11,
+    "revision": 15,
     "volumes": [],
     "status": "ACTIVE",
     "requiresAttributes": [
@@ -74,13 +74,13 @@
     "requiresCompatibilities": [
         "EC2"
     ],
-    "cpu": "768",
-    "memory": "768",
+    "cpu": "1536",
+    "memory": "1536",
     "runtimePlatform": {
         "cpuArchitecture": "X86_64",
         "operatingSystemFamily": "LINUX"
     },
-    "registeredAt": "2023-07-04T19:33:05.368Z",
+    "registeredAt": "2023-07-06T21:53:18.486Z",
     "registeredBy": "arn:aws:iam::846941037195:root",
     "tags": []
 }
