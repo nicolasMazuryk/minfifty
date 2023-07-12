@@ -2,7 +2,12 @@ import * as process from 'process'
 
 import { ORDER_SIDE, ORDER_TYPE, ORDER_TYPE_ID_FIELD, TICKER } from '@common/strategy/constants'
 import { IOrder } from '@common/strategy/types'
-import { chunkArray, logger } from '@common/strategy/utils'
+import {
+  chunkArray,
+  logger,
+  decodeBinanceUrl,
+  parseBinanceErrorString,
+} from '@common/strategy/utils'
 import Binance, { NewFuturesOrder, OrderSide, TimeInForce } from 'binance-api-node'
 import dotenv from 'dotenv-safe'
 
@@ -124,6 +129,68 @@ const handleUnableToProcessYourRequestBinanceError = async (
   await openBatchOrders([order], orderType)
 }
 
+const handleUnhandledBinanceOpenOrdersError = async (
+  error: string,
+  requestOrders: IOrder[],
+  type: ORDER_TYPE,
+) => {
+  try {
+    const { code, url } = parseBinanceErrorString(error)
+
+    const errorCode = -1001 // 'Internal error; unable to process your request. Please try again.'
+
+    if (code !== errorCode) return
+
+    const batchOrders = decodeBinanceUrl(url, 'batchOrders')
+
+    const orders = batchOrders
+      .map(
+        (orderRequestParams: any) =>
+          requestOrders.find(
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            // @ts-ignore
+            (order) => order[ORDER_TYPE_ID_FIELD[type]] === orderRequestParams.newClientOrderId,
+          ) as IOrder,
+      )
+      .filter((order: IOrder) => !!order)
+
+    await openBatchOrders(orders, type)
+  } catch (error: any) {
+    logger.error('handleUnhandledBinanceOpenOrdersError:', error)
+  }
+}
+
+const handleUnhandledBinanceCancelOrdersError = async (
+  error: string,
+  requestOrders: IOrder[],
+  type: ORDER_TYPE,
+) => {
+  try {
+    const { code, url } = parseBinanceErrorString(error)
+
+    const errorCode = -1001 // 'Internal error; unable to process your request. Please try again.'
+
+    if (code !== errorCode) return
+
+    const origClientOrderIdList = decodeBinanceUrl(url, 'origClientOrderIdList')
+
+    const orders = origClientOrderIdList
+      .map(
+        (clientOrderId: any) =>
+          requestOrders.find(
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            // @ts-ignore
+            (order) => order[ORDER_TYPE_ID_FIELD[type]] === clientOrderId,
+          ) as IOrder,
+      )
+      .filter((order: IOrder) => !!order)
+
+    await openBatchOrders(orders, type)
+  } catch (error: any) {
+    logger.error('handleUnhandledBinanceCancelOrdersError:', error)
+  }
+}
+
 export const handleBinanceError = async (response: any[], request: any[], orders: IOrder[]) => {
   for (const [index, responseItem] of response.entries()) {
     // log error, add original orders to logs
@@ -203,23 +270,9 @@ export async function openBatchOrders(orders: IOrder[], type: ORDER_TYPE) {
     )
 
     await handleBinanceError(binanceOrders.flat(), chunks.flat(), orders)
-
-    // const binanceOrders: any[] = []
-    //
-    // for (const chunk of chunks) {
-    //   const futuresOrders = await binance.futuresBatchOrders({
-    //     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    //     // @ts-ignore
-    //     batchOrders: JSON.stringify(chunk),
-    //     recvWindow: 10000,
-    //   })
-    //
-    //   binanceOrders.push(futuresOrders)
-    // }
-    //
-    // await handleBinanceError(binanceOrders.flat(), chunks.flat(), orders)
-  } catch (error) {
+  } catch (error: any) {
     logger.error(error)
+    await handleUnhandledBinanceOpenOrdersError(error, orders, type)
   }
 }
 
@@ -250,22 +303,9 @@ export async function cancelBatchOrders(orders: IOrder[], type: ORDER_TYPE) {
     )
 
     await handleBinanceError(binanceOrders.flat(), chunks.flat(), orders)
-
-    // const binanceOrders: any[] = []
-    //
-    // for (const chunk of chunks) {
-    //   const futuresCanceledOrders = await binance.futuresCancelBatchOrders({
-    //     symbol: TICKER.ETH,
-    //     origClientOrderIdList: JSON.stringify(chunk),
-    //     recvWindow: 10000,
-    //   })
-    //
-    //   binanceOrders.push(futuresCanceledOrders)
-    // }
-    //
-    // await handleBinanceError(binanceOrders.flat(), chunks.flat(), orders)
-  } catch (error) {
+  } catch (error: any) {
     logger.error(error)
+    await handleUnhandledBinanceCancelOrdersError(error, orders, type)
   }
 }
 

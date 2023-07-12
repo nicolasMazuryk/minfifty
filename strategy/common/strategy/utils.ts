@@ -67,3 +67,33 @@ export const waitUntilArrayIsEmpty = (array: any) =>
       }
     }, 10)
   })
+
+export const decodeBinanceUrl = (url: string, targetParam: string) => {
+  const urlParts = url.split('?')
+  const queryString = urlParts[1]
+
+  const params = new URLSearchParams(queryString)
+
+  const param = params.get(targetParam) as string
+  const decodedParams = decodeURIComponent(param)
+
+  return JSON.parse(decodedParams)
+}
+
+export const parseBinanceErrorString = (str: string) => {
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
+  const json = str.split('{').pop().split('}').shift() as string
+
+  const codeMatch = json.match(/code:\s*(-?\d+)/)
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
+  const code = Number(codeMatch[1])
+
+  const urlMatch = json.match(/url:\s*'([^']+)'/)
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
+  const url = urlMatch[1]
+
+  return { code, url }
+}
