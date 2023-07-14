@@ -5,7 +5,7 @@ export const ORDER_BASE_QUANTITY = 0.015
 export const ORDER_BASE_AMOUNT = 6
 export const TRADING_FEE = 0.02 / 100
 
-export const BASE_RETRACEMENT_CONFIRMATION = 0.06 / 100 // 0.6 ///// 0.14
+export const BASE_RETRACEMENT_CONFIRMATION = 10 / 100 // 0.6 ///// 0.14
 export const BASE_PRECEDING_BARS = 3 // 10 // before base ///// 3
 
 export const NUMBER_OF_LEVELS = 10
