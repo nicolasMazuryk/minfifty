@@ -4,6 +4,8 @@ import { uuid } from 'uuidv4'
 export interface IBase {
   barIndex: number
   price: number
+  quantity: number
+  amount: number
   baseBrokenTime: Date | null
   baseBrokenBarIndex: number
   isBroken: boolean
@@ -12,14 +14,14 @@ export interface IBase {
   takeProfit: number
   breakEven: number
   stopLoss: number
+  isClosedInProfit: boolean
+  isClosedInBreakEven: boolean
+  isClosedInLoss: boolean
   warningPriceLow: number
   emergencyTakeProfit: number
   emergencyPriceLow: number
   breakEvenPriceLow: number
   levels: number[] // TODO: remove levels. add EmergencyTriggerPrice instead
-  isClosedInProfit: boolean
-  isClosedInBreakEven: boolean
-  isClosedInLoss: boolean
   PNL: number
   stats: {
     percentDrop: number
@@ -27,6 +29,12 @@ export interface IBase {
     barsLength: number
   }
   orders: IOrder[]
+
+  takeProfitOrderId: uuid
+  stopLimitOrderId: uuid
+
+  binanceTakeProfit: OrderUpdate | undefined
+  binanceStopLoss: OrderUpdate | undefined
 }
 
 export interface IGlobalBase {
@@ -51,10 +59,6 @@ export interface IBar {
 }
 
 export interface IOrder {
-  limitOrderId: uuid
-  stopLimitOrderId: uuid
-  takeProfitOrderId: uuid
-
   baseBarIndex: number
   level: number
   timeOpen: Date | null
@@ -74,9 +78,9 @@ export interface IOrder {
   feeCoin: number
   PNLCoin: number
 
+  limitOrderId: uuid
+
   binanceLimit: OrderUpdate | undefined
-  binanceTakeProfit: OrderUpdate | undefined
-  binanceStopLoss: OrderUpdate | undefined
 
   base: IBase
 }

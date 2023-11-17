@@ -14,6 +14,8 @@ export const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve,
 export const roundToPrecision = (precision: number) => (value: number) =>
   Number(value.toFixed(precision))
 
+export const sum = (arr: any[]) => arr.reduce((a, b) => a + b, 0)
+
 export const max = (arr: any[]) => Math.max(...arr, 0)
 
 export const min = (arr: any[]) => Math.min(...arr)

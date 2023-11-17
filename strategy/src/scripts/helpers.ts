@@ -2,14 +2,9 @@ import fs from 'fs'
 import path from 'path'
 
 import Strategy from '@common/strategy'
-import {
-  ORDER_STATUS,
-  ORDER_TYPE,
-  ORDER_TYPE_BINANCE_ORDER_FIELD,
-  ORDER_TYPE_ID_FIELD,
-} from '@common/strategy/constants'
+import { ORDER_STATUS, ORDER_TYPE } from '@common/strategy/constants'
 import { IBar, IBase, IMarketData } from '@common/strategy/types'
-import { countMinutes, logger, roundEpochToFullMinute } from '@common/strategy/utils'
+import { countMinutes, logger, roundEpochToFullMinute, sum } from '@common/strategy/utils'
 import { Candle, CandleChartResult, OrderSide, OrderUpdate } from 'binance-api-node'
 import Sequelize from 'sequelize'
 
@@ -330,21 +325,7 @@ export const isAllOpenOrdersClosed = (base: IBase, type: ORDER_TYPE) => {
 
   const limitOrders = base.orders.filter((order) => orderStatuses.includes(order.status))
 
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore
-  const binanceOrderFieldName = ORDER_TYPE_BINANCE_ORDER_FIELD[type]
-
-  const closingOrders = base.orders.filter(
-    (order) =>
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
-      order[binanceOrderFieldName] &&
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
-      order[binanceOrderFieldName].orderStatus === ORDER_STATUS.FILLED,
-  )
-
-  return limitOrders.length === closingOrders.length
+  return sum(limitOrders.map((order) => order.quantity)) === base.quantity
 }
 
 export const sortUnprocessedEvents = (unprocessedOrderEventStack: OrderUpdate[]) =>
@@ -380,7 +361,9 @@ export const sortUnprocessedEvents = (unprocessedOrderEventStack: OrderUpdate[])
     if (a.side === 'SELL' && a.orderType === 'LIMIT' && a.orderStatus === 'CANCELED') return -1
     if (b.side === 'SELL' && b.orderType === 'LIMIT' && b.orderStatus === 'CANCELED') return 1
 
-    return 0
+    return Number(b.price) - Number(a.price)
+
+    // return 0
   })
 
 export const isTakeProfitOrderTriggered = (base: IBase) => {
@@ -393,13 +376,7 @@ export const isTakeProfitOrderTriggered = (base: IBase) => {
 
   if (!sellLimitFilledEventIds.length) return false
 
-  const takeProfitOrderIds = base.orders
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
-    .map((order) => order[ORDER_TYPE_ID_FIELD[ORDER_TYPE.TAKE_PROFIT]])
-    .filter((id) => Boolean(id))
-
-  return takeProfitOrderIds.some((id) => sellLimitFilledEventIds.includes(id))
+  return sellLimitFilledEventIds.includes(base.takeProfitOrderId)
 }
 
 export const isStopLossOrderTriggered = (base: IBase) => {
@@ -412,11 +389,5 @@ export const isStopLossOrderTriggered = (base: IBase) => {
 
   if (!sellMarketFilledEventIds.length) return false
 
-  const stopLossOrderIds = base.orders
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
-    .map((order) => order[ORDER_TYPE_ID_FIELD[ORDER_TYPE.MARKET]])
-    .filter((id) => Boolean(id))
-
-  return stopLossOrderIds.some((id) => sellMarketFilledEventIds.includes(id))
+  return sellMarketFilledEventIds.includes(base.stopLimitOrderId)
 }

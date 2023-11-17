@@ -55,10 +55,9 @@ const getOrderOptionsByType = (order: IOrder, type: ORDER_TYPE) => {
       symbol: TICKER.ETH,
       type: ORDER_TYPE.STOP_MARKET,
       side: OrderSide.SELL,
-      quantity: order.quantity.toString(),
+      quantity: order.base.quantity.toString(),
       stopPrice: order.stopLoss.toString(),
-      // takeProfit: (999999).toString(),
-      newClientOrderId: order.stopLimitOrderId,
+      newClientOrderId: order.base.stopLimitOrderId,
     }
   }
 
@@ -68,9 +67,9 @@ const getOrderOptionsByType = (order: IOrder, type: ORDER_TYPE) => {
       side: OrderSide.SELL,
       type: ORDER_TYPE.LIMIT,
       timeInForce: TimeInForce.GTC,
-      quantity: order.quantity.toString(),
+      quantity: order.base.quantity.toString(),
       price: order.takeProfit.toString(),
-      newClientOrderId: order.takeProfitOrderId,
+      newClientOrderId: order.base.takeProfitOrderId,
     }
   }
   // in case price is below STOP_MARKET SELL stopPrice - the order will fail. We need to forcefully close the loss using MARKET order
@@ -79,10 +78,19 @@ const getOrderOptionsByType = (order: IOrder, type: ORDER_TYPE) => {
       symbol: TICKER.ETH,
       side: OrderSide.SELL,
       type: ORDER_TYPE.MARKET,
-      quantity: order.quantity.toString(),
-      newClientOrderId: order.stopLimitOrderId,
+      quantity: order.base.quantity.toString(),
+      newClientOrderId: order.base.stopLimitOrderId,
     }
   }
+}
+
+const getClientOrderIdByType = (order: IOrder, type: ORDER_TYPE) => {
+  if (type === ORDER_TYPE.LIMIT) return order.limitOrderId
+
+  if (type === ORDER_TYPE.STOP_MARKET) return order.base.stopLimitOrderId
+  if (type === ORDER_TYPE.MARKET) return order.base.stopLimitOrderId
+
+  if (type === ORDER_TYPE.TAKE_PROFIT) return order.base.takeProfitOrderId
 }
 
 const handleFailedToPlaceStopMarketOrderBinanceError = async (
@@ -98,7 +106,7 @@ const handleFailedToPlaceStopMarketOrderBinanceError = async (
   }
 }
 
-const handleUnknownOrderSentBinanceError = async (
+const isOrderTriggered_HandleUnknownOrderSentBinanceError = async (
   responseItem: any,
   // orderRequestParams: any,
   // order: IOrder,
@@ -106,7 +114,7 @@ const handleUnknownOrderSentBinanceError = async (
   const errorCode = -2011 // 'Unknown order sent.'
 
   if (responseItem.code === errorCode) {
-    return responseItem
+    return true
   }
 }
 
@@ -210,16 +218,18 @@ export const handleBinanceError = async (response: any[], request: any[], orders
         orders[index],
       )
 
-      await handleUnknownOrderSentBinanceError(responseItem)
-
       await handleUnableToProcessYourRequestBinanceError(
         responseItem,
         request[index],
         orders[index],
       )
-    }
 
-    return responseItem
+      const isOrderTriggered = await isOrderTriggered_HandleUnknownOrderSentBinanceError(
+        responseItem,
+      )
+
+      return isOrderTriggered
+    }
   }
 }
 
@@ -269,7 +279,7 @@ export async function openBatchOrders(orders: IOrder[], type: ORDER_TYPE) {
       ),
     )
 
-    await handleBinanceError(binanceOrders.flat(), chunks.flat(), orders)
+    return await handleBinanceError(binanceOrders.flat(), chunks.flat(), orders)
   } catch (error: any) {
     logger.error(error)
     await handleUnhandledBinanceOpenOrdersError(error, orders, type)
@@ -277,14 +287,12 @@ export async function openBatchOrders(orders: IOrder[], type: ORDER_TYPE) {
 }
 
 export async function cancelBatchOrders(orders: IOrder[], type: ORDER_TYPE) {
-  if (!orders.length) return
+  if (!orders.length) return false
 
   const binance = getBinance()
 
   const origClientOrderIdList = orders
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
-    .map((order) => order[ORDER_TYPE_ID_FIELD[type]])
+    .map((order) => getClientOrderIdByType(order, type))
     .filter((id) => Boolean(id))
 
   logCancelBinanceOrdersParams(orders, type)
@@ -302,7 +310,7 @@ export async function cancelBatchOrders(orders: IOrder[], type: ORDER_TYPE) {
       ),
     )
 
-    await handleBinanceError(binanceOrders.flat(), chunks.flat(), orders)
+    return await handleBinanceError(binanceOrders.flat(), chunks.flat(), orders)
   } catch (error: any) {
     logger.error(error)
     await handleUnhandledBinanceCancelOrdersError(error, orders, type)

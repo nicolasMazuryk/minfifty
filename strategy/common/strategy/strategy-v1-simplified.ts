@@ -7,7 +7,7 @@ import {
   ORDER_TYPE,
   ORDER_STATUS,
   ORDER_BASE_TYPES,
-  ORDER_TYPE_BINANCE_ORDER_FIELD,
+  // ORDER_TYPE_BINANCE_ORDER_FIELD,
 } from './constants'
 import {
   INITIAL_CAPITAL_USDT,
@@ -30,7 +30,7 @@ import {
   MAX_SIMULTANEOUS_BROKEN_BASES,
 } from './settings'
 import { IBase, IBar, IOrder } from './types'
-import { roundToPrecision, average, max, min, logger } from './utils'
+import { roundToPrecision, average, max, min, sum, logger } from './utils'
 
 const round = roundToPrecision(2)
 const roundTo3 = roundToPrecision(3)
@@ -181,6 +181,8 @@ export default class Strategy {
     const base = {
       barIndex: this.newBaseBarIndex,
       price: basePrice,
+      quantity: 0,
+      amount: 0,
       baseBrokenTime: null,
       baseBrokenBarIndex: 0,
       isBroken: false,
@@ -204,6 +206,12 @@ export default class Strategy {
         barsLength: 0,
       },
       orders: [],
+
+      takeProfitOrderId: v4(),
+      stopLimitOrderId: v4(),
+
+      binanceTakeProfit: undefined,
+      binanceStopLoss: undefined,
     }
 
     if (this.bases[0]?.isBroken) {
@@ -242,12 +250,8 @@ export default class Strategy {
       feeCoin: 0,
       PNLCoin: 0,
 
-      takeProfitOrderId: undefined,
-      stopLimitOrderId: undefined,
-
+      limitOrderId: undefined,
       binanceLimit: undefined,
-      binanceTakeProfit: undefined,
-      binanceStopLoss: undefined,
 
       base: base,
     }
@@ -332,20 +336,21 @@ export default class Strategy {
 
     // --------------------------------------------
     // trigger cancel and reopen of TakeProfit orders only once:
-    // when all regular TakeProfit orders has been placed on binance with status NEW
-    const binanceOrderFieldName = ORDER_TYPE_BINANCE_ORDER_FIELD[ORDER_TYPE.TAKE_PROFIT]
+    // when all regular TakeProfit orders have been placed on binance with status NEW
 
-    const ordersToBeExecuted = base.orders.filter(
-      (order) =>
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
-        order[binanceOrderFieldName] &&
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
-        order[binanceOrderFieldName].orderStatus === ORDER_STATUS.NEW,
-    )
+    // const binanceOrderFieldName = ORDER_TYPE_BINANCE_ORDER_FIELD[ORDER_TYPE.TAKE_PROFIT]
 
-    if (orders.length !== ordersToBeExecuted.length) return
+    // const ordersToBeExecuted = base.orders.filter(
+    //   (order) =>
+    //     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    //     // @ts-ignore
+    //     order[binanceOrderFieldName] &&
+    //     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    //     // @ts-ignore
+    //     order[binanceOrderFieldName].orderStatus === ORDER_STATUS.NEW,
+    // )
+
+    if (sum(orders.map((order) => order.quantity)) !== base.quantity) return
     // --------------------------------------------
     // do not recalculate breakEven if at least one SELL LIMIT order in UNPROCESSED_ORDER_EVENT_STACK is triggered
     if (isTakeProfitOrderTriggered(base) || isStopLossOrderTriggered(base)) return
@@ -384,36 +389,28 @@ export default class Strategy {
 
     if (currentBreakEven === base.breakEven) return
 
-    await this.cancelTakeProfitOrders(ordersToBeExecuted)
-    await this.openTakeProfitOrders(ordersToBeExecuted)
+    await this.cancelTakeProfitOrder(orders[0])
+    await this.openTakeProfitOrder(orders[0])
   }
 
-  public async openStopLossOrders(orders: IOrder[]) {
-    orders.forEach((order) => (order.stopLimitOrderId = v4()))
-
-    const orderType = isStopLossOrderTriggered(orders[0].base)
+  public async openStopLossOrder(order: IOrder) {
+    const orderType = isStopLossOrderTriggered(order.base)
       ? ORDER_TYPE.MARKET
       : ORDER_TYPE.STOP_MARKET
 
-    await openBatchOrders(orders, orderType)
+    await openBatchOrders([order], orderType)
   }
 
-  public async cancelStopLossOrders(orders: IOrder[]) {
-    // const binanceOrderFieldName = ORDER_TYPE_BINANCE_ORDER_FIELD[ORDER_TYPE.STOP_MARKET]
-    // // @ts-ignore
-    // const ordersToBeExecuted = base.orders.filter(order => order[binanceOrderFieldName] && order[binanceOrderFieldName].orderStatus === ORDER_STATUS.NEW)
-
-    await cancelBatchOrders(orders, ORDER_TYPE.STOP_MARKET)
+  public async cancelStopLossOrder(order: IOrder) {
+    await cancelBatchOrders([order], ORDER_TYPE.STOP_MARKET)
   }
 
-  public async openTakeProfitOrders(orders: IOrder[]) {
-    orders.forEach((order) => (order.takeProfitOrderId = v4()))
-
-    await openBatchOrders(orders, ORDER_TYPE.TAKE_PROFIT)
+  public async openTakeProfitOrder(order: IOrder) {
+    await openBatchOrders([order], ORDER_TYPE.TAKE_PROFIT)
   }
 
-  public async cancelTakeProfitOrders(orders: IOrder[]) {
-    await cancelBatchOrders(orders, ORDER_TYPE.TAKE_PROFIT)
+  public async cancelTakeProfitOrder(order: IOrder) {
+    return cancelBatchOrders([order], ORDER_TYPE.TAKE_PROFIT)
   }
 
   private performanceCleanup() {

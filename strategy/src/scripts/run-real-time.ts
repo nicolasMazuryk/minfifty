@@ -6,7 +6,7 @@ import process from 'process'
 import Strategy from '@common/strategy'
 import { MARKET, ORDER_STATUS, ORDER_TYPE, TICKER } from '@common/strategy/constants'
 import { IBar } from '@common/strategy/types'
-import { logger, wait } from '@common/strategy/utils'
+import { logger, roundToPrecision, wait } from '@common/strategy/utils'
 import { Candle, OrderStatus, OrderUpdate } from 'binance-api-node'
 
 import binance from './binance'
@@ -19,6 +19,8 @@ import {
   sortUnprocessedEvents,
   wsCandleToMarketData,
 } from './helpers'
+
+const roundTo3 = roundToPrecision(3)
 
 // import { TRADING_FEE } from '@common/strategy/settings'
 
@@ -44,8 +46,17 @@ const handleOrderUpdate = async (event: OrderUpdate) => {
         // order.fee = order.amount * TRADING_FEE
         // order.feeCoin = order.fee / order.price
 
-        if (!isStopLossOrderTriggered(order.base)) await strategy.openTakeProfitOrders([order])
-        if (!isTakeProfitOrderTriggered(order.base)) await strategy.openStopLossOrders([order])
+        order.base.quantity = roundTo3(order.base.quantity + order.quantity)
+        order.base.amount = roundTo3(order.base.amount + order.amount)
+
+        if (!isTakeProfitOrderTriggered(order.base)) {
+          const isOrderTriggered = order.level > 1 && (await strategy.cancelStopLossOrder(order))
+          !isOrderTriggered && (await strategy.openStopLossOrder(order))
+        }
+        if (!isStopLossOrderTriggered(order.base)) {
+          const isOrderTriggered = order.level > 1 && (await strategy.cancelTakeProfitOrder(order))
+          !isOrderTriggered && (await strategy.openTakeProfitOrder(order))
+        }
       }
 
       if (event.orderStatus === ORDER_STATUS.CANCELED) {
@@ -57,8 +68,8 @@ const handleOrderUpdate = async (event: OrderUpdate) => {
       break
     }
 
-    if (event.clientOrderId === order.takeProfitOrderId) {
-      order.binanceTakeProfit = event
+    if (event.clientOrderId === order.base.takeProfitOrderId) {
+      order.base.binanceTakeProfit = event
 
       if (event.orderStatus === ORDER_STATUS.NEW) {
         await strategy.calculateBaseBreakEven(order.base)
@@ -69,6 +80,9 @@ const handleOrderUpdate = async (event: OrderUpdate) => {
           order.base,
           ORDER_TYPE.TAKE_PROFIT,
         )
+
+        order.base.quantity = 0
+        order.base.amount = 0
 
         if (order.breakEven === 999999) {
           order.status = ORDER_STATUS.TAKE_PROFIT
@@ -91,13 +105,13 @@ const handleOrderUpdate = async (event: OrderUpdate) => {
         // order.PNLCoin = order.PNL / order.takeProfit
 
         await strategy.cancelBaseOrders(order.base)
-        await strategy.cancelStopLossOrders([order])
+        await strategy.cancelStopLossOrder(order)
       }
       break
     }
 
-    if (event.clientOrderId === order.stopLimitOrderId) {
-      order.binanceStopLoss = event
+    if (event.clientOrderId === order.base.stopLimitOrderId) {
+      order.base.binanceStopLoss = event
 
       if (event.orderStatus === ORDER_STATUS.FILLED) {
         order.status = ORDER_STATUS.STOP_LOSS
@@ -113,16 +127,16 @@ const handleOrderUpdate = async (event: OrderUpdate) => {
         order.takeProfit = order.stopLoss
 
         await strategy.cancelBaseOrders(order.base)
-        await strategy.cancelTakeProfitOrders([order])
+        await strategy.cancelTakeProfitOrder(order)
 
-        const isAllOpenStopMarketOrdersClosed = isAllOpenOrdersClosed(
-          order.base,
-          ORDER_TYPE.STOP_MARKET,
-        )
+        // const isAllOpenStopMarketOrdersClosed = isAllOpenOrdersClosed(
+        //   order.base,
+        //   ORDER_TYPE.STOP_MARKET,
+        // )
 
-        if (isAllOpenStopMarketOrdersClosed) {
-          order.base.isClosedInLoss = true
-        }
+        // if (isAllOpenStopMarketOrdersClosed) {
+        order.base.isClosedInLoss = true
+        // }
       }
       break
     }
@@ -199,8 +213,6 @@ setInterval(async () => {
     }
 
     UNPROCESSED_ORDER_EVENT_STACK = sortUnprocessedEvents([...UNPROCESSED_ORDER_EVENT_STACK, msg])
-
-    // UNPROCESSED_ORDER_EVENT_STACK.push(msg)
   })
 
   strategy.isRealTime = isRealTime

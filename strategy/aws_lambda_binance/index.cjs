@@ -51,6 +51,13 @@ module.exports.handler = async(event, context) => {
     price: price,
   }
 
+  // const order = {
+  //   type: 'MARKET',
+  //   symbol: symbol,
+  //   side: side.toUpperCase(),
+  //   quantity: quantity,
+  // }
+
   await retry(binance.futuresOrder, order)
 
   return { statusCode: 200 }
@@ -60,3 +67,11 @@ module.exports.handler = async(event, context) => {
 // (async () => {
 //   await run({ body: 'buy ETHUSDT p=1000 q=0.01 a=USDM' })
 // })()
+
+
+const order = {
+  type: 'MARKET',
+  symbol: symbol,
+  side: side.toUpperCase(),
+  quantity: quantity,
+}
