@@ -42,21 +42,21 @@ module.exports.handler = async(event, context) => {
   const price = Number(priceStr.replace('p=','')).toFixed(pricePrecision)
   const quantity = Number(quantityStr.replace('q=','')).toFixed(quantityPrecision)
 
-  const order = {
-    type: 'LIMIT',
-    timeInForce: 'GTC',
-    symbol: symbol,
-    side: side.toUpperCase(),
-    quantity: quantity,
-    price: price,
-  }
-
   // const order = {
-  //   type: 'MARKET',
+  //   type: 'LIMIT',
+  //   timeInForce: 'GTC',
   //   symbol: symbol,
   //   side: side.toUpperCase(),
   //   quantity: quantity,
+  //   price: price,
   // }
+
+  const order = {
+    type: 'MARKET',
+    symbol: symbol,
+    side: side.toUpperCase(),
+    quantity: quantity,
+  }
 
   await retry(binance.futuresOrder, order)
 
@@ -69,9 +69,9 @@ module.exports.handler = async(event, context) => {
 // })()
 
 
-const order = {
-  type: 'MARKET',
-  symbol: symbol,
-  side: side.toUpperCase(),
-  quantity: quantity,
-}
+// const order = {
+//   type: 'MARKET',
+//   symbol: symbol,
+//   side: side.toUpperCase(),
+//   quantity: quantity,
+// }
