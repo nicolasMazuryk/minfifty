@@ -38,6 +38,8 @@ const retry = async (fn, parameters, retries = 12, delay = 1000) => {
 // const run = async(event, context) => {
 
 module.exports.handler = async(event, context) => {
+  console.log(event.body)
+
   const [side, symbol, priceStr, quantityStr] = event.body.split(' ')
 
   const exchange = await retry(binance.exchangeInfo, undefined, 8)
@@ -49,25 +51,25 @@ module.exports.handler = async(event, context) => {
   const price = Number(priceStr.replace('p=','')).toFixed(quotePrecision)
   const quantity = Number(quantityStr.replace('q=','')).toFixed(quantityPrecision)
 
-  const order = {
-    type: 'LIMIT',
-    isIsolated: false,
-    sideEffectType: 'AUTO_BORROW_REPAY',
-    timeInForce: 'GTC',
-    symbol: symbol,
-    side: side.toUpperCase(),
-    quantity: quantity,
-    price: price,
-  }
-
   // const order = {
-  //   type: 'MARKET',
+  //   type: 'LIMIT',
   //   isIsolated: false,
   //   sideEffectType: 'AUTO_BORROW_REPAY',
+  //   timeInForce: 'GTC',
   //   symbol: symbol,
   //   side: side.toUpperCase(),
   //   quantity: quantity,
+  //   price: price,
   // }
+
+  const order = {
+    type: 'MARKET',
+    isIsolated: false,
+    sideEffectType: 'AUTO_BORROW_REPAY',
+    symbol: symbol,
+    side: side.toUpperCase(),
+    quantity: quantity,
+  }
 
   await retry(binance.marginOrder, order)
 

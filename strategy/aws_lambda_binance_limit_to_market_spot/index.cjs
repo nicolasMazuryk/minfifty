@@ -29,6 +29,8 @@ const retry = async (fn, parameters, retries = 12, delay = 1000) => {
 // const run = async(event, context) => {
 
 module.exports.handler = async(event, context) => {
+  console.log(event)
+
   const { apiKey, apiSecret, limitPercent = 1 } = event
 
   const binance = Binance({
