@@ -11,7 +11,7 @@
             "skipFiles": [
                 "<node_internals>/**"
             ],
-            "program": "${workspaceFolder}/strategy/aws_lambda_binance_spot/index.cjs"
+            "program": "${workspaceFolder}/strategy/aws_lambda_binance_limit_to_market/index.cjs"
         }
     ]
 }

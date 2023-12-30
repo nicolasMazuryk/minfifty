@@ -1,4 +1,10 @@
-// zip -r aws_lambda_binance.zip .
+// zip -r aws_lambda_binance_dynamodb_market.zip .
+
+const AWS = require('aws-sdk')
+
+AWS.config.update({region: 'eu-central-1'})
+
+const ddb = new AWS.DynamoDB.DocumentClient()
 
 const Binance = require('binance-api-node').default
 
@@ -58,20 +64,23 @@ module.exports.handler = async(event, context) => {
     quantity: quantity,
   }
 
-  await retry(binance.futuresOrder, order)
+  const binanceOrder = await retry(binance.futuresOrder, order)
+
+  const params = {
+    TableName: 'orders',
+    Item: {
+      ...binanceOrder,
+      orderId: String(binanceOrder.orderId),
+      apiKey: process.env.BINANCE_API_KEY,
+    }
+  }
+
+  await ddb.put(params).promise()
 
   return { statusCode: 200 }
 }
 
 
 // (async () => {
-//   await run({ body: 'buy ETHUSDT p=1000 q=0.01 a=USDM' })
+//   await run({ body: 'buy ETHUSDT p=2000 q=0.01 a=USDM' })
 // })()
-
-
-// const order = {
-//   type: 'MARKET',
-//   symbol: symbol,
-//   side: side.toUpperCase(),
-//   quantity: quantity,
-// }

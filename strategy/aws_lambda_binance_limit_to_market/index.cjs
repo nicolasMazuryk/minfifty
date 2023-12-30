@@ -1,4 +1,10 @@
-// zip -r aws_lambda_binance_limit_to_market.zip .
+// zip -r aws_lambda_binance_limit_to_market_dynamodb.zip .
+
+const AWS = require('aws-sdk')
+
+AWS.config.update({region: 'eu-central-1'})
+
+const ddb = new AWS.DynamoDB.DocumentClient()
 
 const Binance = require('binance-api-node').default
 
@@ -23,7 +29,7 @@ const retry = async (fn, parameters, retries = 12, delay = 1000) => {
 // const run = async(event, context) => {
 
 module.exports.handler = async(event, context) => {
-  // console.log(event)
+  console.log(event)
 
   const { apiKey, apiSecret, limitPercent = 1 } = event
 
@@ -57,7 +63,7 @@ module.exports.handler = async(event, context) => {
       quantity: quantity,
     }
   
-    await retry(binance.futuresOrder, marketOrder, 8)
+    const binanceOrder = await retry(binance.futuresOrder, marketOrder, 8)
 
     const cancelOrder = {
       symbol: limitOrder.symbol,
@@ -65,6 +71,31 @@ module.exports.handler = async(event, context) => {
     }
 
     await retry(binance.futuresCancelOrder, cancelOrder, 8)
+
+    const deleteParams = {
+      TableName: 'orders',
+      Key: {
+        orderId: String(limitOrder.orderId),
+      }
+    }
+  
+    await ddb.delete(deleteParams).promise()
+
+    const putParams = {
+      TableName: 'orders',
+      Item: {
+        ...binanceOrder,
+        orderId: String(binanceOrder.orderId),
+        apiKey,
+        limitPercent,
+        difference,
+        price: currentPrice,
+        origQty: limitOrder.origQty,
+        cumQuote: (limitOrder.origQty * currentPrice).toFixed(2)
+      }
+    }
+  
+    await ddb.put(putParams).promise()
 
     console.log(`ACTUAL DIFFERENCE [${limitPercent}%]: ${(difference).toFixed(2)}% `, ` Details: ${limitOrder.status} ${limitOrder.symbol} ${limitOrder.side} ${limitOrder.price} ${limitOrder.origQty} - ${limitOrder.executedQty}`)
   }
