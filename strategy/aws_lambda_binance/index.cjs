@@ -1,4 +1,4 @@
-// zip -r aws_lambda_binance_dynamodb_market.zip .
+// zip -r aws_lambda_binance_dynamodb_limit.zip .
 
 const AWS = require('aws-sdk')
 
@@ -23,7 +23,7 @@ const retry = async (fn, parameters, retries = 12, delay = 1000) => {
   try {
     return await fn(parameters)
   } catch (error) {
-    if (error?.code === -1001) {
+    if ([-1001, -1008, -3007].includes(error?.code)) {
       if (retries <= 0) throw new Error('Retries to place the order was not successful')
 
       await new Promise(resolve => setTimeout(resolve, delay))
@@ -48,21 +48,21 @@ module.exports.handler = async(event, context) => {
   const price = Number(priceStr.replace('p=','')).toFixed(pricePrecision)
   const quantity = Number(quantityStr.replace('q=','')).toFixed(quantityPrecision)
 
-  // const order = {
-  //   type: 'LIMIT',
-  //   timeInForce: 'GTC',
-  //   symbol: symbol,
-  //   side: side.toUpperCase(),
-  //   quantity: quantity,
-  //   price: price,
-  // }
-
   const order = {
-    type: 'MARKET',
+    type: 'LIMIT',
+    timeInForce: 'GTC',
     symbol: symbol,
     side: side.toUpperCase(),
     quantity: quantity,
+    price: price,
   }
+
+  // const order = {
+  //   type: 'MARKET',
+  //   symbol: symbol,
+  //   side: side.toUpperCase(),
+  //   quantity: quantity,
+  // }
 
   const binanceOrder = await retry(binance.futuresOrder, order)
 

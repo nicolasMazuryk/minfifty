@@ -14,7 +14,7 @@ const retry = async (fn, parameters, retries = 12, delay = 1000) => {
   try {
     return await fn(parameters)
   } catch (error) {
-    if (error?.code === -1001) {
+    if ([-1001, -1008, -3007].includes(error?.code)) {
       if (retries <= 0) throw new Error('Retries to place the order was not successful')
 
       await new Promise(resolve => setTimeout(resolve, delay))
@@ -65,12 +65,23 @@ module.exports.handler = async(event, context) => {
   
     const binanceOrder = await retry(binance.futuresOrder, marketOrder, 8)
 
-    const cancelOrder = {
-      symbol: limitOrder.symbol,
-      orderId: limitOrder.orderId,
-    }
+    // revert executed MARKET order in case LIMIT order was executed as well
+    try {
+      const cancelOrder = {
+        symbol: limitOrder.symbol,
+        orderId: limitOrder.orderId,
+      }
+  
+      await retry(binance.futuresCancelOrder, cancelOrder, 8)
+    } catch (error) {
+      console.error(`Caught error: `, error)
 
-    await retry(binance.futuresCancelOrder, cancelOrder, 8)
+      if (error.code === -2011) { // "Unknown order sent."
+        marketOrder.side = marketOrder.side === 'BUY' ? 'SELL' : 'BUY'
+
+        await retry(binance.futuresOrder, marketOrder, 8)
+      }
+    }
 
     const deleteParams = {
       TableName: 'orders',

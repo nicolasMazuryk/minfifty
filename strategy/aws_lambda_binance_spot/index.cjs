@@ -23,7 +23,7 @@ const retry = async (fn, parameters, retries = 12, delay = 1000) => {
   try {
     return await fn(parameters)
   } catch (error) {
-    if ([-1001, -3007].includes(error?.code)) {
+    if ([-1001, -1008, -3007].includes(error?.code)) {
       if (retries <= 0) throw new Error('Retries to place the order was not successful')
 
       await new Promise(resolve => setTimeout(resolve, delay))
