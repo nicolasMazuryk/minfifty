@@ -10,6 +10,15 @@
       ],
     },
     {
+      "name": "entry-limit-exit-market",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceRoot}/strategy/aws_lambda_binance_entry_limit_exit_market/index.cjs",
+      "skipFiles": [
+          "<node_internals>/**"
+      ],
+    },
+    {
       "name": "ws-order-monitoring",
       "type": "node",
       "request": "launch",
