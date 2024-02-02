@@ -20,6 +20,6 @@
       "@common/*": ["common/*"]
     }
   },
-  "include": ["src/**/*", "common/**/*"],
+  "include": ["src/**/*", "common/**/*", "ws-order-monitoring/**/*"],
   "exclude": ["node_modules", "build"]
 }

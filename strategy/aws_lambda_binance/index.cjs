@@ -1,4 +1,4 @@
-// zip -r aws_lambda_binance_dynamodb_limit.zip .
+// zip -r aws_lambda_binance_bbo.zip .
 
 const AWS = require('aws-sdk')
 
@@ -18,6 +18,12 @@ const binance = Binance({
   httpFutures: BINANCE_FUTURES_API_URL,
   useServerTime: true
 })
+
+const generateUUID = () => { // 8 characters
+  const timestamp = Date.now().toString(36).substring(5,8)
+  const randomString = Math.random().toString(36).substring(3, 8)
+  return `${timestamp}${randomString}`
+}
 
 const retry = async (fn, parameters, retries = 12, delay = 1000) => {
   try {
@@ -54,7 +60,8 @@ module.exports.handler = async(event, context) => {
     symbol: symbol,
     side: side.toUpperCase(),
     quantity: quantity,
-    price: price,
+    priceMatch: 'QUEUE',
+    newClientOrderId: `${generateUUID()}:${price}:${quantity}:${0}`
   }
 
   // const order = {
@@ -66,12 +73,21 @@ module.exports.handler = async(event, context) => {
 
   const binanceOrder = await retry(binance.futuresOrder, order)
 
+  const signalDiff = binanceOrder.side === 'BUY' ? Number(price) - Number(binanceOrder.price) : Number(binanceOrder.price) - Number(price)
+
   const params = {
     TableName: 'orders',
     Item: {
       ...binanceOrder,
       orderId: String(binanceOrder.orderId),
       apiKey: process.env.BINANCE_API_KEY,
+      // apiKey: '${BINANCE_API_KEY}',
+      signalPrice: price,
+      signalQuantity: quantity,
+      attempt: 0,
+      placedPrice: binanceOrder.price,
+      placedQuantity: binanceOrder.origQty,
+      signalDiff: signalDiff.toFixed(pricePrecision),
     }
   }
 
@@ -82,5 +98,6 @@ module.exports.handler = async(event, context) => {
 
 
 // (async () => {
-//   await run({ body: 'buy ETHUSDT p=2000 q=0.01 a=USDM' })
+//   await run({ body: 'sell RUNEUSDT p=4.095 q=5' })
 // })()
+

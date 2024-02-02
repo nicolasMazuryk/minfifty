@@ -1,17 +1,26 @@
 {
-    // Use IntelliSense to learn about possible attributes.
-    // Hover to view descriptions of existing attributes.
-    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
-    "version": "0.2.0",
-    "configurations": [
-        {
-            "type": "node",
-            "request": "launch",
-            "name": "Launch Program",
-            "skipFiles": [
-                "<node_internals>/**"
-            ],
-            "program": "${workspaceFolder}/strategy/aws_lambda_binance_limit_to_market/index.cjs"
-        }
-    ]
+  "configurations": [
+    {
+      "name": "aws-lambda-binance",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceRoot}/strategy/aws_lambda_binance/index.cjs",
+      "skipFiles": [
+          "<node_internals>/**"
+      ],
+    },
+    {
+      "name": "ws-order-monitoring",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceRoot}/strategy/ws-order-monitoring/ws.ts",
+      "runtimeExecutable": "${workspaceRoot}/strategy/ws-order-monitoring/node_modules/.bin/tsx",
+    
+      "internalConsoleOptions": "openOnSessionStart",
+    
+      "skipFiles": [
+          "<node_internals>/**"
+      ],
+    }
+  ],
 }
