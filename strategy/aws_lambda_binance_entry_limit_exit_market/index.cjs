@@ -1,4 +1,4 @@
-// zip -r aws_lambda_binance_entry_limit_exit_market.zip .
+// zip -r aws_lambda_binance_entry_limit_exit_market_x2.zip .
 
 const AWS = require('aws-sdk')
 
@@ -39,6 +39,7 @@ const retry = async (fn, parameters, retries = 12, delay = 1000) => {
 
 module.exports.handler = async(event, context) => {
   console.log(event.body)
+  console.log('aws_lambda_binance_entry_limit_exit_market.zip ', new Date())
 
   const [side, symbol, priceStr, quantityStr, commentStr] = event.body.split(' ')
 
@@ -54,7 +55,8 @@ module.exports.handler = async(event, context) => {
   const isEntry = commentStr === 'LONG' || commentStr === 'SHORT'
   const isExit = commentStr === 'LX' || commentStr === 'SX'
 
-  const slippageOffsetTicks = parseFloat(`0.${'0'.repeat(pricePrecision - 2)}1`)
+  const slippageTicks = 2
+  const slippageOffsetTicks = parseFloat(`0.${'0'.repeat(pricePrecision - 2)}1`) * slippageTicks
   const slippageOffset = side.toUpperCase() === 'BUY' ? -slippageOffsetTicks : slippageOffsetTicks
   const slippageOffsetPrice = (Number(price) + slippageOffset).toFixed(pricePrecision)
 
@@ -74,7 +76,7 @@ module.exports.handler = async(event, context) => {
   if (isExit) {
     const openOrders = await retry(binance.futuresOpenOrders, undefined, 8)
     const openOrdersSide = commentStr === 'LX' ? 'BUY' : 'SELL'
-    const unExecutedOrders = openOrders.filter(openOrder => openOrder.side === openOrdersSide)
+    const unExecutedOrders = openOrders.filter(openOrder => openOrder.side === openOrdersSide && openOrder.origType === 'LIMIT')
 
     if (unExecutedOrders.length > 1) throw new Error ('Multiple unExecuted Open Orders: ', JSON.stringify(openOrders))
 
@@ -107,8 +109,8 @@ module.exports.handler = async(event, context) => {
         Item: {
           ...openOrder,
           orderId: String(openOrder.orderId),
-          // apiKey: process.env.BINANCE_API_KEY,
-          apiKey: '${BINANCE_API_KEY}',
+          apiKey: process.env.BINANCE_API_KEY,
+          // apiKey: '${BINANCE_API_KEY}',
           exitPrice: price,
           exitQuantity: quantity,
           missedPercent: (missedPercent * 100).toFixed(2),
@@ -136,6 +138,6 @@ module.exports.handler = async(event, context) => {
 
 
 // (async () => {
-//   await run({ body: 'sell RUNEUSDT p=4.399 q=5 LX' })
+//   await run({ body: 'sell RUNEUSDT p=4.392 q=112.988 LX' })
 // })()
 

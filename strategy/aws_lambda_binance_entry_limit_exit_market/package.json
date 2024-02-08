@@ -1,5 +1,5 @@
 {
-  "name": "aws_lambda_binance",
+  "name": "aws_lambda_binance_entry_limit_exit_market",
   "type": "module",
   "scripts": {
     "aws:lambda": "node index.cjs"
