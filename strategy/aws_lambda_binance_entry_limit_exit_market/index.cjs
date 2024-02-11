@@ -1,4 +1,4 @@
-// zip -r aws_lambda_binance_entry_limit_exit_market_x2.zip .
+// zip -r aws_lambda_binance_entry_limit_exit_market.zip .
 
 const AWS = require('aws-sdk')
 
@@ -19,6 +19,25 @@ const binance = Binance({
   useServerTime: true
 })
 
+const SLIPPAGE_TICKS = Number(process.env.SLIPPAGE_TICKS) || 0
+// const SLIPPAGE_TICKS = 1
+
+const collectDebugInformation = async () => {
+  const openOrders = await binance.futuresOpenOrders({ symbol: 'RUNEUSDT' })
+  const accountInfo = await binance.futuresAccountInfo()
+  const positionRisk = await binance.futuresPositionRisk({ symbol: 'RUNEUSDT' })
+  const allOrders = await binance.futuresAllOrders({ symbol: 'RUNEUSDT', limit: 8 })
+
+  console.log('Open Orders:')
+  console.log(JSON.stringify(openOrders))
+  console.log('Account Information:')
+  console.log(JSON.stringify(accountInfo))
+  console.log('Position Risk:')
+  console.log(JSON.stringify(positionRisk))
+  console.log('All Orders:')
+  console.log(JSON.stringify(allOrders))
+}
+
 const retry = async (fn, parameters, retries = 12, delay = 1000) => {
   try {
     return await fn(parameters)
@@ -31,6 +50,8 @@ const retry = async (fn, parameters, retries = 12, delay = 1000) => {
       return await retry(fn, parameters, retries - 1, delay * 2)
     }
 
+    await collectDebugInformation()
+
     throw error
   }
 }
@@ -39,7 +60,6 @@ const retry = async (fn, parameters, retries = 12, delay = 1000) => {
 
 module.exports.handler = async(event, context) => {
   console.log(event.body)
-  console.log('aws_lambda_binance_entry_limit_exit_market.zip ', new Date())
 
   const [side, symbol, priceStr, quantityStr, commentStr] = event.body.split(' ')
 
@@ -55,8 +75,7 @@ module.exports.handler = async(event, context) => {
   const isEntry = commentStr === 'LONG' || commentStr === 'SHORT'
   const isExit = commentStr === 'LX' || commentStr === 'SX'
 
-  const slippageTicks = 2
-  const slippageOffsetTicks = parseFloat(`0.${'0'.repeat(pricePrecision - 2)}1`) * slippageTicks
+  const slippageOffsetTicks = parseFloat(`0.${'0'.repeat(pricePrecision - 2)}1`) * SLIPPAGE_TICKS
   const slippageOffset = side.toUpperCase() === 'BUY' ? -slippageOffsetTicks : slippageOffsetTicks
   const slippageOffsetPrice = (Number(price) + slippageOffset).toFixed(pricePrecision)
 
@@ -113,6 +132,7 @@ module.exports.handler = async(event, context) => {
           // apiKey: '${BINANCE_API_KEY}',
           exitPrice: price,
           exitQuantity: quantity,
+          slippageTicks: SLIPPAGE_TICKS,
           missedPercent: (missedPercent * 100).toFixed(2),
           missedAmount: missedAmount.toFixed(2)
         }

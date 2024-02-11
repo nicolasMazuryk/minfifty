@@ -1,0 +1,18 @@
+{
+  "name": "order-monitoring",
+  "engines": {
+    "node": ">=20.x"
+  },
+  "scripts": {
+    "start": "npx tsx ws.ts",
+    "pm2": "pm2-runtime start ecosystem.config.js"
+  },
+  "dependencies": {
+    "aws-sdk": "^2.1528.0",
+    "binance-api-node": "^0.12.4",
+    "pm2": "^5.3.1"
+  },
+  "devDependencies": {
+    "tsx": "^4.7.0"
+  }
+}

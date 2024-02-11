@@ -5,26 +5,35 @@ AWS.config.update({ region: 'eu-central-1' })
 
 const ddb = new AWS.DynamoDB.DocumentClient()
 
-const API_KEY = '${BINANCE_API_KEY}'
-const API_SECRET = '${BINANCE_ACCOUNT20_API_SECRET}'
-
 const binance = Binance({
-  apiKey: API_KEY,
-  apiSecret: API_SECRET,
+  // apiKey: process.env.BINANCE_API_KEY,
+  // apiSecret: process.env.BINANCE_API_SECRET,
+  apiKey: '${BINANCE_API_KEY}',
+  apiSecret: '${BINANCE_ACCOUNT20_API_SECRET}',
 })
 
 const logger = {
   // eslint-disable-next-line no-console
-  info: (...args: any) => console.log(`[${new Date().toLocaleString('pl-PL')}]`, ...args),
+  info: (...args: any) => console.log(...args),
   // eslint-disable-next-line no-console
-  error: (...args: any) => console.error(`[${new Date().toLocaleString('pl-PL')}]`, ...args),
-  // eslint-disable-next-line no-console
-  time: (...args: any) => console.time(...args),
-  // eslint-disable-next-line no-console
-  timeEnd: (...args: any) => console.timeEnd(...args),
+  error: (...args: any) => console.error(...args),
 }
 
-const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
+const collectDebugInformation = async () => {
+  const openOrders = await binance.futuresOpenOrders({ symbol: 'RUNEUSDT' })
+  const accountInfo = await binance.futuresAccountInfo()
+  const positionRisk = await binance.futuresPositionRisk({ symbol: 'RUNEUSDT' })
+  const allOrders = await binance.futuresAllOrders({ symbol: 'RUNEUSDT', limit: 8 })
+
+  logger.info('Open Orders:')
+  logger.info(JSON.stringify(openOrders))
+  logger.info('Account Information:')
+  logger.info(JSON.stringify(accountInfo))
+  logger.info('Position Risk:')
+  logger.info(JSON.stringify(positionRisk))
+  logger.info('All Orders:')
+  logger.info(JSON.stringify(allOrders))
+}
 
 const retry = async (fn: any, parameters: any, retries = 12, delay = 1000): Promise<any> => {
   try {
@@ -38,15 +47,10 @@ const retry = async (fn: any, parameters: any, retries = 12, delay = 1000): Prom
       return await retry(fn, parameters, retries - 1, delay * 2)
     }
 
+    await collectDebugInformation()
+
     throw error
   }
-}
-
-const generateUUID = () => {
-  // 8 characters
-  const timestamp = Date.now().toString(36).substring(5, 8)
-  const randomString = Math.random().toString(36).substring(3, 8)
-  return `${timestamp}${randomString}`
 }
 
 const convertEventMessageToOpenOrder = (eventMessage: any) => ({
@@ -71,20 +75,33 @@ const convertEventMessageToOpenOrder = (eventMessage: any) => ({
   workingType: eventMessage.workingType,
 })
 
+const isExitOrder = (order: any) => {
+  const [uuid, commentStr] = order.clientOrderId.split(':')
+
+  return ['LX', 'SX'].includes(commentStr) && order.origType === 'LIMIT'
+}
+
+const getOpenOrders = async () => {
+  const openOrders = await retry(binance.futuresOpenOrders, undefined, 8)
+
+  return openOrders.filter(isExitOrder)
+}
+
 // --------------------
 
 const main = async () => {
-  const THRESHOLD_TICKS = 0.005 // 10
+  // const DIFFERENCE_THRESHOLD_TICKS = process.env.DIFFERENCE_THRESHOLD_TICKS
+  const DIFFERENCE_THRESHOLD_TICKS = 0.005 // 10
 
   let isProcessingAggregatedTradesEvent = false
   let isProcessingOrderUpdateEvent = false
 
-  let OPEN_ORDERS = await retry(binance.futuresOpenOrders, undefined, 8)
+  let OPEN_ORDERS = await getOpenOrders()
 
   const openOrdersInterval = setInterval(async () => {
     if (isProcessingOrderUpdateEvent) return
 
-    OPEN_ORDERS = await retry(binance.futuresOpenOrders, undefined, 8)
+    OPEN_ORDERS = await getOpenOrders()
   }, 3000)
 
   const futuresAggTradesWebsocketConnection = binance.ws.futuresAggTrades(
@@ -100,14 +117,16 @@ const main = async () => {
             ? currentPrice - Number(openOrder.price)
             : Number(openOrder.price) - currentPrice
 
-        if (difference < THRESHOLD_TICKS) return
+        if (difference < DIFFERENCE_THRESHOLD_TICKS) return
 
         isProcessingAggregatedTradesEvent = true
 
-        const exchange = await retry(binance.futuresExchangeInfo, undefined, 8)
-        const { pricePrecision, quantityPrecision } = exchange.symbols.find(
-          (item: any) => item.symbol === openOrder.symbol,
-        )
+        // const exchange = await retry(binance.futuresExchangeInfo, undefined, 8)
+        // const { pricePrecision, quantityPrecision } = exchange.symbols.find(
+        //   (item: any) => item.symbol === openOrder.symbol,
+        // )
+        const pricePrecision = 4
+        const quantityPrecision = 0
 
         const quantity = (Number(openOrder.origQty) - Number(openOrder.executedQty)).toFixed(
           quantityPrecision,
@@ -120,72 +139,38 @@ const main = async () => {
 
         await retry(binance.futuresCancelOrder, cancelOrder, 8)
 
-        const [signalPrice = openOrder.price, signalQuantity = openOrder.origQty] =
-          openOrder.clientOrderId.split(':')
-
-        let [uuid, attempt] = openOrder.clientOrderId.split(':')
-
-        uuid = uuid.length > 9 ? generateUUID() : uuid
-        attempt = attempt >= 0 ? attempt : -1
-
-        const newLimitOrder = {
-          type: 'LIMIT',
-          timeInForce: 'GTC',
+        const order = {
+          type: 'MARKET',
           symbol: openOrder.symbol,
           side: openOrder.side.toUpperCase(),
           quantity: quantity,
-          priceMatch: 'QUEUE',
-          newClientOrderId: `${uuid}:${signalPrice}:${signalQuantity}:${Number(attempt) + 1}`,
         }
 
-        const binanceOrder = await retry(binance.futuresOrder, newLimitOrder, 8)
+        await retry(binance.futuresOrder, order, 8)
 
-        const deleteParams = {
-          TableName: 'orders',
-          Key: {
-            orderId: String(openOrder.orderId),
-          },
-        }
+        const missedPercent =
+          Math.abs(Number(currentPrice) - Number(openOrder.price)) / Number(openOrder.price)
+        const missedAmount =
+          (Number(openOrder.origQty) - Number(openOrder.executedQty)) *
+          Number(openOrder.price) *
+          missedPercent
 
-        await ddb.delete(deleteParams).promise()
-
-        const signalDiff =
-          binanceOrder.side === 'BUY'
-            ? Number(signalPrice) - Number(binanceOrder.price)
-            : Number(binanceOrder.price) - Number(signalPrice)
-        const actualDiff =
-          binanceOrder.side === 'BUY'
-            ? Number(currentPrice) - Number(binanceOrder.price)
-            : Number(binanceOrder.price) - Number(currentPrice)
-
-        const putParams = {
+        const params = {
           TableName: 'orders',
           Item: {
-            ...binanceOrder,
-            orderId: String(binanceOrder.orderId),
-            apiKey: API_KEY,
-            threshold: THRESHOLD_TICKS,
-            difference: difference.toFixed(pricePrecision),
-            signalPrice,
-            signalQuantity,
-            attempt: Number(attempt) + 1,
-            actualPrice: currentPrice,
-            actualQuantity: quantity,
-            placedPrice: binanceOrder.price,
-            placedQuantity: binanceOrder.origQty,
-            signalDiff: signalDiff.toFixed(pricePrecision),
-            actualDiff: actualDiff.toFixed(pricePrecision),
+            ...openOrder,
+            orderId: String(openOrder.orderId),
+            // apiKey: process.env.BINANCE_API_KEY,
+            apiKey: '${BINANCE_API_KEY}',
+            thresholdTicks: DIFFERENCE_THRESHOLD_TICKS,
+            missedPercent: (missedPercent * 100).toFixed(2),
+            missedAmount: missedAmount.toFixed(2),
           },
         }
 
-        await ddb.put(putParams).promise()
+        await ddb.put(params).promise()
 
         isProcessingAggregatedTradesEvent = false
-
-        console.log(
-          `ACTUAL DIFFERENCE [${THRESHOLD_TICKS}]: ${difference.toFixed(pricePrecision)} `,
-          ` Details: ${binanceOrder.status} ${binanceOrder.symbol} ${binanceOrder.side} ${binanceOrder.price} ${signalQuantity} - ${binanceOrder.executedQty}`,
-        )
       }
     },
   )
@@ -202,7 +187,10 @@ const main = async () => {
     isProcessingOrderUpdateEvent = true
 
     if (['NEW'].includes(msg.orderStatus)) {
-      OPEN_ORDERS.push(convertEventMessageToOpenOrder(msg))
+      const order = convertEventMessageToOpenOrder(msg)
+      const isExit = isExitOrder(order)
+
+      if (isExit) OPEN_ORDERS.push(order)
     }
 
     if (['PARTIALLY_FILLED'].includes(msg.orderStatus)) {
@@ -211,7 +199,10 @@ const main = async () => {
         OPEN_ORDERS.splice(index, 1)
       }
 
-      OPEN_ORDERS.push(convertEventMessageToOpenOrder(msg))
+      const order = convertEventMessageToOpenOrder(msg)
+      const isExit = isExitOrder(order)
+
+      if (isExit) OPEN_ORDERS.push(order)
     }
 
     if (['FILLED', 'CANCELED'].includes(msg.orderStatus)) {

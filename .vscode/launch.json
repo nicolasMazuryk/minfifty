@@ -1,10 +1,10 @@
 {
   "configurations": [
     {
-      "name": "aws-lambda-binance",
+      "name": "aws-lambda-binance-limit",
       "type": "node",
       "request": "launch",
-      "program": "${workspaceRoot}/strategy/aws_lambda_binance/index.cjs",
+      "program": "${workspaceRoot}/strategy/aws_lambda_binance_limit/index.cjs",
       "skipFiles": [
           "<node_internals>/**"
       ],
@@ -19,11 +19,11 @@
       ],
     },
     {
-      "name": "ws-order-monitoring",
+      "name": "order-monitoring",
       "type": "node",
       "request": "launch",
-      "program": "${workspaceRoot}/strategy/ws-order-monitoring/ws.ts",
-      "runtimeExecutable": "${workspaceRoot}/strategy/ws-order-monitoring/node_modules/.bin/tsx",
+      "program": "${workspaceRoot}/strategy/order-monitoring/ws.ts",
+      "runtimeExecutable": "${workspaceRoot}/strategy/order-monitoring/node_modules/.bin/tsx",
     
       "internalConsoleOptions": "openOnSessionStart",
     
