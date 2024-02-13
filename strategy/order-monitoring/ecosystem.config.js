@@ -3,11 +3,11 @@ module.exports = {
     // life8063722@gmail.com 
     {
       name: "${BINANCE_API_KEY}",
-      script: 'current/strategy/order-monitoring/ws.ts',
+      script: 'ws.ts',
       interpreter: 'node',
       interpreter_args: '--import tsx',
-      cwd: '/home/ec2-user',
-      log_file: `./logs/${this.BINANCE_API_KEY}.log`,
+      cwd: '/home/ec2-user/current/strategy/order-monitoring',
+      log_file: `../../../logs/${this.BINANCE_API_KEY}.log`,
       // log_date_format: 'YYYY-MM-DD HH:mm Z',
       env: {
         BINANCE_API_KEY: "${BINANCE_API_KEY}",
