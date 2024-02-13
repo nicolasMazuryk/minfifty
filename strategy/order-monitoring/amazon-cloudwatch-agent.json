@@ -1,22 +1,94 @@
 {
-	"logs": {
-		"logs_collected": {
-			"files": {
-				"collect_list": [
-					{
-						"file_path": "/home/ec2-user/logs/${BINANCE_API_KEY}.log.**",
-						"retention_in_days": 7
-					},
+    "logs": {
+        "logs_collected": {
+            "files": {
+                "collect_list": [
                     {
-						"file_path": "/home/ec2-user/logs/${BINANCE_ACCOUNT1_API_KEY}.log.**",
-						"retention_in_days": 7
-					},
+                        "file_path": "/home/ec2-user/logs/${BINANCE_API_KEY}.log.**",
+                        "retention_in_days": 7
+                    },
                     {
-						"file_path": "/home/ec2-user/logs/${BINANCE_ACCOUNT2_API_KEY}.log.**",
-						"retention_in_days": 7
-					}
-				]
-			}
-		}
-	}
+                        "file_path": "/home/ec2-user/logs/${BINANCE_ACCOUNT1_API_KEY}.log.**",
+                        "retention_in_days": 7
+                    },
+                    {
+                        "file_path": "/home/ec2-user/logs/${BINANCE_ACCOUNT2_API_KEY}.log.**",
+                        "retention_in_days": 7
+                    },
+                    {
+                        "file_path": "/home/ec2-user/logs/${BINANCE_ACCOUNT3_API_KEY}.log.**",
+                        "retention_in_days": 7
+                    },
+                    {
+                        "file_path": "/home/ec2-user/logs/${BINANCE_ACCOUNT4_API_KEY}.log.**",
+                        "retention_in_days": 7
+                    },
+                    {
+                        "file_path": "/home/ec2-user/logs/${BINANCE_ACCOUNT5_API_KEY}.log.**",
+                        "retention_in_days": 7
+                    },
+                    {
+                        "file_path": "/home/ec2-user/logs/${BINANCE_ACCOUNT6_API_KEY}.log.**",
+                        "retention_in_days": 7
+                    },
+                    {
+                        "file_path": "/home/ec2-user/logs/${BINANCE_ACCOUNT7_API_KEY}.log.**",
+                        "retention_in_days": 7
+                    },
+                    {
+                        "file_path": "/home/ec2-user/logs/${BINANCE_ACCOUNT8_API_KEY}.log.**",
+                        "retention_in_days": 7
+                    },
+                    {
+                        "file_path": "/home/ec2-user/logs/${BINANCE_ACCOUNT9_API_KEY}.log.**",
+                        "retention_in_days": 7
+                    },
+                    {
+                        "file_path": "/home/ec2-user/logs/${BINANCE_ACCOUNT10_API_KEY}.log.**",
+                        "retention_in_days": 7
+                    },
+                    {
+                        "file_path": "/home/ec2-user/logs/${BINANCE_ACCOUNT11_API_KEY}.log.**",
+                        "retention_in_days": 7
+                    },
+                    {
+                        "file_path": "/home/ec2-user/logs/${BINANCE_ACCOUNT12_API_KEY}.log.**",
+                        "retention_in_days": 7
+                    },
+                    {
+                        "file_path": "/home/ec2-user/logs/${BINANCE_ACCOUNT13_API_KEY}.log.**",
+                        "retention_in_days": 7
+                    },
+                    {
+                        "file_path": "/home/ec2-user/logs/${BINANCE_ACCOUNT14_API_KEY}.log.**",
+                        "retention_in_days": 7
+                    },
+                    {
+                        "file_path": "/home/ec2-user/logs/${BINANCE_ACCOUNT15_API_KEY}.log.**",
+                        "retention_in_days": 7
+                    },
+                    {
+                        "file_path": "/home/ec2-user/logs/${BINANCE_ACCOUNT16_API_KEY}.log.**",
+                        "retention_in_days": 7
+                    },
+                    {
+                        "file_path": "/home/ec2-user/logs/${BINANCE_ACCOUNT17_API_KEY}.log.**",
+                        "retention_in_days": 7
+                    },
+                    {
+                        "file_path": "/home/ec2-user/logs/${BINANCE_ACCOUNT18_API_KEY}.log.**",
+                        "retention_in_days": 7
+                    },
+                    {
+                        "file_path": "/home/ec2-user/logs/${BINANCE_ACCOUNT19_API_KEY}.log.**",
+                        "retention_in_days": 7
+                    },
+                    {
+                        "file_path": "/home/ec2-user/logs/${BINANCE_ACCOUNT20_API_KEY}.log.**",
+                        "retention_in_days": 7
+                    }
+                ]
+            }
+        }
+    }
 }
