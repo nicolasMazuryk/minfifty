@@ -59,7 +59,7 @@ module.exports = {
       'post-deploy' : 
         `cd /home/ec2-user/current/strategy/order-monitoring &&
         npm install && 
-        pm2 reload ecosystem.config.js &&
+        pm2 restart ecosystem.config.js &&
         sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -s -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json`,
       'pre-setup': ''
     }
