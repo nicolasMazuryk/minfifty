@@ -4,7 +4,15 @@
 			"files": {
 				"collect_list": [
 					{
-						"file_path": "/home/ec2-user/logs/**.log",
+						"file_path": "/home/ec2-user/logs/${BINANCE_API_KEY}.log.**",
+						"retention_in_days": 7
+					},
+                    {
+						"file_path": "/home/ec2-user/logs/${BINANCE_ACCOUNT1_API_KEY}.log.**",
+						"retention_in_days": 7
+					},
+                    {
+						"file_path": "/home/ec2-user/logs/${BINANCE_ACCOUNT2_API_KEY}.log.**",
 						"retention_in_days": 7
 					}
 				]
