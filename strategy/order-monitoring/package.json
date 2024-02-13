@@ -5,12 +5,16 @@
   },
   "scripts": {
     "start": "npx tsx ws.ts",
-    "pm2": "pm2-runtime start ecosystem.config.js"
+    "pm2": "pm2-runtime start ecosystem.config.js",
+    "deploy": "pm2 deploy production"
   },
   "dependencies": {
+    "@aws-sdk/client-cloudwatch-logs": "^3.511.0",
     "aws-sdk": "^2.1528.0",
     "binance-api-node": "^0.12.4",
-    "pm2": "^5.3.1"
+    "pm2": "^5.3.1",
+    "winston": "^3.11.0",
+    "winston-cloudwatch": "^6.2.0"
   },
   "devDependencies": {
     "tsx": "^4.7.0"

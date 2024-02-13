@@ -1,15 +1,18 @@
 import AWS from 'aws-sdk'
 import Binance, { AggregatedTrade } from 'binance-api-node'
 
+// import { createLogger, format } from 'winston';
+// import WinstonCloudWatch from 'winston-cloudwatch';
+
 AWS.config.update({ region: 'eu-central-1' })
 
 const ddb = new AWS.DynamoDB.DocumentClient()
 
 const binance = Binance({
-  // apiKey: process.env.BINANCE_API_KEY,
-  // apiSecret: process.env.BINANCE_API_SECRET,
-  apiKey: '${BINANCE_API_KEY}',
-  apiSecret: '${BINANCE_ACCOUNT20_API_SECRET}',
+  apiKey: process.env.BINANCE_API_KEY,
+  apiSecret: process.env.BINANCE_API_SECRET,
+  // apiKey: '${BINANCE_API_KEY}',
+  // apiSecret: '${BINANCE_ACCOUNT20_API_SECRET}',
 })
 
 const logger = {
@@ -18,6 +21,18 @@ const logger = {
   // eslint-disable-next-line no-console
   error: (...args: any) => console.error(...args),
 }
+
+// const logger = createLogger({
+//   level: 'debug',
+//   format: format.json(),
+//   transports: [
+//     new WinstonCloudWatch({
+//       logGroupName: `order-monitoring/${BINANCE_API_KEY}`,
+//       logStreamName: () => new Date().toISOString().split('T')[0],
+//       retentionInDays: 14,
+//     }),
+//   ]
+// });
 
 const collectDebugInformation = async () => {
   const openOrders = await binance.futuresOpenOrders({ symbol: 'RUNEUSDT' })
@@ -76,7 +91,7 @@ const convertEventMessageToOpenOrder = (eventMessage: any) => ({
 })
 
 const isExitOrder = (order: any) => {
-  const [uuid, commentStr] = order.clientOrderId.split(':')
+  const [, commentStr] = order.clientOrderId.split(':')
 
   return ['LX', 'SX'].includes(commentStr) && order.origType === 'LIMIT'
 }
@@ -90,8 +105,8 @@ const getOpenOrders = async () => {
 // --------------------
 
 const main = async () => {
-  // const DIFFERENCE_THRESHOLD_TICKS = process.env.DIFFERENCE_THRESHOLD_TICKS
-  const DIFFERENCE_THRESHOLD_TICKS = 0.005 // 10
+  const DIFFERENCE_THRESHOLD_TICKS = process.env.DIFFERENCE_THRESHOLD_TICKS as string
+  // const DIFFERENCE_THRESHOLD_TICKS = 0.005 // 10
 
   let isProcessingAggregatedTradesEvent = false
   let isProcessingOrderUpdateEvent = false
@@ -117,7 +132,7 @@ const main = async () => {
             ? currentPrice - Number(openOrder.price)
             : Number(openOrder.price) - currentPrice
 
-        if (difference < DIFFERENCE_THRESHOLD_TICKS) return
+        if (difference < Number(DIFFERENCE_THRESHOLD_TICKS)) return
 
         isProcessingAggregatedTradesEvent = true
 
@@ -160,8 +175,8 @@ const main = async () => {
           Item: {
             ...openOrder,
             orderId: String(openOrder.orderId),
-            // apiKey: process.env.BINANCE_API_KEY,
-            apiKey: '${BINANCE_API_KEY}',
+            apiKey: process.env.BINANCE_API_KEY,
+            // apiKey: '${BINANCE_API_KEY}',
             thresholdTicks: DIFFERENCE_THRESHOLD_TICKS,
             missedPercent: (missedPercent * 100).toFixed(2),
             missedAmount: missedAmount.toFixed(2),
