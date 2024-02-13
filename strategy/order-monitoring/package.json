@@ -5,7 +5,7 @@
   },
   "scripts": {
     "start": "npx tsx ws.ts",
-    "pm2": "pm2-runtime start ecosystem.config.js",
+    "pm2": "pm2-runtime restart ecosystem.config.js",
     "deploy": "pm2 deploy production"
   },
   "dependencies": {
