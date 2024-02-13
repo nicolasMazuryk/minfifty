@@ -330,7 +330,7 @@ module.exports = {
       'post-deploy' : 
         `cd /home/ec2-user/current/strategy/order-monitoring &&
         npm install && 
-        pm2 restart ecosystem.config.js`,
+        pm2 restart /home/ec2-user/current/strategy/order-monitoring/ecosystem.config.js`,
       'pre-setup': ''
     }
   }
