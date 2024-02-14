@@ -9,6 +9,8 @@
     "deploy": "pm2 deploy production"
   },
   "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.513.0",
+    "@aws-sdk/lib-dynamodb": "^3.513.0",
     "aws-sdk": "^2.1528.0",
     "binance-api-node": "^0.12.4",
     "pm2": "^5.3.1"

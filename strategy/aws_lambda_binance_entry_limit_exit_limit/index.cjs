@@ -1,4 +1,4 @@
-// zip -r aws_lambda_binance_limit.zip .
+// zip -r aws_lambda_binance_entry_limit_exit_limit.zip .
 
 const AWS = require('aws-sdk')
 
@@ -171,6 +171,6 @@ module.exports.handler = async(event, context) => {
 
 
 // (async () => {
-//   await run({ body: 'sell RUNEUSDT p=4.392 q=112.988 LX' })
+//   await run({ body: 'buy RUNEUSDT p=5.605 q=5 SX' })
 // })()
 

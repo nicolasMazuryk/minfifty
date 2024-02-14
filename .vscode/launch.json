@@ -1,10 +1,10 @@
 {
   "configurations": [
     {
-      "name": "aws-lambda-binance-limit",
+      "name": "entry-limit-exit-limit",
       "type": "node",
       "request": "launch",
-      "program": "${workspaceRoot}/strategy/aws_lambda_binance_limit/index.cjs",
+      "program": "${workspaceRoot}/strategy/aws_lambda_binance_entry_limit_exit_limit/index.cjs",
       "skipFiles": [
           "<node_internals>/**"
       ],

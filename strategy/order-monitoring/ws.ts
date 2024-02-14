@@ -1,9 +1,8 @@
-import AWS from 'aws-sdk'
+import { DynamoDB } from '@aws-sdk/client-dynamodb'
+import { DynamoDBDocument } from '@aws-sdk/lib-dynamodb'
 import Binance, { AggregatedTrade } from 'binance-api-node'
 
-AWS.config.update({ region: 'eu-central-1' })
-
-const ddb = new AWS.DynamoDB.DocumentClient()
+const ddb = DynamoDBDocument.from(new DynamoDB({ region: 'eu-central-1' }))
 
 const binance = Binance({
   apiKey: process.env.BINANCE_API_KEY,
@@ -120,7 +119,7 @@ const main = async () => {
             ? currentPrice - Number(openOrder.price)
             : Number(openOrder.price) - currentPrice
 
-        if (difference < Number(DIFFERENCE_THRESHOLD_TICKS)) return
+        if (difference <= Number(DIFFERENCE_THRESHOLD_TICKS)) return
 
         isProcessingAggregatedTradesEvent = true
 
@@ -171,7 +170,7 @@ const main = async () => {
           },
         }
 
-        await ddb.put(params).promise()
+        await ddb.put(params)
 
         isProcessingAggregatedTradesEvent = false
       }
@@ -189,10 +188,10 @@ const main = async () => {
 
     isProcessingOrderUpdateEvent = true
 
-    if (['NEW'].includes(msg.orderStatus)) {
-      const order = convertEventMessageToOpenOrder(msg)
-      const isExit = isExitOrder(order)
+    const order = convertEventMessageToOpenOrder(msg)
+    const isExit = isExitOrder(order)
 
+    if (['NEW'].includes(msg.orderStatus)) {
       if (isExit) OPEN_ORDERS.push(order)
     }
 
@@ -201,9 +200,6 @@ const main = async () => {
       if (index !== -1) {
         OPEN_ORDERS.splice(index, 1)
       }
-
-      const order = convertEventMessageToOpenOrder(msg)
-      const isExit = isExitOrder(order)
 
       if (isExit) OPEN_ORDERS.push(order)
     }
