@@ -310,12 +310,9 @@ module.exports = {
       host : 'ec2-3-124-193-68.eu-central-1.compute.amazonaws.com',
       ref  : 'origin/master',
       repo : 'git@github.com:nicolasMazuryk/minfifty.git',
-      path : '/home/ec2-user/current/strategy/order-monitoring',
+      path : '/home/ec2-user',
       'pre-deploy-local': '',
-      'post-deploy' : 
-        `cd /home/ec2-user/current/strategy/order-monitoring/current/strategy/order-monitoring &&
-        npm install && 
-        npm run pm2`,
+      'post-deploy' : 'cd /home/ec2-user/current/strategy/order-monitoring && npm install && npm run pm2',
       'pre-setup': ''
     }
   }
