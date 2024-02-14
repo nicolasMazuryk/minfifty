@@ -20,7 +20,7 @@ module.exports = {
     // },
 
 
-    
+
 
     // // codegrade.test@gmail.com
     // {
@@ -179,7 +179,7 @@ module.exports = {
       env: {
         BINANCE_API_KEY: "${BINANCE_ACCOUNT11_API_KEY}",
         BINANCE_API_SECRET: "${BINANCE_API_SECRET}",
-        DIFFERENCE_THRESHOLD_TICKS: 0,
+        DIFFERENCE_THRESHOLD_TICKS: 50,
       },
     },
     // malgosidejellyrune5_virtual@8w7s1ykjnoemail.com
@@ -193,7 +193,7 @@ module.exports = {
       env: {
         BINANCE_API_KEY: "${BINANCE_ACCOUNT12_API_KEY}",
         BINANCE_API_SECRET: "${BINANCE_ACCOUNT1_API_SECRET}",
-        DIFFERENCE_THRESHOLD_TICKS: 0,
+        DIFFERENCE_THRESHOLD_TICKS: 50,
       },
     },
         // malgosidewoo15_virtual@yk54hj4enoemail.com
@@ -207,7 +207,7 @@ module.exports = {
       env: {
         BINANCE_API_KEY: "${BINANCE_ACCOUNT13_API_KEY}",
         BINANCE_API_SECRET: "${BINANCE_ACCOUNT2_API_SECRET}",
-        DIFFERENCE_THRESHOLD_TICKS: 0,
+        DIFFERENCE_THRESHOLD_TICKS: 50,
       },
     },
     // malgosidearb30_virtual@0cjk3rwwnoemail.com
@@ -221,7 +221,7 @@ module.exports = {
       env: {
         BINANCE_API_KEY: "${BINANCE_ACCOUNT14_API_KEY}",
         BINANCE_API_SECRET: "${BINANCE_ACCOUNT3_API_SECRET}",
-        DIFFERENCE_THRESHOLD_TICKS: 0,
+        DIFFERENCE_THRESHOLD_TICKS: 50,
       },
     },
         // malgosidearb15_virtual@iuthyo7vnoemail.com
@@ -235,7 +235,7 @@ module.exports = {
       env: {
         BINANCE_API_KEY: "${BINANCE_ACCOUNT15_API_KEY}",
         BINANCE_API_SECRET: "${BINANCE_ACCOUNT4_API_SECRET}",
-        DIFFERENCE_THRESHOLD_TICKS: 0,
+        DIFFERENCE_THRESHOLD_TICKS: 50,
       },
     },
     // malgohardcoderune5_virtual@g4ictt8fnoemail.com
@@ -249,7 +249,7 @@ module.exports = {
       env: {
         BINANCE_API_KEY: "${BINANCE_ACCOUNT16_API_KEY}",
         BINANCE_API_SECRET: "${BINANCE_ACCOUNT5_API_SECRET}",
-        DIFFERENCE_THRESHOLD_TICKS: 0,
+        DIFFERENCE_THRESHOLD_TICKS: 50,
       },
     },
         // malgohardcodedwoo5_virtual@q9os06aonoemail.com
@@ -263,7 +263,7 @@ module.exports = {
       env: {
         BINANCE_API_KEY: "${BINANCE_ACCOUNT17_API_KEY}",
         BINANCE_API_SECRET: "${BINANCE_ACCOUNT6_API_SECRET}",
-        DIFFERENCE_THRESHOLD_TICKS: 0,
+        DIFFERENCE_THRESHOLD_TICKS: 50,
       },
     },
     // malgosmadegarb15_virtual@3ni81h35noemail.com
@@ -277,7 +277,7 @@ module.exports = {
       env: {
         BINANCE_API_KEY: "${BINANCE_ACCOUNT18_API_KEY}",
         BINANCE_API_SECRET: "${BINANCE_ACCOUNT7_API_SECRET}",
-        DIFFERENCE_THRESHOLD_TICKS: 0,
+        DIFFERENCE_THRESHOLD_TICKS: 50,
       },
     },
         // malgohardcodedrune30_virtual@7u9rawggnoemail.com
@@ -291,7 +291,7 @@ module.exports = {
       env: {
         BINANCE_API_KEY: "${BINANCE_ACCOUNT19_API_KEY}",
         BINANCE_API_SECRET: "${BINANCE_ACCOUNT8_API_SECRET}",
-        DIFFERENCE_THRESHOLD_TICKS: 0,
+        DIFFERENCE_THRESHOLD_TICKS: 50,
       },
     },
     // atremastrategybtc1_virtual@12jqf55rnoemail.com
@@ -305,7 +305,7 @@ module.exports = {
       env: {
         BINANCE_API_KEY: "${BINANCE_ACCOUNT20_API_KEY}",
         BINANCE_API_SECRET: "${BINANCE_ACCOUNT9_API_SECRET}",
-        DIFFERENCE_THRESHOLD_TICKS: 0,
+        DIFFERENCE_THRESHOLD_TICKS: 50,
       },
     },
   ],
