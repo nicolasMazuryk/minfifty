@@ -20,147 +20,154 @@ module.exports = {
     // },
 
 
-    // codegrade.test@gmail.com
-    {
-      name: "${BINANCE_ACCOUNT1_API_KEY}",
-      script: 'npm',
-      args : 'start',
-      cwd: '/home/ec2-user/current/strategy/order-monitoring',
-      log_file: `../../../logs/${BINANCE_ACCOUNT1_API_KEY}.log`,
-      // log_date_format: 'YYYY-MM-DD HH:mm Z',
-      env: {
-        BINANCE_API_KEY: "${BINANCE_ACCOUNT1_API_KEY}",
-        BINANCE_API_SECRET: "${BINANCE_ACCOUNT10_API_SECRET}",
-        DIFFERENCE_THRESHOLD_TICKS: 0,
-      },
-    },
-    // malgotm30m_virtual@f7l7hysqnoemail.com
-    {
-      name: "${BINANCE_ACCOUNT2_API_KEY}",
-      script: 'npm',
-      args : 'start',
-      cwd: '/home/ec2-user/current/strategy/order-monitoring',
-      log_file: `../../../logs/${BINANCE_ACCOUNT2_API_KEY}.log`,
-      // log_date_format: 'YYYY-MM-DD HH:mm Z',
-      env: {
-        BINANCE_API_KEY: "${BINANCE_ACCOUNT2_API_KEY}",
-        BINANCE_API_SECRET: "${BINANCE_ACCOUNT11_API_SECRET}",
-        DIFFERENCE_THRESHOLD_TICKS: 0,
-      },
-    },
+    
 
-    // jackson5_virtual@9xx7lynnnoemail.com
-    {
-      name: "${BINANCE_ACCOUNT3_API_KEY}",
-      script: 'npm',
-      args : 'start',
-      cwd: '/home/ec2-user/current/strategy/order-monitoring',
-      log_file: `../../../logs/${BINANCE_ACCOUNT3_API_KEY}.log`,
-      // log_date_format: 'YYYY-MM-DD HH:mm Z',
-      env: {
-        BINANCE_API_KEY: "${BINANCE_ACCOUNT3_API_KEY}",
-        BINANCE_API_SECRET: "${BINANCE_ACCOUNT12_API_SECRET}",
-        DIFFERENCE_THRESHOLD_TICKS: 0,
-      },
-    },
-        // jackson5atr_virtual@i74kcfzlnoemail.com
-    {
-      name: "${BINANCE_ACCOUNT4_API_KEY}",
-      script: 'npm',
-      args : 'start',
-      cwd: '/home/ec2-user/current/strategy/order-monitoring',
-      log_file: `../../../logs/${BINANCE_ACCOUNT4_API_KEY}.log`,
-      // log_date_format: 'YYYY-MM-DD HH:mm Z',
-      env: {
-        BINANCE_API_KEY: "${BINANCE_ACCOUNT4_API_KEY}",
-        BINANCE_API_SECRET: "${BINANCE_ACCOUNT13_API_SECRET}",
-        DIFFERENCE_THRESHOLD_TICKS: 0,
-      },
-    },
-    // bollingerbreakout_virtual@nurv4rjtnoemail.com
-    {
-      name: "${BINANCE_ACCOUNT5_API_KEY}",
-      script: 'npm',
-      args : 'start',
-      cwd: '/home/ec2-user/current/strategy/order-monitoring',
-      log_file: `../../../logs/${BINANCE_ACCOUNT5_API_KEY}.log`,
-      // log_date_format: 'YYYY-MM-DD HH:mm Z',
-      env: {
-        BINANCE_API_KEY: "${BINANCE_ACCOUNT5_API_KEY}",
-        BINANCE_API_SECRET: "${BINANCE_ACCOUNT14_API_SECRET}",
-        DIFFERENCE_THRESHOLD_TICKS: 0,
-      },
-    },
-        // doubleema_virtual@02w4zdu1noemail.com
-    {
-      name: "${BINANCE_ACCOUNT6_API_KEY}",
-      script: 'npm',
-      args : 'start',
-      cwd: '/home/ec2-user/current/strategy/order-monitoring',
-      log_file: `../../../logs/${BINANCE_ACCOUNT6_API_KEY}.log`,
-      // log_date_format: 'YYYY-MM-DD HH:mm Z',
-      env: {
-        BINANCE_API_KEY: "${BINANCE_ACCOUNT6_API_KEY}",
-        BINANCE_API_SECRET: "${BINANCE_ACCOUNT15_API_SECRET}",
-        DIFFERENCE_THRESHOLD_TICKS: 0,
-      },
-    },
-    // doubleemabolinger_virtual@ul8fh2monoemail.com
-    {
-      name: "${BINANCE_ACCOUNT7_API_KEY}",
-      script: 'npm',
-      args : 'start',
-      cwd: '/home/ec2-user/current/strategy/order-monitoring',
-      log_file: `../../../logs/${BINANCE_ACCOUNT7_API_KEY}.log`,
-      // log_date_format: 'YYYY-MM-DD HH:mm Z',
-      env: {
-        BINANCE_API_KEY: "${BINANCE_ACCOUNT7_API_KEY}",
-        BINANCE_API_SECRET: "${BINANCE_ACCOUNT16_API_SECRET}",
-        DIFFERENCE_THRESHOLD_TICKS: 0,
-      },
-    },
-        // malgosmadeg_virtual@5q62pwctnoemail.com
-    {
-      name: "${BINANCE_ACCOUNT8_API_KEY}",
-      script: 'npm',
-      args : 'start',
-      cwd: '/home/ec2-user/current/strategy/order-monitoring',
-      log_file: `../../../logs/${BINANCE_ACCOUNT8_API_KEY}.log`,
-      // log_date_format: 'YYYY-MM-DD HH:mm Z',
-      env: {
-        BINANCE_API_KEY: "${BINANCE_ACCOUNT8_API_KEY}",
-        BINANCE_API_SECRET: "${BINANCE_ACCOUNT17_API_SECRET}",
-        DIFFERENCE_THRESHOLD_TICKS: 0,
-      },
-    },
-    // malgosidev3fxs30_virtual@bgot7orcnoemail.com
-    {
-      name: "${BINANCE_ACCOUNT9_API_KEY}",
-      script: 'npm',
-      args : 'start',
-      cwd: '/home/ec2-user/current/strategy/order-monitoring',
-      log_file: `../../../logs/${BINANCE_ACCOUNT9_API_KEY}.log`,
-      // log_date_format: 'YYYY-MM-DD HH:mm Z',
-      env: {
-        BINANCE_API_KEY: "${BINANCE_ACCOUNT9_API_KEY}",
-        BINANCE_API_SECRET: "${BINANCE_ACCOUNT18_API_SECRET}",
-        DIFFERENCE_THRESHOLD_TICKS: 0,
-      },
-    },
-        // malgosidejellyfxs30_virtual@ksr26se9noemail.com
-    {
-      name: "${BINANCE_ACCOUNT10_API_KEY}",
-      script: 'npm',
-      args : 'start',
-      cwd: '/home/ec2-user/current/strategy/order-monitoring',
-      log_file: `../../../logs/${BINANCE_ACCOUNT10_API_KEY}.log`,
-      // log_date_format: 'YYYY-MM-DD HH:mm Z',
-      env: {
-        BINANCE_API_KEY: "${BINANCE_ACCOUNT10_API_KEY}",
-        BINANCE_API_SECRET: "${BINANCE_ACCOUNT19_API_SECRET}",
-        DIFFERENCE_THRESHOLD_TICKS: 0,
-      },
-    },
+    // // codegrade.test@gmail.com
+    // {
+    //   name: "${BINANCE_ACCOUNT1_API_KEY}",
+    //   script: 'npm',
+    //   args : 'start',
+    //   cwd: '/home/ec2-user/current/strategy/order-monitoring',
+    //   log_file: `../../../logs/${BINANCE_ACCOUNT1_API_KEY}.log`,
+    //   // log_date_format: 'YYYY-MM-DD HH:mm Z',
+    //   env: {
+    //     BINANCE_API_KEY: "${BINANCE_ACCOUNT1_API_KEY}",
+    //     BINANCE_API_SECRET: "${BINANCE_ACCOUNT10_API_SECRET}",
+    //     DIFFERENCE_THRESHOLD_TICKS: 0,
+    //   },
+    // },
+    // // malgotm30m_virtual@f7l7hysqnoemail.com
+    // {
+    //   name: "${BINANCE_ACCOUNT2_API_KEY}",
+    //   script: 'npm',
+    //   args : 'start',
+    //   cwd: '/home/ec2-user/current/strategy/order-monitoring',
+    //   log_file: `../../../logs/${BINANCE_ACCOUNT2_API_KEY}.log`,
+    //   // log_date_format: 'YYYY-MM-DD HH:mm Z',
+    //   env: {
+    //     BINANCE_API_KEY: "${BINANCE_ACCOUNT2_API_KEY}",
+    //     BINANCE_API_SECRET: "${BINANCE_ACCOUNT11_API_SECRET}",
+    //     DIFFERENCE_THRESHOLD_TICKS: 0,
+    //   },
+    // },
+
+    // // jackson5_virtual@9xx7lynnnoemail.com
+    // {
+    //   name: "${BINANCE_ACCOUNT3_API_KEY}",
+    //   script: 'npm',
+    //   args : 'start',
+    //   cwd: '/home/ec2-user/current/strategy/order-monitoring',
+    //   log_file: `../../../logs/${BINANCE_ACCOUNT3_API_KEY}.log`,
+    //   // log_date_format: 'YYYY-MM-DD HH:mm Z',
+    //   env: {
+    //     BINANCE_API_KEY: "${BINANCE_ACCOUNT3_API_KEY}",
+    //     BINANCE_API_SECRET: "${BINANCE_ACCOUNT12_API_SECRET}",
+    //     DIFFERENCE_THRESHOLD_TICKS: 0,
+    //   },
+    // },
+    //     // jackson5atr_virtual@i74kcfzlnoemail.com
+    // {
+    //   name: "${BINANCE_ACCOUNT4_API_KEY}",
+    //   script: 'npm',
+    //   args : 'start',
+    //   cwd: '/home/ec2-user/current/strategy/order-monitoring',
+    //   log_file: `../../../logs/${BINANCE_ACCOUNT4_API_KEY}.log`,
+    //   // log_date_format: 'YYYY-MM-DD HH:mm Z',
+    //   env: {
+    //     BINANCE_API_KEY: "${BINANCE_ACCOUNT4_API_KEY}",
+    //     BINANCE_API_SECRET: "${BINANCE_ACCOUNT13_API_SECRET}",
+    //     DIFFERENCE_THRESHOLD_TICKS: 0,
+    //   },
+    // },
+    // // bollingerbreakout_virtual@nurv4rjtnoemail.com
+    // {
+    //   name: "${BINANCE_ACCOUNT5_API_KEY}",
+    //   script: 'npm',
+    //   args : 'start',
+    //   cwd: '/home/ec2-user/current/strategy/order-monitoring',
+    //   log_file: `../../../logs/${BINANCE_ACCOUNT5_API_KEY}.log`,
+    //   // log_date_format: 'YYYY-MM-DD HH:mm Z',
+    //   env: {
+    //     BINANCE_API_KEY: "${BINANCE_ACCOUNT5_API_KEY}",
+    //     BINANCE_API_SECRET: "${BINANCE_ACCOUNT14_API_SECRET}",
+    //     DIFFERENCE_THRESHOLD_TICKS: 0,
+    //   },
+    // },
+    //     // doubleema_virtual@02w4zdu1noemail.com
+    // {
+    //   name: "${BINANCE_ACCOUNT6_API_KEY}",
+    //   script: 'npm',
+    //   args : 'start',
+    //   cwd: '/home/ec2-user/current/strategy/order-monitoring',
+    //   log_file: `../../../logs/${BINANCE_ACCOUNT6_API_KEY}.log`,
+    //   // log_date_format: 'YYYY-MM-DD HH:mm Z',
+    //   env: {
+    //     BINANCE_API_KEY: "${BINANCE_ACCOUNT6_API_KEY}",
+    //     BINANCE_API_SECRET: "${BINANCE_ACCOUNT15_API_SECRET}",
+    //     DIFFERENCE_THRESHOLD_TICKS: 0,
+    //   },
+    // },
+    // // doubleemabolinger_virtual@ul8fh2monoemail.com
+    // {
+    //   name: "${BINANCE_ACCOUNT7_API_KEY}",
+    //   script: 'npm',
+    //   args : 'start',
+    //   cwd: '/home/ec2-user/current/strategy/order-monitoring',
+    //   log_file: `../../../logs/${BINANCE_ACCOUNT7_API_KEY}.log`,
+    //   // log_date_format: 'YYYY-MM-DD HH:mm Z',
+    //   env: {
+    //     BINANCE_API_KEY: "${BINANCE_ACCOUNT7_API_KEY}",
+    //     BINANCE_API_SECRET: "${BINANCE_ACCOUNT16_API_SECRET}",
+    //     DIFFERENCE_THRESHOLD_TICKS: 0,
+    //   },
+    // },
+    //     // malgosmadeg_virtual@5q62pwctnoemail.com
+    // {
+    //   name: "${BINANCE_ACCOUNT8_API_KEY}",
+    //   script: 'npm',
+    //   args : 'start',
+    //   cwd: '/home/ec2-user/current/strategy/order-monitoring',
+    //   log_file: `../../../logs/${BINANCE_ACCOUNT8_API_KEY}.log`,
+    //   // log_date_format: 'YYYY-MM-DD HH:mm Z',
+    //   env: {
+    //     BINANCE_API_KEY: "${BINANCE_ACCOUNT8_API_KEY}",
+    //     BINANCE_API_SECRET: "${BINANCE_ACCOUNT17_API_SECRET}",
+    //     DIFFERENCE_THRESHOLD_TICKS: 0,
+    //   },
+    // },
+    // // malgosidev3fxs30_virtual@bgot7orcnoemail.com
+    // {
+    //   name: "${BINANCE_ACCOUNT9_API_KEY}",
+    //   script: 'npm',
+    //   args : 'start',
+    //   cwd: '/home/ec2-user/current/strategy/order-monitoring',
+    //   log_file: `../../../logs/${BINANCE_ACCOUNT9_API_KEY}.log`,
+    //   // log_date_format: 'YYYY-MM-DD HH:mm Z',
+    //   env: {
+    //     BINANCE_API_KEY: "${BINANCE_ACCOUNT9_API_KEY}",
+    //     BINANCE_API_SECRET: "${BINANCE_ACCOUNT18_API_SECRET}",
+    //     DIFFERENCE_THRESHOLD_TICKS: 0,
+    //   },
+    // },
+    //     // malgosidejellyfxs30_virtual@ksr26se9noemail.com
+    // {
+    //   name: "${BINANCE_ACCOUNT10_API_KEY}",
+    //   script: 'npm',
+    //   args : 'start',
+    //   cwd: '/home/ec2-user/current/strategy/order-monitoring',
+    //   log_file: `../../../logs/${BINANCE_ACCOUNT10_API_KEY}.log`,
+    //   // log_date_format: 'YYYY-MM-DD HH:mm Z',
+    //   env: {
+    //     BINANCE_API_KEY: "${BINANCE_ACCOUNT10_API_KEY}",
+    //     BINANCE_API_SECRET: "${BINANCE_ACCOUNT19_API_SECRET}",
+    //     DIFFERENCE_THRESHOLD_TICKS: 0,
+    //   },
+    // },
+
+
+    // ----------------------------------
+
+
     // malgosidejellyrune15_virtual@5pvb9i9tnoemail.com
     {
       name: "${BINANCE_ACCOUNT11_API_KEY}",
