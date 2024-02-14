@@ -1,26 +1,30 @@
 module.exports = {
   apps : [
-    // life8063722@gmail.com 
-    {
-      name: "${BINANCE_API_KEY}",
-      script: 'ws.ts',
-      interpreter: 'node',
-      interpreter_args: '--import tsx',
-      cwd: '/home/ec2-user/current/strategy/order-monitoring',
-      log_file: `../../../logs/${BINANCE_API_KEY}.log`,
-      // log_date_format: 'YYYY-MM-DD HH:mm Z',
-      env: {
-        BINANCE_API_KEY: "${BINANCE_API_KEY}",
-        BINANCE_API_SECRET: "${BINANCE_ACCOUNT20_API_SECRET}",
-        DIFFERENCE_THRESHOLD_TICKS: 0,
-      },
-    },
+    // // LOCALHOST
+    // // life8063722@gmail.com 
+    // {
+    //   name: "${BINANCE_API_KEY}",
+    //   // script: 'ws.ts',
+    //   // interpreter: 'node',
+    //   // interpreter_args: '--import tsx',
+    //   script: 'npm',
+    //   args : 'start',
+    //   cwd: '/Users/nmazuryk/Documents/minfifty/strategy/order-monitoring',
+    //   log_file: `./logs/${BINANCE_API_KEY}.log`,
+    //   // log_date_format: 'YYYY-MM-DD HH:mm Z',
+    //   env: {
+    //     BINANCE_API_KEY: "${BINANCE_API_KEY}",
+    //     BINANCE_API_SECRET: "${BINANCE_ACCOUNT20_API_SECRET}",
+    //     DIFFERENCE_THRESHOLD_TICKS: 0,
+    //   },
+    // },
+
+
     // codegrade.test@gmail.com
     {
       name: "${BINANCE_ACCOUNT1_API_KEY}",
-      script: 'ws.ts',
-      interpreter: 'node',
-      interpreter_args: '--import tsx',
+      script: 'npm',
+      args : 'start',
       cwd: '/home/ec2-user/current/strategy/order-monitoring',
       log_file: `../../../logs/${BINANCE_ACCOUNT1_API_KEY}.log`,
       // log_date_format: 'YYYY-MM-DD HH:mm Z',
@@ -33,9 +37,8 @@ module.exports = {
     // malgotm30m_virtual@f7l7hysqnoemail.com
     {
       name: "${BINANCE_ACCOUNT2_API_KEY}",
-      script: 'ws.ts',
-      interpreter: 'node',
-      interpreter_args: '--import tsx',
+      script: 'npm',
+      args : 'start',
       cwd: '/home/ec2-user/current/strategy/order-monitoring',
       log_file: `../../../logs/${BINANCE_ACCOUNT2_API_KEY}.log`,
       // log_date_format: 'YYYY-MM-DD HH:mm Z',
@@ -49,9 +52,8 @@ module.exports = {
     // jackson5_virtual@9xx7lynnnoemail.com
     {
       name: "${BINANCE_ACCOUNT3_API_KEY}",
-      script: 'ws.ts',
-      interpreter: 'node',
-      interpreter_args: '--import tsx',
+      script: 'npm',
+      args : 'start',
       cwd: '/home/ec2-user/current/strategy/order-monitoring',
       log_file: `../../../logs/${BINANCE_ACCOUNT3_API_KEY}.log`,
       // log_date_format: 'YYYY-MM-DD HH:mm Z',
@@ -64,9 +66,8 @@ module.exports = {
         // jackson5atr_virtual@i74kcfzlnoemail.com
     {
       name: "${BINANCE_ACCOUNT4_API_KEY}",
-      script: 'ws.ts',
-      interpreter: 'node',
-      interpreter_args: '--import tsx',
+      script: 'npm',
+      args : 'start',
       cwd: '/home/ec2-user/current/strategy/order-monitoring',
       log_file: `../../../logs/${BINANCE_ACCOUNT4_API_KEY}.log`,
       // log_date_format: 'YYYY-MM-DD HH:mm Z',
@@ -79,9 +80,8 @@ module.exports = {
     // bollingerbreakout_virtual@nurv4rjtnoemail.com
     {
       name: "${BINANCE_ACCOUNT5_API_KEY}",
-      script: 'ws.ts',
-      interpreter: 'node',
-      interpreter_args: '--import tsx',
+      script: 'npm',
+      args : 'start',
       cwd: '/home/ec2-user/current/strategy/order-monitoring',
       log_file: `../../../logs/${BINANCE_ACCOUNT5_API_KEY}.log`,
       // log_date_format: 'YYYY-MM-DD HH:mm Z',
@@ -94,9 +94,8 @@ module.exports = {
         // doubleema_virtual@02w4zdu1noemail.com
     {
       name: "${BINANCE_ACCOUNT6_API_KEY}",
-      script: 'ws.ts',
-      interpreter: 'node',
-      interpreter_args: '--import tsx',
+      script: 'npm',
+      args : 'start',
       cwd: '/home/ec2-user/current/strategy/order-monitoring',
       log_file: `../../../logs/${BINANCE_ACCOUNT6_API_KEY}.log`,
       // log_date_format: 'YYYY-MM-DD HH:mm Z',
@@ -109,9 +108,8 @@ module.exports = {
     // doubleemabolinger_virtual@ul8fh2monoemail.com
     {
       name: "${BINANCE_ACCOUNT7_API_KEY}",
-      script: 'ws.ts',
-      interpreter: 'node',
-      interpreter_args: '--import tsx',
+      script: 'npm',
+      args : 'start',
       cwd: '/home/ec2-user/current/strategy/order-monitoring',
       log_file: `../../../logs/${BINANCE_ACCOUNT7_API_KEY}.log`,
       // log_date_format: 'YYYY-MM-DD HH:mm Z',
@@ -124,9 +122,8 @@ module.exports = {
         // malgosmadeg_virtual@5q62pwctnoemail.com
     {
       name: "${BINANCE_ACCOUNT8_API_KEY}",
-      script: 'ws.ts',
-      interpreter: 'node',
-      interpreter_args: '--import tsx',
+      script: 'npm',
+      args : 'start',
       cwd: '/home/ec2-user/current/strategy/order-monitoring',
       log_file: `../../../logs/${BINANCE_ACCOUNT8_API_KEY}.log`,
       // log_date_format: 'YYYY-MM-DD HH:mm Z',
@@ -139,9 +136,8 @@ module.exports = {
     // malgosidev3fxs30_virtual@bgot7orcnoemail.com
     {
       name: "${BINANCE_ACCOUNT9_API_KEY}",
-      script: 'ws.ts',
-      interpreter: 'node',
-      interpreter_args: '--import tsx',
+      script: 'npm',
+      args : 'start',
       cwd: '/home/ec2-user/current/strategy/order-monitoring',
       log_file: `../../../logs/${BINANCE_ACCOUNT9_API_KEY}.log`,
       // log_date_format: 'YYYY-MM-DD HH:mm Z',
@@ -154,9 +150,8 @@ module.exports = {
         // malgosidejellyfxs30_virtual@ksr26se9noemail.com
     {
       name: "${BINANCE_ACCOUNT10_API_KEY}",
-      script: 'ws.ts',
-      interpreter: 'node',
-      interpreter_args: '--import tsx',
+      script: 'npm',
+      args : 'start',
       cwd: '/home/ec2-user/current/strategy/order-monitoring',
       log_file: `../../../logs/${BINANCE_ACCOUNT10_API_KEY}.log`,
       // log_date_format: 'YYYY-MM-DD HH:mm Z',
@@ -169,9 +164,8 @@ module.exports = {
     // malgosidejellyrune15_virtual@5pvb9i9tnoemail.com
     {
       name: "${BINANCE_ACCOUNT11_API_KEY}",
-      script: 'ws.ts',
-      interpreter: 'node',
-      interpreter_args: '--import tsx',
+      script: 'npm',
+      args : 'start',
       cwd: '/home/ec2-user/current/strategy/order-monitoring',
       log_file: `../../../logs/${BINANCE_ACCOUNT11_API_KEY}.log`,
       // log_date_format: 'YYYY-MM-DD HH:mm Z',
@@ -184,9 +178,8 @@ module.exports = {
     // malgosidejellyrune5_virtual@8w7s1ykjnoemail.com
     {
       name: "${BINANCE_ACCOUNT12_API_KEY}",
-      script: 'ws.ts',
-      interpreter: 'node',
-      interpreter_args: '--import tsx',
+      script: 'npm',
+      args : 'start',
       cwd: '/home/ec2-user/current/strategy/order-monitoring',
       log_file: `../../../logs/${BINANCE_ACCOUNT12_API_KEY}.log`,
       // log_date_format: 'YYYY-MM-DD HH:mm Z',
@@ -199,9 +192,8 @@ module.exports = {
         // malgosidewoo15_virtual@yk54hj4enoemail.com
     {
       name: "${BINANCE_ACCOUNT13_API_KEY}",
-      script: 'ws.ts',
-      interpreter: 'node',
-      interpreter_args: '--import tsx',
+      script: 'npm',
+      args : 'start',
       cwd: '/home/ec2-user/current/strategy/order-monitoring',
       log_file: `../../../logs/${BINANCE_ACCOUNT13_API_KEY}.log`,
       // log_date_format: 'YYYY-MM-DD HH:mm Z',
@@ -214,9 +206,8 @@ module.exports = {
     // malgosidearb30_virtual@0cjk3rwwnoemail.com
     {
       name: "${BINANCE_ACCOUNT14_API_KEY}",
-      script: 'ws.ts',
-      interpreter: 'node',
-      interpreter_args: '--import tsx',
+      script: 'npm',
+      args : 'start',
       cwd: '/home/ec2-user/current/strategy/order-monitoring',
       log_file: `../../../logs/${BINANCE_ACCOUNT14_API_KEY}.log`,
       // log_date_format: 'YYYY-MM-DD HH:mm Z',
@@ -229,9 +220,8 @@ module.exports = {
         // malgosidearb15_virtual@iuthyo7vnoemail.com
     {
       name: "${BINANCE_ACCOUNT15_API_KEY}",
-      script: 'ws.ts',
-      interpreter: 'node',
-      interpreter_args: '--import tsx',
+      script: 'npm',
+      args : 'start',
       cwd: '/home/ec2-user/current/strategy/order-monitoring',
       log_file: `../../../logs/${BINANCE_ACCOUNT15_API_KEY}.log`,
       // log_date_format: 'YYYY-MM-DD HH:mm Z',
@@ -244,9 +234,8 @@ module.exports = {
     // malgohardcoderune5_virtual@g4ictt8fnoemail.com
     {
       name: "${BINANCE_ACCOUNT16_API_KEY}",
-      script: 'ws.ts',
-      interpreter: 'node',
-      interpreter_args: '--import tsx',
+      script: 'npm',
+      args : 'start',
       cwd: '/home/ec2-user/current/strategy/order-monitoring',
       log_file: `../../../logs/${BINANCE_ACCOUNT16_API_KEY}.log`,
       // log_date_format: 'YYYY-MM-DD HH:mm Z',
@@ -259,9 +248,8 @@ module.exports = {
         // malgohardcodedwoo5_virtual@q9os06aonoemail.com
     {
       name: "${BINANCE_ACCOUNT17_API_KEY}",
-      script: 'ws.ts',
-      interpreter: 'node',
-      interpreter_args: '--import tsx',
+      script: 'npm',
+      args : 'start',
       cwd: '/home/ec2-user/current/strategy/order-monitoring',
       log_file: `../../../logs/${BINANCE_ACCOUNT17_API_KEY}.log`,
       // log_date_format: 'YYYY-MM-DD HH:mm Z',
@@ -274,9 +262,8 @@ module.exports = {
     // malgosmadegarb15_virtual@3ni81h35noemail.com
     {
       name: "${BINANCE_ACCOUNT18_API_KEY}",
-      script: 'ws.ts',
-      interpreter: 'node',
-      interpreter_args: '--import tsx',
+      script: 'npm',
+      args : 'start',
       cwd: '/home/ec2-user/current/strategy/order-monitoring',
       log_file: `../../../logs/${BINANCE_ACCOUNT18_API_KEY}.log`,
       // log_date_format: 'YYYY-MM-DD HH:mm Z',
@@ -289,9 +276,8 @@ module.exports = {
         // malgohardcodedrune30_virtual@7u9rawggnoemail.com
     {
       name: "${BINANCE_ACCOUNT19_API_KEY}",
-      script: 'ws.ts',
-      interpreter: 'node',
-      interpreter_args: '--import tsx',
+      script: 'npm',
+      args : 'start',
       cwd: '/home/ec2-user/current/strategy/order-monitoring',
       log_file: `../../../logs/${BINANCE_ACCOUNT19_API_KEY}.log`,
       // log_date_format: 'YYYY-MM-DD HH:mm Z',
@@ -304,9 +290,8 @@ module.exports = {
     // atremastrategybtc1_virtual@12jqf55rnoemail.com
     {
       name: "${BINANCE_ACCOUNT20_API_KEY}",
-      script: 'ws.ts',
-      interpreter: 'node',
-      interpreter_args: '--import tsx',
+      script: 'npm',
+      args : 'start',
       cwd: '/home/ec2-user/current/strategy/order-monitoring',
       log_file: `../../../logs/${BINANCE_ACCOUNT20_API_KEY}.log`,
       // log_date_format: 'YYYY-MM-DD HH:mm Z',

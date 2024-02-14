@@ -117,7 +117,7 @@ const main = async () => {
     if (isProcessingOrderUpdateEvent) return
 
     OPEN_ORDERS = await getOpenOrders()
-  }, 3000)
+  }, 5000)
 
   const futuresAggTradesWebsocketConnection = binance.ws.futuresAggTrades(
     'RUNEUSDT',
