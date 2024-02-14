@@ -1,9 +1,6 @@
 import AWS from 'aws-sdk'
 import Binance, { AggregatedTrade } from 'binance-api-node'
 
-// import { createLogger, format } from 'winston';
-// import WinstonCloudWatch from 'winston-cloudwatch';
-
 AWS.config.update({ region: 'eu-central-1' })
 
 const ddb = new AWS.DynamoDB.DocumentClient()
@@ -22,17 +19,8 @@ const logger = {
   error: (...args: any) => console.error(...args),
 }
 
-// const logger = createLogger({
-//   level: 'debug',
-//   format: format.json(),
-//   transports: [
-//     new WinstonCloudWatch({
-//       logGroupName: `order-monitoring/${BINANCE_API_KEY}`,
-//       logStreamName: () => new Date().toISOString().split('T')[0],
-//       retentionInDays: 14,
-//     }),
-//   ]
-// });
+const getRandomNumber = (min: number, max: number) =>
+  Math.floor(Math.random() * (max - min + 1) + min)
 
 const collectDebugInformation = async () => {
   const openOrders = await binance.futuresOpenOrders({ symbol: 'RUNEUSDT' })
@@ -117,7 +105,7 @@ const main = async () => {
     if (isProcessingOrderUpdateEvent) return
 
     OPEN_ORDERS = await getOpenOrders()
-  }, 5000)
+  }, getRandomNumber(10000, 20000))
 
   const futuresAggTradesWebsocketConnection = binance.ws.futuresAggTrades(
     'RUNEUSDT',

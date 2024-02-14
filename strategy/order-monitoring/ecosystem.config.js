@@ -1,6 +1,6 @@
 module.exports = {
   apps : [
-    // // LOCALHOST
+    // // LOCALHOST (but can be deployed, change paths)
     // // life8063722@gmail.com 
     // {
     //   name: "${BINANCE_API_KEY}",
