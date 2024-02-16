@@ -94,13 +94,21 @@ module.exports.handler = async(event, context) => {
 
   if (isExit) {
     const openOrders = await retry(binance.futuresOpenOrders, undefined, 8)
-    const openOrdersSide = commentStr === 'LX' ? 'BUY' : 'SELL'
-    const unExecutedOrders = openOrders.filter(openOrder => openOrder.side === openOrdersSide && openOrder.origType === 'LIMIT')
+    const openEntryOrderSide = commentStr === 'LX' ? 'BUY' : 'SELL'
+    const openEntryOrderType = commentStr === 'LX' ? 'LONG' : 'SHORT'
 
-    if (unExecutedOrders.length > 1) throw new Error ('Multiple unExecuted Open Orders: ', JSON.stringify(openOrders))
+    const isUnexecutedEntryOrder = (openOrder) => {
+      const [, orderTypeCommentStr] = openOrder.clientOrderId.split(':')
+    
+      return  openOrder.side === openEntryOrderSide && openEntryOrderType === orderTypeCommentStr && openOrder.origType === 'LIMIT'
+    }
+    
+    const unExecutedEntryOrders = openOrders.filter(isUnexecutedEntryOrder)
 
-    if (unExecutedOrders.length === 1) {
-      const openOrder = unExecutedOrders[0]
+    if (unExecutedEntryOrders.length > 1) throw new Error ('Multiple unExecuted Open Entry Orders: ', JSON.stringify(openOrders))
+
+    if (unExecutedEntryOrders.length === 1) {
+      const openOrder = unExecutedEntryOrders[0]
 
       if (Number(openOrder.executedQty) > 0) {
         const order = {
@@ -141,7 +149,7 @@ module.exports.handler = async(event, context) => {
       await ddb.put(params).promise()
     }
 
-    if (unExecutedOrders.length === 0) {
+    if (unExecutedEntryOrders.length === 0) {
       const order = {
         type: 'MARKET',
         symbol: symbol,

@@ -2,6 +2,7 @@ module.exports = {
   apps : [
     // // LOCALHOST (but can be deployed, change paths)
     // // life8063722@gmail.com 
+    // // Slack Errors (cloudwatch-logs-error-filter): aws logs put-subscription-filter
     // {
     //   name: "${BINANCE_API_KEY}",
     //   // script: 'ws.ts',
@@ -23,6 +24,7 @@ module.exports = {
 
 
     // // codegrade.test@gmail.com
+    // // Slack Errors (cloudwatch-logs-error-filter): aws logs put-subscription-filter
     // {
     //   name: "${BINANCE_ACCOUNT1_API_KEY}",
     //   script: 'npm',
@@ -37,6 +39,7 @@ module.exports = {
     //   },
     // },
     // // malgotm30m_virtual@f7l7hysqnoemail.com
+    // // Slack Errors (cloudwatch-logs-error-filter): aws logs put-subscription-filter
     // {
     //   name: "${BINANCE_ACCOUNT2_API_KEY}",
     //   script: 'npm',
@@ -52,6 +55,7 @@ module.exports = {
     // },
 
     // // jackson5_virtual@9xx7lynnnoemail.com
+    // // Slack Errors (cloudwatch-logs-error-filter): aws logs put-subscription-filter
     // {
     //   name: "${BINANCE_ACCOUNT3_API_KEY}",
     //   script: 'npm',
@@ -66,6 +70,7 @@ module.exports = {
     //   },
     // },
     //     // jackson5atr_virtual@i74kcfzlnoemail.com
+    // // Slack Errors (cloudwatch-logs-error-filter): aws logs put-subscription-filter
     // {
     //   name: "${BINANCE_ACCOUNT4_API_KEY}",
     //   script: 'npm',
@@ -80,6 +85,7 @@ module.exports = {
     //   },
     // },
     // // bollingerbreakout_virtual@nurv4rjtnoemail.com
+    // // Slack Errors (cloudwatch-logs-error-filter): aws logs put-subscription-filter
     // {
     //   name: "${BINANCE_ACCOUNT5_API_KEY}",
     //   script: 'npm',
@@ -94,6 +100,7 @@ module.exports = {
     //   },
     // },
     //     // doubleema_virtual@02w4zdu1noemail.com
+    // // Slack Errors (cloudwatch-logs-error-filter): aws logs put-subscription-filter
     // {
     //   name: "${BINANCE_ACCOUNT6_API_KEY}",
     //   script: 'npm',
@@ -108,6 +115,7 @@ module.exports = {
     //   },
     // },
     // // doubleemabolinger_virtual@ul8fh2monoemail.com
+    // // Slack Errors (cloudwatch-logs-error-filter): aws logs put-subscription-filter
     // {
     //   name: "${BINANCE_ACCOUNT7_API_KEY}",
     //   script: 'npm',
@@ -122,6 +130,7 @@ module.exports = {
     //   },
     // },
     //     // malgosmadeg_virtual@5q62pwctnoemail.com
+    // // Slack Errors (cloudwatch-logs-error-filter): aws logs put-subscription-filter
     // {
     //   name: "${BINANCE_ACCOUNT8_API_KEY}",
     //   script: 'npm',
@@ -136,6 +145,7 @@ module.exports = {
     //   },
     // },
     // // malgosidev3fxs30_virtual@bgot7orcnoemail.com
+    // // Slack Errors (cloudwatch-logs-error-filter): aws logs put-subscription-filter
     // {
     //   name: "${BINANCE_ACCOUNT9_API_KEY}",
     //   script: 'npm',
@@ -150,6 +160,7 @@ module.exports = {
     //   },
     // },
     //     // malgosidejellyfxs30_virtual@ksr26se9noemail.com
+    // // Slack Errors (cloudwatch-logs-error-filter): aws logs put-subscription-filter
     // {
     //   name: "${BINANCE_ACCOUNT10_API_KEY}",
     //   script: 'npm',
@@ -179,7 +190,7 @@ module.exports = {
       env: {
         BINANCE_API_KEY: "${BINANCE_ACCOUNT11_API_KEY}",
         BINANCE_API_SECRET: "${BINANCE_API_SECRET}",
-        DIFFERENCE_THRESHOLD_TICKS: 50,
+        DIFFERENCE_THRESHOLD_TICKS: 0.050,
       },
     },
     // malgosidejellyrune5_virtual@8w7s1ykjnoemail.com
@@ -193,7 +204,7 @@ module.exports = {
       env: {
         BINANCE_API_KEY: "${BINANCE_ACCOUNT12_API_KEY}",
         BINANCE_API_SECRET: "${BINANCE_ACCOUNT1_API_SECRET}",
-        DIFFERENCE_THRESHOLD_TICKS: 50,
+        DIFFERENCE_THRESHOLD_TICKS: 0.050,
       },
     },
         // malgosidewoo15_virtual@yk54hj4enoemail.com
@@ -207,7 +218,7 @@ module.exports = {
       env: {
         BINANCE_API_KEY: "${BINANCE_ACCOUNT13_API_KEY}",
         BINANCE_API_SECRET: "${BINANCE_ACCOUNT2_API_SECRET}",
-        DIFFERENCE_THRESHOLD_TICKS: 50,
+        DIFFERENCE_THRESHOLD_TICKS: 0.050,
       },
     },
     // malgosidearb30_virtual@0cjk3rwwnoemail.com
@@ -221,7 +232,7 @@ module.exports = {
       env: {
         BINANCE_API_KEY: "${BINANCE_ACCOUNT14_API_KEY}",
         BINANCE_API_SECRET: "${BINANCE_ACCOUNT3_API_SECRET}",
-        DIFFERENCE_THRESHOLD_TICKS: 50,
+        DIFFERENCE_THRESHOLD_TICKS: 0.050,
       },
     },
         // malgosidearb15_virtual@iuthyo7vnoemail.com
@@ -235,7 +246,7 @@ module.exports = {
       env: {
         BINANCE_API_KEY: "${BINANCE_ACCOUNT15_API_KEY}",
         BINANCE_API_SECRET: "${BINANCE_ACCOUNT4_API_SECRET}",
-        DIFFERENCE_THRESHOLD_TICKS: 50,
+        DIFFERENCE_THRESHOLD_TICKS: 0.050,
       },
     },
     // malgohardcoderune5_virtual@g4ictt8fnoemail.com
@@ -249,7 +260,7 @@ module.exports = {
       env: {
         BINANCE_API_KEY: "${BINANCE_ACCOUNT16_API_KEY}",
         BINANCE_API_SECRET: "${BINANCE_ACCOUNT5_API_SECRET}",
-        DIFFERENCE_THRESHOLD_TICKS: 50,
+        DIFFERENCE_THRESHOLD_TICKS: 0.050,
       },
     },
         // malgohardcodedwoo5_virtual@q9os06aonoemail.com
@@ -263,7 +274,7 @@ module.exports = {
       env: {
         BINANCE_API_KEY: "${BINANCE_ACCOUNT17_API_KEY}",
         BINANCE_API_SECRET: "${BINANCE_ACCOUNT6_API_SECRET}",
-        DIFFERENCE_THRESHOLD_TICKS: 50,
+        DIFFERENCE_THRESHOLD_TICKS: 0.050,
       },
     },
     // malgosmadegarb15_virtual@3ni81h35noemail.com
@@ -277,7 +288,7 @@ module.exports = {
       env: {
         BINANCE_API_KEY: "${BINANCE_ACCOUNT18_API_KEY}",
         BINANCE_API_SECRET: "${BINANCE_ACCOUNT7_API_SECRET}",
-        DIFFERENCE_THRESHOLD_TICKS: 50,
+        DIFFERENCE_THRESHOLD_TICKS: 0.050,
       },
     },
         // malgohardcodedrune30_virtual@7u9rawggnoemail.com
@@ -291,7 +302,7 @@ module.exports = {
       env: {
         BINANCE_API_KEY: "${BINANCE_ACCOUNT19_API_KEY}",
         BINANCE_API_SECRET: "${BINANCE_ACCOUNT8_API_SECRET}",
-        DIFFERENCE_THRESHOLD_TICKS: 50,
+        DIFFERENCE_THRESHOLD_TICKS: 0.050,
       },
     },
     // atremastrategybtc1_virtual@12jqf55rnoemail.com
@@ -305,7 +316,7 @@ module.exports = {
       env: {
         BINANCE_API_KEY: "${BINANCE_ACCOUNT20_API_KEY}",
         BINANCE_API_SECRET: "${BINANCE_ACCOUNT9_API_SECRET}",
-        DIFFERENCE_THRESHOLD_TICKS: 50,
+        DIFFERENCE_THRESHOLD_TICKS: 0.050,
       },
     },
   ],
