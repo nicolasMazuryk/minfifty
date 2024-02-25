@@ -1,7 +1,7 @@
 {
   "name": "order-monitoring",
   "engines": {
-    "node": ">=16.x"
+    "node": ">=20.x"
   },
   "scripts": {
     "start": "npx tsx ws.ts",

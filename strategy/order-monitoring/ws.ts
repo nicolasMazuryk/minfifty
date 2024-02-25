@@ -91,14 +91,12 @@ const getOpenOrders = async () => {
 
     return openOrders.filter(isExitOrder)
   } catch (error: any) {
-    // // -1021: Error: Timestamp for this request is outside of the recvWindow.
-    // // UND_ERR_CONNECT_TIMEOUT: Error: TypeError: fetch failed at Object.fetch (node:internal/deps/undici/undici:13220:11)
-    // if ([-1021, 'UND_ERR_CONNECT_TIMEOUT'].includes(error?.code) || error?.message.includes('fetch failed')) {
-    //   logger.info('Caught known issue on getOpenOrders. Continue silently...')
-    // }
-
     // -1021: Error: Timestamp for this request is outside of the recvWindow.
-    if ([-1021].includes(error?.code)) {
+    // UND_ERR_CONNECT_TIMEOUT: Error: TypeError: fetch failed at Object.fetch (node:internal/deps/undici/undici:13220:11)
+    if (
+      [-1021, 'UND_ERR_CONNECT_TIMEOUT'].includes(error?.code) ||
+      error?.message.includes('fetch failed')
+    ) {
       logger.info('Caught known issue on getOpenOrders. Continue silently...')
     }
 
