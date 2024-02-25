@@ -83,10 +83,29 @@ const isExitOrder = (order: any) => {
   return ['LX', 'SX'].includes(commentStr) && order.origType === 'LIMIT'
 }
 
-const getOpenOrders = async () => {
-  const openOrders = await retry(binance.futuresOpenOrders, undefined, 8)
+let OPEN_ORDERS: any[] = []
 
-  return openOrders.filter(isExitOrder)
+const getOpenOrders = async () => {
+  try {
+    const openOrders = await binance.futuresOpenOrders({ symbol: 'RUNEUSDT' })
+
+    return openOrders.filter(isExitOrder)
+  } catch (error: any) {
+    // // -1021: Error: Timestamp for this request is outside of the recvWindow.
+    // // UND_ERR_CONNECT_TIMEOUT: Error: TypeError: fetch failed at Object.fetch (node:internal/deps/undici/undici:13220:11)
+    // if ([-1021, 'UND_ERR_CONNECT_TIMEOUT'].includes(error?.code) || error?.message.includes('fetch failed')) {
+    //   logger.info('Caught known issue on getOpenOrders. Continue silently...')
+    // }
+
+    // -1021: Error: Timestamp for this request is outside of the recvWindow.
+    if ([-1021].includes(error?.code)) {
+      logger.info('Caught known issue on getOpenOrders. Continue silently...')
+    }
+
+    logger.error(error)
+  } finally {
+    return OPEN_ORDERS
+  }
 }
 
 // --------------------
@@ -98,7 +117,7 @@ const main = async () => {
   let isProcessingAggregatedTradesEvent = false
   let isProcessingOrderUpdateEvent = false
 
-  let OPEN_ORDERS = await getOpenOrders()
+  OPEN_ORDERS = await getOpenOrders()
 
   const openOrdersInterval = setInterval(async () => {
     if (isProcessingOrderUpdateEvent) return
