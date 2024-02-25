@@ -56,6 +56,13 @@ const retry = async (fn, parameters, retries = 12, delay = 1000) => {
   }
 }
 
+const generateUUID = () => {
+  // 8 characters
+  const timestamp = Date.now().toString(36).substring(5, 8)
+  const randomString = Math.random().toString(36).substring(3, 8)
+  return `${timestamp}${randomString}`
+}
+
 // const run = async(event, context) => {
 
 module.exports.handler = async(event, context) => {
