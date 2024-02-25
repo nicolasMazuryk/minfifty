@@ -94,6 +94,7 @@ module.exports.handler = async(event, context) => {
       side: side.toUpperCase(),
       price: slippageOffsetPrice,
       quantity: quantity,
+      newClientOrderId: `${generateUUID()}:${commentStr}`,
     }
 
     await retry(binance.futuresOrder, order)
