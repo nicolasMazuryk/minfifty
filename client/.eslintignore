@@ -9,6 +9,3 @@ scripts/*
 build/*
 src/react-app-env.d.ts
 src/reportWebVitals.ts
-src/charting_library
-public/charting_library
-public/datafeeds

@@ -18,7 +18,6 @@ module.exports = {
     '.jest.config.js',
     'build/**/*.js',
     'config-overrides.js',
-    'charting_library/**/*.{js,ts}',
   ],
   overrides: [
     {

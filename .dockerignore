@@ -4,7 +4,6 @@
 
 client
 server
-tradingView
 
 strategy/aws-lambda-cloudwatch-errors-slack-notification
 strategy/aws_lambda_binance
