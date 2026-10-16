@@ -56,3 +56,10 @@ server/src/scripts/performance/
 strategy/src/scripts/market-data/
 strategy/src/scripts/performance/
 strategy/src/scripts/archived_31_march
+
+# Environment files (keep the examples)
+.env
+.env.*
+!.env.example
+*.tfstate*
+.terraform/
