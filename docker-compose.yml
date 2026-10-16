@@ -20,6 +20,6 @@ services:
     ports:
       - 5432:5432
     environment:
-      POSTGRES_PASSWORD: ab1f6hh942sm
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-boilerplate}
       POSTGRES_USER: boilerplate
       POSTGRES_DB: boilerplate

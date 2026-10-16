@@ -1,0 +1,24 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  client:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm install --ignore-scripts --no-audit --no-fund
+      - run: npm run lint
+        working-directory: client
+      - run: npx jest
+        working-directory: client
+      - run: npm run build-no-map
+        working-directory: client
+        env:
+          CI: 'false'
