@@ -18,7 +18,7 @@
     "migration:undo": "npm run build && npx sequelize-cli db:migrate:undo",
     "migration:undo-all-to": "npm run build && npx sequelize-cli db:migrate:undo:all --to XXXXXX.js"
   },
-  "license": "ISC",
+  "license": "MIT",
   "devDependencies": {
     "@types/axios": "^0.14.0",
     "@types/csv-parse": "^1.2.2",

@@ -16,7 +16,7 @@
     "lint": "eslint . --ext .ts --ext .js --ext .tsx",
     "lint:fix": "eslint --fix . --ext .ts --ext .js --ext .tsx"
   },
-  "license": "ISC",
+  "license": "MIT",
   "devDependencies": {
     "@testing-library/jest-dom": "^5.16.4",
     "@testing-library/react": "^13.1.1",

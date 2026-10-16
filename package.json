@@ -1,7 +1,11 @@
 {
   "name": "minfifty",
   "version": "0.0.1",
-  "description": "",
+  "description": "Full-stack crypto trading platform: React dashboard, Express/Sequelize API and Binance/Bybit execution strategies",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  },
   "devDependencies": {
     "husky": "^8.0.1",
     "lint-staged": "^13.0.3"
