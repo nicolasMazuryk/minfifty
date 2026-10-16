@@ -30,9 +30,9 @@ module.exports = override(
   addWebpackResolve({ plugins: [new TsconfigPathsPlugin()] }),
   addDecoratorsLegacy(),
   removeModuleScopePlugin(),
-  babelInclude([path.resolve('src'), path.resolve(__dirname, '../common')]),
+  babelInclude([path.resolve('src'), path.resolve(__dirname, '../strategy/common')]),
   addWebpackAlias({
-    '@common': path.resolve(__dirname, '../common'),
+    '@common': path.resolve(__dirname, '../strategy/common'),
     '@styles': path.resolve(__dirname, './src/assets/styles'),
     '@assets': path.resolve(__dirname, './src/assets'),
   }),

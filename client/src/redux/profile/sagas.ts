@@ -1,4 +1,5 @@
 import { History } from 'history'
+import { AnyAction } from 'redux'
 import { put, takeEvery } from 'redux-saga/effects'
 
 import { ROUTES } from '@/constants/routes'
@@ -13,7 +14,7 @@ import {
 
 export function* loginSuccess(history: History) {
   yield takeEvery(LOGIN_SUCCESS, function* () {
-    yield put(loadProfile())
+    yield put(loadProfile() as unknown as AnyAction)
 
     yield history.push(ROUTES.HOME)
   })

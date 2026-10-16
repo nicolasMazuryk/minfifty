@@ -21,7 +21,7 @@
     "baseUrl": "./",
     "paths": {
       "@/*": ["src/*"],
-      "@common/*": ["../common/*"]
+      "@common/*": ["../strategy/common/*"]
     }
   },
   "include": [".eslintrc.js", "jest.config.js", "src"],

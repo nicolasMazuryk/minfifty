@@ -17,7 +17,7 @@
     "resolveJsonModule": true,
     "paths": {
       "@/*": ["src/*"],
-      "@common/*": ["../common/*"]
+      "@common/*": ["../strategy/common/*"]
     }
   },
   "include": ["src/**/*"],
